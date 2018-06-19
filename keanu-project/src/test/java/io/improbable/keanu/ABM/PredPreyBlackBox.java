@@ -2,7 +2,7 @@ package io.improbable.keanu.ABM;
 
 import io.improbable.keanu.algorithms.NetworkSamples;
 import io.improbable.keanu.algorithms.mcmc.MetropolisHastings;
-import io.improbable.keanu.network.BayesNet;
+//import io.improbable.keanu.network.BayesNet;
 import io.improbable.keanu.randomfactory.RandomFactory;
 import io.improbable.keanu.research.MixedInputOutputBlackBox;
 import io.improbable.keanu.research.VertexBackedRandomFactory;
@@ -65,20 +65,20 @@ public class PredPreyBlackBox {
         integersIn.add(new PoissonVertex(5));
         integersIn.add(new PoissonVertex(100));
 
-        MixedInputOutputBlackBox box = new MixedInputOutputBlackBox(integersIn, doublesIn, PredPreyBlackBox::model,
-            2, 0);
-
-        integersIn.get(0).observe(20);
-        integersIn.get(1).observe(5);
-        integersIn.get(2).observe(100);
-        box.integerOutputs.get(0).observe(60);
-        box.integerOutputs.get(1).observe(10);
-
-        BayesNet simulationNet = new BayesNet(box.getConnectedGraph());
-        ArrayList<Vertex> fromVertices = new ArrayList<>();
-        fromVertices.addAll(doublesIn);
-        fromVertices.addAll(integersIn);
-
-        NetworkSamples samples = MetropolisHastings.getPosteriorSamples(simulationNet, fromVertices, 1000);
+//        MixedInputOutputBlackBox box = new MixedInputOutputBlackBox(integersIn, doublesIn, PredPreyBlackBox::model,
+//            2, 0);
+//
+//        integersIn.get(0).observe(20);
+//        integersIn.get(1).observe(5);
+//        integersIn.get(2).observe(100);
+//        box.integerOutputs.get(0).observe(60);
+//        box.integerOutputs.get(1).observe(10);
+//
+//        BayesNet simulationNet = new BayesNet(box.getConnectedGraph());
+//        ArrayList<Vertex> fromVertices = new ArrayList<>();
+//        fromVertices.addAll(doublesIn);
+//        fromVertices.addAll(integersIn);
+//
+//        NetworkSamples samples = MetropolisHastings.getPosteriorSamples(simulationNet, fromVertices, 1000);
     }
 }

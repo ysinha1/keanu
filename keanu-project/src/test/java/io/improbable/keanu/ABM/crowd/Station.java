@@ -7,27 +7,39 @@ import java.util.stream.Collectors;
 
 public class Station {
 
-    private Random random = new Random(1);
-    private double areaXDimension = 200.0;
-    private double areaYDimension = 100.0;
+    private double areaYDimension;
     private List<Person> people = new ArrayList<>();
 
-    public Random getRandom() {
-        return random;
-    }
-
-    public double getAreaXDimension() {
-        return areaXDimension;
+    public Station(double areaYDimension) {
+        this.areaYDimension = areaYDimension;
     }
 
     public double getAreaYDimension() {
         return areaYDimension;
     }
 
+    public List<Person> getPeople() {
+        return people;
+    }
+
+    public void add(Person person) {
+        people.add(person);
+    }
+
     public List<Person> getPeopleInRange(Vector3D location, double range, Person... excluding) {
         return people.stream().filter(p ->
             !personInArray(p, excluding) && range <= location.distance(p.getLocation())
         ).collect(Collectors.toList());
+    }
+
+    public void removePeopleAtDestinations() {
+        int i = 0;
+        while (i < people.size()) {
+            if (people.get(i).isAtTarget()) {
+                people.remove(i);
+            }
+            i++;
+        }
     }
 
     private boolean personInArray(Person p, Person[] people) {

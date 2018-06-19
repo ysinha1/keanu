@@ -10,6 +10,7 @@ import java.util.Optional;
 
 public class PersonIntermediate implements Person {
 
+    private double targetEpsilon = 0.001;
     private static Vector3D zAxis = Vector3D.PLUS_K;
     private static double maxRotation = Math.PI / 2.0;
 
@@ -35,6 +36,19 @@ public class PersonIntermediate implements Person {
     @Override
     public double getRadius() {
         return radius;
+    }
+
+    @Override
+    public boolean isAtTarget() {
+        return location.distance(target) < targetEpsilon;
+    }
+
+    @Override
+    public String printStatus() {
+        return "PersonAdcock[" +
+            "location = " + location.getX() + ", " + location.getY() + ", " + location.getZ() +
+            "; target = " + target.getX() + ", " + target.getY() + ", " + target.getZ() +
+            "; distance = " + location.distance(target) + " ]";
     }
 
     @Override

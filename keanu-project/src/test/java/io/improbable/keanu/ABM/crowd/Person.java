@@ -8,5 +8,9 @@ public interface Person {
 
     double getRadius();
 
+    boolean isAtTarget();
+
+    String printStatus();
+
     void step(Station station);
 }

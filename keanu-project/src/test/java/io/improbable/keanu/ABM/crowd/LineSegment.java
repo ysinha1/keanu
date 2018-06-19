@@ -30,18 +30,18 @@ public class LineSegment {
             return start.distance(p);
         }
     }
-
-    public double abscissa(Vector3D p) {
-        double abscissa = line.getAbscissa(p);
-
-        if (abscissa >= 1.0) {
-            return end;
-        } else if (abscissa > 0.0) {
-            return line.pointAt(abscissa);
-        } else {
-            return start;
-        }
-    }
+//
+//    public double abscissa(Vector3D p) {
+//        double abscissa = line.getAbscissa(p);
+//
+//        if (abscissa >= 1.0) {
+//            return end;
+//        } else if (abscissa > 0.0) {
+//            return line.getAbscissa(abscissa);
+//        } else {
+//            return start;
+//        }
+//    }
 
     public Vector3D closestPointOnLineSegment(Vector3D p) {
         double abscissa = line.getAbscissa(p);
