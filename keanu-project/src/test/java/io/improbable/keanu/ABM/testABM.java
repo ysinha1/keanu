@@ -28,14 +28,8 @@ public class testABM {
         }
         Integer simulationCensusSystemTotal = simulation.numberOfPredators + simulation.numberOfPrey;
 
-        Integer manualPopulationCensus = 0;
-        for (Agent[] row : simulation.grid) {
-            for (Agent agent : row) {
-                if (agent != null) {
-                    manualPopulationCensus += 1;
-                }
-            }
-        }
+        Pair<Integer, Integer> manualPopulationCheck = manuallyCheckPopulation(simulation.grid);
+        Integer manualPopulationCensus = manualPopulationCheck.getFirst() + manualPopulationCheck.getSecond();
 
         assertEquals(0, simulationCensusSystemTotal, 0);
         assertEquals(0, manualPopulationCensus, 0);
