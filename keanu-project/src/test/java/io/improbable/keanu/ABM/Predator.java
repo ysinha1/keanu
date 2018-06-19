@@ -20,7 +20,7 @@ public class Predator extends Agent {
     private void hunt() {
         for (Agent agent: proximateAgents) {
             if (agent instanceof Prey) {
-                agent.removeAgent();
+                sim.removeAgent(agent.xLocation, agent.yLocation);
                 hasEaten = true;
             }
         }
@@ -28,9 +28,9 @@ public class Predator extends Agent {
 
     private void controlPopulation() {
         if (!hasEaten && random.nextDouble(0, 240) < 1) {
-            removeAgent();
-        } else if (hasEaten && random.nextDouble(0, 1) > (predReproductionGradient * getNumberOfProximatePredators())) {
-            giveBirth(sim::spawnPreditor);
+            sim.removeAgent(xLocation, yLocation);
+        } else if (hasEaten && random.nextDouble(0, 1) < (predReproductionGradient * getNumberOfProximatePredators())) {
+            giveBirth(sim::spawnPredator);
         }
     }
 }

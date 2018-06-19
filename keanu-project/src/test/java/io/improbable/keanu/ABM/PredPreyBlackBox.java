@@ -2,10 +2,12 @@ package io.improbable.keanu.ABM;
 
 import io.improbable.keanu.algorithms.NetworkSamples;
 import io.improbable.keanu.algorithms.mcmc.MetropolisHastings;
-import io.improbable.keanu.network.BayesNet;
+import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.randomfactory.RandomFactory;
 import io.improbable.keanu.research.MixedInputOutputBlackBox;
 import io.improbable.keanu.research.VertexBackedRandomFactory;
+import io.improbable.keanu.tensor.dbl.DoubleTensor;
+import io.improbable.keanu.tensor.intgr.IntegerTensor;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
@@ -17,22 +19,24 @@ import java.util.ArrayList;
 
 public class PredPreyBlackBox {
 
-    public static Pair<Integer[], Double[]> model(Integer[] integersIn, Double[] doublesIn, RandomFactory<Double> random) {
+    public static Pair<IntegerTensor[], DoubleTensor[]> model(IntegerTensor[] integersIn, DoubleTensor[] doublesIn, RandomFactory<Double> random) {
 
         Simulation simulation = new Simulation(10, 10,
             new VertexBackedRandomFactory(10, 10),
-            integersIn[2], integersIn[0], integersIn[1],
-            doublesIn[0], doublesIn[1], doublesIn[2]);
-
-        simulation.initialiseSimulation();
+            integersIn[2].scalar(), integersIn[0].scalar(), integersIn[1].scalar(),
+            doublesIn[0].scalar(), doublesIn[1].scalar(), doublesIn[2].scalar());
 
         simulation.run();
 
-        Double[] doubleOutputs = new Double[0];
+        DoubleTensor[] doubleOutputs = new DoubleTensor[0];
 
-        Integer[] integerOutputs = new Integer[2];
-        integerOutputs[0] = simulation.numberOfPredators;
-        integerOutputs[1] = simulation.numberOfPrey;
+        IntegerTensor[] integerOutputs = new IntegerTensor[2];
+        int[] numberOfPredators = new int[1];
+        numberOfPredators[0] = simulation.numberOfPredators;
+        integerOutputs[0] = IntegerTensor.create(numberOfPredators);
+        int[] numberOfPrey = new int[1];
+        numberOfPrey[0] = simulation.numberOfPrey;
+        integerOutputs[0] = IntegerTensor.create(numberOfPrey);
 
         return new Pair<>(integerOutputs, doubleOutputs);
     }
@@ -74,7 +78,7 @@ public class PredPreyBlackBox {
         box.integerOutputs.get(0).observe(60);
         box.integerOutputs.get(1).observe(10);
 
-        BayesNet simulationNet = new BayesNet(box.getConnectedGraph());
+        BayesianNetwork simulationNet = new BayesianNetwork(box.getConnectedGraph());
         ArrayList<Vertex> fromVertices = new ArrayList<>();
         fromVertices.addAll(doublesIn);
         fromVertices.addAll(integersIn);

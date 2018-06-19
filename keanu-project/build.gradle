@@ -31,6 +31,7 @@ dependencies {
     compile 'org.nd4j:nd4j-native-platform:1.0.0-alpha'
     compile "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compile group: 'org.slf4j', name: 'slf4j-nop', version: '1.7.10'
+    compile 'com.googlecode.json-simple:json-simple:1.1.1'
 
     //testing
     testCompile 'junit:junit:4.12'

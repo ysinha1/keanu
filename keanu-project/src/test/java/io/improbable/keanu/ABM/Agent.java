@@ -8,8 +8,8 @@ import java.util.function.BiConsumer;
 public class Agent {
 
     Simulation sim;
-    private int xLocation;
-    private int yLocation;
+    int xLocation;
+    int yLocation;
     VertexBackedRandomFactory random;
     ArrayList<Agent> proximateAgents;
 
@@ -18,13 +18,10 @@ public class Agent {
         this.xLocation = startX;
         this.yLocation = startY;
         random = sim.random.nextRandomFactory();
-
     }
 
     public void step() {
-
         Integer direction = random.nextDouble(0, 4).intValue();
-
         int testYLocation = yLocation;
         int testXLocation = xLocation;
 
@@ -76,25 +73,15 @@ public class Agent {
         return proximateAgents.stream().filter((Agent i) -> i instanceof Predator).count();
     }
 
-    public void removeAgent() {
-        // TODO does this work?
-        sim.grid[xLocation][yLocation] = null;
-    }
-
     void giveBirth(BiConsumer<Integer, Integer> function) {
-        boolean pregnant = true;
-        while (pregnant) {
-            for (int i = xLocation - 1; i <= xLocation + 1; i++) {
-                for (int j = yLocation - 1; j <= yLocation + 1; j++) {
-                    if (sim.getXY(i, j) == null && i < sim.grid.length && i >= 0 && j < sim.grid.length && j >= 0) {
-                        function.accept(i, j);
-                        pregnant = false;
-                    }
+        findBirthingSpace:
+        for (int i = xLocation - 1; i <= xLocation + 1; i++) {
+            for (int j = yLocation - 1; j <= yLocation + 1; j++) {
+                if (sim.getXY(i, j) == null && i < sim.grid.length && i >= 0 && j < sim.grid.length && j >= 0) {
+                    function.accept(i, j);
+                    break findBirthingSpace;
                 }
             }
-            pregnant = false;
         }
     }
-
-
 }

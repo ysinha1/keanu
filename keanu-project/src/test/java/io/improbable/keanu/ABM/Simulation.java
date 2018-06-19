@@ -11,50 +11,63 @@ public class Simulation {
     VertexBackedRandomFactory random;
 
     private Integer timesteps;
-    Integer numberOfPredators;
-    Integer numberOfPrey;
+    public Integer currentTime = 0;
+    Integer numberOfPredators = 0;
+    Integer numberOfPrey = 0;
     private Double preyReproductionGradient;
     private Double preyReproductionConstant;
     private Double predReproductionGradient;
+    private OutputWriter output = new OutputWriter();
+
+    private ArrayList<Agent> agentsKilledDuringStep;
 
     public Simulation(int XSIZE, int YSIZE, VertexBackedRandomFactory random, Integer timesteps,
                       Integer initialNumberOfPrey, Integer initialNumberOfPredators,
                       Double preyReproductionGradient, Double preyReproductionConstant,
                       Double predReproductionGradient) {
+        assert XSIZE >= 3 || YSIZE >= 3: "Domain size must be 3x3 or greater";
         this.timesteps = timesteps;
-        this.numberOfPrey = initialNumberOfPrey;
-        this.numberOfPredators = initialNumberOfPredators;
         this.preyReproductionGradient = preyReproductionGradient;
         this.preyReproductionConstant = preyReproductionConstant;
         this.predReproductionGradient = predReproductionGradient;
 
         grid = new Agent[XSIZE][YSIZE];
         this.random = random;
+
+        output.initialiseJSON(XSIZE, YSIZE, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
+        initialiseSimulation(initialNumberOfPrey, initialNumberOfPredators);
     }
 
-    public void initialiseSimulation() {
-        randomSpawnPopulation(numberOfPredators, this::spawnPreditor);
+    private void initialiseSimulation(int numberOfPrey, int numberOfPredators) {
+        randomSpawnPopulation(numberOfPredators, this::spawnPredator);
         randomSpawnPopulation(numberOfPrey, this::spawnPrey);
         System.out.println("Simulation initialised");
     }
 
-    private void step() {
-        ArrayList<Agent> tempAgentCollection = new ArrayList<>();
+    public void step() {
+        ArrayList<Agent> agentsToStep = new ArrayList<>();
+        agentsKilledDuringStep = new ArrayList<>();
         for (Agent[] subset: grid) {
             for (Agent agent: subset) {
                 if (agent != null) {
-                    tempAgentCollection.add(agent);
+                    agentsToStep.add(agent);
                 }
             }
         }
-        for (Agent agent: tempAgentCollection) {
-            agent.step();
+        for (Agent agent: agentsToStep) {
+            if (!agentsKilledDuringStep.contains(agent)) {
+                agent.step();
+            }
         }
     }
 
     public void run() {
-        for (int i=0; i<timesteps; i++) {
+        while (currentTime < timesteps) {
+            output.dumpToJSON(currentTime+0.0, numberOfPrey, numberOfPredators, grid);
             step();
+            System.out.println("Time: " + currentTime + "\t Predator population: " + numberOfPredators + "\t Prey population: " + numberOfPrey);
+            output.dumpToJSON(currentTime+0.9, numberOfPrey, numberOfPredators, grid);
+            currentTime++;
         }
     }
 
@@ -76,9 +89,23 @@ public class Simulation {
 
     public void spawnPrey(int startX, int startY) {
         grid[startX][startY] = new Prey(this, startX, startY, preyReproductionGradient, preyReproductionConstant);
+        numberOfPrey += 1;
+        System.out.println("- Prey spawned at: " + startX + ", " + startY + "\t\t Total count: " + numberOfPrey);
     }
 
-    public void spawnPreditor(int startX, int startY) {
+    public void spawnPredator(int startX, int startY) {
         grid[startX][startY] = new Predator(this, startX, startY, predReproductionGradient);
+        numberOfPredators += 1;
+        System.out.println("- Predator spawned at: " + startX + ", " + startY + "\t\t Total count: " + numberOfPredators);
+    }
+
+    public void removeAgent(Integer xLocation, Integer yLocation) {
+        if (grid[xLocation][yLocation] instanceof Prey) {
+            numberOfPrey -= 1;
+        } else if (grid[xLocation][yLocation] instanceof Predator) {
+            numberOfPredators -= 1;
+        }
+        agentsKilledDuringStep.add(grid[xLocation][yLocation]);
+        grid[xLocation][yLocation] = null;
     }
 }
