@@ -18,8 +18,7 @@ public class Simulation {
     private Double preyReproductionConstant;
     private Double predReproductionGradient;
     private OutputWriter output = new OutputWriter();
-
-    private ArrayList<Agent> agentsKilledDuringStep;
+    private ArrayList<Agent> agentsKilledDuringStep = new ArrayList<>();
 
     public Simulation(int XSIZE, int YSIZE, VertexBackedRandomFactory random, Integer timesteps,
                       Integer initialNumberOfPrey, Integer initialNumberOfPredators,
