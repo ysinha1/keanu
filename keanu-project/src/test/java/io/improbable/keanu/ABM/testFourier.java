@@ -1,5 +1,7 @@
 package io.improbable.keanu.ABM;
 
+import java.util.function.BiConsumer;
+
 import static java.lang.Math.*;
 
 // Experiments to characterise the spatial distribution of agents
@@ -29,10 +31,26 @@ public class testFourier {
              new Double[spatialDomain.length][spatialDomain[0].length]);
     }
 
+    public testFourier (Double[][] waveDomainRealValueComponent, Double[][] waveDomainImaginaryComponent) {
+        this(new Double[waveDomainRealValueComponent.length][waveDomainRealValueComponent[0].length],
+            waveDomainRealValueComponent,
+            waveDomainImaginaryComponent,
+            new Double[waveDomainRealValueComponent.length][waveDomainRealValueComponent[0].length]);
+    }
+
     public void forward2DFourierTransformFromSpaceToWavenumber() {
+        iterateOverOutput(this::iterateOverSpatialDomain);
+    }
+
+    public void reverse2DFourierTransformFromWavenumberToSpace() {
+        iterateOverOutput(this::iterateOverSpectralDomain);
+
+    }
+
+    public void iterateOverOutput(BiConsumer<Integer, Integer> sourceDomainIterator) {
         for (int yWave=0; yWave<ySize; yWave++) {
             for (int xWave=0; xWave<xSize; xWave++) {
-                iterateOverSpatialDomain(yWave, xWave);
+                sourceDomainIterator.accept(yWave, xWave);
             }
         }
     }
@@ -49,6 +67,19 @@ public class testFourier {
                 waveDomainAmplitudeComponent[yWave][xWave] = sqrt(
                     waveDomainRealValueComponent[yWave][xWave] * waveDomainRealValueComponent[yWave][xWave]
                         + waveDomainImaginaryComponent[yWave][xWave] * waveDomainImaginaryComponent[yWave][xWave]);
+            }
+        }
+    }
+
+    private void iterateOverSpectralDomain (Integer ySpace, Integer xSpace) {
+        for (int yWave=0; yWave<ySize; yWave++) {
+            for (int xWave=0; xWave<xSize; xWave++) {
+                spatialDomain[ySpace][xSpace] += (
+                    waveDomainRealValueComponent[yWave][xWave]
+                        * cos(2 * PI * ((1.0 * xSpace * xWave / xSize) + (1.0 * ySpace * yWave / ySize)))
+                  - waveDomainImaginaryComponent[yWave][xWave]
+                        * sin(2 * PI * ((1.0 * xSpace * xWave / xSize) + (1.0 * ySpace * yWave / ySize))))
+                  / sqrt(xSize * ySize);
             }
         }
     }
