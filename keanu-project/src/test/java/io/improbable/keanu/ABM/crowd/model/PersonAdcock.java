@@ -159,7 +159,7 @@ public class PersonAdcock implements Person {
     }
 
     private Vector3D getRandomOffsetLocation(Vector3D location) {
-        double newY = location.getY() + 0.5 * (Simulation.random.nextBoolean()? desiredSpeed : -desiredSpeed);
+        double newY = location.getY() + 0.5 * (CrowdSim.random.nextBoolean()? desiredSpeed : -desiredSpeed);
         return new Vector3D(location.getX(), newY, location.getZ());
     }
 

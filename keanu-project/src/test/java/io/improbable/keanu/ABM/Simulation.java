@@ -35,7 +35,7 @@ public class Simulation {
     public void initialiseSimulation() {
         randomSpawnPopulation(numberOfPredators, this::spawnPreditor);
         randomSpawnPopulation(numberOfPrey, this::spawnPrey);
-        System.out.println("Simulation initialised");
+        System.out.println("CrowdSim initialised");
     }
 
     private void step() {

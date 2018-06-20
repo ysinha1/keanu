@@ -1,7 +1,9 @@
-package io.improbable.keanu.ABM.crowd.model;
+package io.improbable.keanu.ABM.crowd;
 
 import io.improbable.keanu.ABM.crowd.fxVis.FreeCam3DApplication;
 import io.improbable.keanu.ABM.crowd.fxVis.Xform;
+import io.improbable.keanu.ABM.crowd.model.CrowdSim;
+import io.improbable.keanu.ABM.crowd.model.Person;
 import javafx.geometry.Point3D;
 import javafx.scene.Node;
 import javafx.scene.paint.Color;
@@ -23,7 +25,7 @@ public class VisLauncher extends FreeCam3DApplication {
     private List<PhongMaterial> personMaterials;
     private Xform middle;
 
-    private Simulation sim = new Simulation();
+    private CrowdSim sim = new CrowdSim();
     private int nextPersonMaterialIdx = 0;
     private Map<Integer, Cylinder> cylinders = new HashMap<>();
     private long updateFrequencyMillis = 100;

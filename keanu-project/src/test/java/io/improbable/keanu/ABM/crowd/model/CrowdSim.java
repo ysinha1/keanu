@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class Simulation {
+public class CrowdSim {
 
     public static final Random random = new Random(1);
     private static double minSpeed = 1.0;
@@ -16,7 +16,6 @@ public class Simulation {
     private static int numOrigins = 5;
     private static int numDestinations = 5;
     private static int maxPeople = 10;
-    private static int timesteps = 1000;
     private static boolean walkBackAndForth = true;
 
     private List<Vector3D> origins;
@@ -24,7 +23,7 @@ public class Simulation {
     private Station station;
     private int nextPersonId = 0;
 
-    public Simulation() {
+    public CrowdSim() {
         station = new Station(stationYDimension);
         origins = generateOrigins();
         destinations = generateDestinations();
@@ -95,7 +94,8 @@ public class Simulation {
     }
 
     public static void main(String[] args) {
-        Simulation sim = new Simulation();
+        int timesteps = 1000;
+        CrowdSim sim = new CrowdSim();
 
         for (int i = 0; i < timesteps; i++) {
             sim.step();
