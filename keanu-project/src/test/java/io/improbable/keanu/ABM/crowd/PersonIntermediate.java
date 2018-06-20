@@ -14,6 +14,7 @@ public class PersonIntermediate implements Person {
     private static Vector3D zAxis = Vector3D.PLUS_K;
     private static double maxRotation = Math.PI / 2.0;
 
+    private int id;
     private Vector3D location;
     private Vector3D target;
     private double radius;
@@ -21,11 +22,17 @@ public class PersonIntermediate implements Person {
 
     private double currentSpeed;
 
-    public PersonIntermediate(Vector3D location, Vector3D target, double size, double desiredSpeed) {
+    public PersonIntermediate(int id, Vector3D location, Vector3D target, double size, double desiredSpeed) {
+        this.id = id;
         this.location = location;
         this.target = target;
         this.radius = size / 2.0;
         this.desiredSpeed = desiredSpeed;
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 
     @Override

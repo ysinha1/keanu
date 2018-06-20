@@ -4,6 +4,8 @@ import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 
 public interface Person {
 
+    int getId();
+
     Vector3D getLocation();
 
     double getRadius();

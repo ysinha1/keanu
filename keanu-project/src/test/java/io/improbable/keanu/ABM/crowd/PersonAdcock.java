@@ -7,23 +7,33 @@ import java.util.List;
 public class PersonAdcock implements Person {
 
     private static final double targetEpsilon = 0.001;
-    private static final int maxAvoidanceAttempts = 3;
+    private static final int maxSideStepAttempts = 3;
 
     private int id;
     private Vector3D location;
+    private Vector3D origin;
     private Vector3D target;
     private double radius;
     private double desiredSpeed;
+    private double minTollerableSpeedProportion = 0.5;
+    private boolean walkBackAndForth;
 
     private double perceptionRadius;
 
-    public PersonAdcock(int id, Vector3D location, Vector3D target, double size, double desiredSpeed) {
+    public PersonAdcock(int id, Vector3D location, Vector3D target, double size, double desiredSpeed, boolean walkBackAndForth) {
         this.id = id;
         this.location = location;
+        this.origin = location;
         this.target = target;
         this.radius = size / 2.0;
         this.perceptionRadius = radius * 5.0;
         this.desiredSpeed = desiredSpeed;
+        this.walkBackAndForth = walkBackAndForth;
+    }
+
+    @Override
+    public int getId() {
+        return id;
     }
 
     @Override
@@ -52,14 +62,32 @@ public class PersonAdcock implements Person {
     @Override
     public void step(Station station) {
         double distanceToExit = location.distance(target);
-        System.out.println("Location = " + location + ", target = " + target + ", distanceToExit = " + distanceToExit);
-        double speed = calculateSpeedToAvoidCollisions(station);
+        double adjustedDesiredSpeed = Math.min(distanceToExit, desiredSpeed);
+        double minTollerableSpeed = adjustedDesiredSpeed * minTollerableSpeedProportion;
+        double speed = calculateSpeedToAvoidCollisionsSimple(station, distanceToExit, adjustedDesiredSpeed);
         Vector3D newLocation = lerp(location, target, speed, distanceToExit);
-        System.out.println("Speed = " + speed + ", newLocation = " + newLocation);
+        newLocation = attemptSideStepIfBlocked(newLocation, speed, minTollerableSpeed);
         newLocation = adjustLocationIfWallCollision(newLocation, station);
-        System.out.println("newLocation2 = " + newLocation);
         location = applyFinalCollisionAvoidance(newLocation, station);
-        System.out.println("location = " + location);
+
+        if (walkBackAndForth && isAtTarget()) {
+            Vector3D currentTarget = target;
+            target = origin;
+            origin = currentTarget;
+        }
+    }
+
+    private double calculateSpeedToAvoidCollisionsSimple(Station station, double distanceToExit, double adjustedDesiredSpeed) {
+        double speed = adjustedDesiredSpeed;
+        while (collisionAtSpeed(speed, distanceToExit, station)) {
+            speed *= 0.75;
+        }
+        return speed;
+    }
+
+    private boolean collisionAtSpeed(double speed, double distanceToExit, Station station) {
+        Vector3D newLocation = lerp(location, target, speed, distanceToExit);
+        return collision(newLocation, station);
     }
 
     private double calculateSpeedToAvoidCollisions(Station station) {
@@ -70,6 +98,7 @@ public class PersonAdcock implements Person {
             Vector3D newLocation = lerp(location, target, speed, distanceToExit);
             if (collision(newLocation, station)) {
                 speed *= ((slowingDistance - i) / slowingDistance) * 0.1; // Sort out magic number
+            } else {
                 break;
             }
         }
@@ -81,6 +110,14 @@ public class PersonAdcock implements Person {
         double x = p1.getX() + (speed / distance) * (p2.getX() - p1.getX());
         double y = p1.getY() + (speed / distance) * (p2.getY() - p1.getY());
         return new Vector3D(x, y, 0.0);
+    }
+
+    private Vector3D attemptSideStepIfBlocked(Vector3D location, double speed, double minTollerableSpeed) {
+        if (speed < minTollerableSpeed) {
+            return getRandomOffsetLocation(location);
+        }
+
+        return location;
     }
 
     private boolean collision(Vector3D location, Station station) {
@@ -110,9 +147,9 @@ public class PersonAdcock implements Person {
 
     private Vector3D applyFinalCollisionAvoidance(Vector3D newLocation, Station station) {
         Vector3D finalLocation = newLocation;
-        for (int i = 0; i < maxAvoidanceAttempts; i++) {
+        for (int i = 0; i < maxSideStepAttempts; i++) {
             if (collision(finalLocation, station)) {
-                finalLocation = getRandomOffsetLocation(finalLocation, station);
+                finalLocation = getRandomOffsetLocation(finalLocation);
             } else {
                 return finalLocation;
             }
@@ -121,9 +158,13 @@ public class PersonAdcock implements Person {
         return this.location;
     }
 
-    private Vector3D getRandomOffsetLocation(Vector3D location, Station station) {
-        double randomOffsetY = Simulation.random.nextDouble() - 0.5 * desiredSpeed;
-        return new Vector3D(location.getX(), randomOffsetY, location.getZ());
+    private Vector3D getRandomOffsetLocation(Vector3D location) {
+        double newY = location.getY() + 0.5 * (Simulation.random.nextBoolean()? desiredSpeed : -desiredSpeed);
+        return new Vector3D(location.getX(), newY, location.getZ());
+    }
+
+    private void report(String message) {
+        System.out.println("Person " + id + ": " + message);
     }
 
 }

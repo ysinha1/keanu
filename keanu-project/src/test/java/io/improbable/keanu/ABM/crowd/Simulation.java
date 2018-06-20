@@ -10,13 +10,14 @@ public class Simulation {
 
     public static final Random random = new Random(1);
     private static double minSpeed = 1.0;
-    private static double maxSpeed = 5.0;
+    private static double maxSpeed = 3.0;
     private static double personSize = 2.0;
     private static double stationYDimension = 50.0;
     private static int numOrigins = 5;
     private static int numDestinations = 5;
-    private static int maxPeople = 1;
+    private static int maxPeople = 10;
     private static int timesteps = 1000;
+    private static boolean walkBackAndForth = true;
 
     private List<Vector3D> origins;
     private List<Vector3D> destinations;
@@ -29,10 +30,21 @@ public class Simulation {
         destinations = generateDestinations();
     }
 
+    public List<Vector3D> getOrigins() {
+        return origins;
+    }
+
+    public List<Vector3D> getDestinations() {
+        return destinations;
+    }
+
+    public List<Person> getPeople() {
+        return station.getPeople();
+    }
+
     public void step() {
         for (Person person : station.getPeople()) {
             person.step(station);
-            System.out.println(person.printStatus());
         }
 
         if (station.getPeople().size() < maxPeople) {
@@ -67,7 +79,7 @@ public class Simulation {
         Vector3D origin = selectRandom(origins);
         Vector3D destination = selectRandom(destinations);
         double desiredSpeed = randomSpeed();
-        station.getPeople().add(new PersonAdcock(nextPersonId++, origin, destination, personSize, desiredSpeed));
+        station.getPeople().add(new PersonAdcock(nextPersonId++, origin, destination, personSize, desiredSpeed, walkBackAndForth));
     }
 
     private <T> T selectRandom(List<T> list) {

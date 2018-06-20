@@ -28,7 +28,7 @@ public class Station {
 
     public List<Person> getPeopleInRange(Vector3D location, double range, Person... excluding) {
         return people.stream().filter(p ->
-            !personInArray(p, excluding) && range <= location.distance(p.getLocation())
+            !personInArray(p, excluding) && location.distance(p.getLocation()) <= range
         ).collect(Collectors.toList());
     }
 
