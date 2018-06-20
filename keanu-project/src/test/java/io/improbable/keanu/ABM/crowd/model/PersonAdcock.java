@@ -1,4 +1,4 @@
-package io.improbable.keanu.ABM.crowd;
+package io.improbable.keanu.ABM.crowd.model;
 
 import org.apache.commons.math3.geometry.euclidean.threed.Vector3D;
 

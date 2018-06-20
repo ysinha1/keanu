@@ -1,4 +1,4 @@
-package io.improbable.keanu.ABM.crowd;
+package io.improbable.keanu.ABM.crowd.model;
 
 import io.improbable.keanu.ABM.crowd.fxVis.FreeCam3DApplication;
 import io.improbable.keanu.ABM.crowd.fxVis.Xform;
