@@ -23,7 +23,7 @@ public class testPlotting extends Frame {
         }
 
         public void paint(Graphics g) {
-            Color colour = null;
+            Color colour;
             for (int row=0; row<ySize; row++) {
                 for (int col=0; col<xSize; col++) {
                     int red = (int) plotData[row][col];
@@ -43,7 +43,6 @@ public class testPlotting extends Frame {
     }
 
     public class GreyscalePlotScale extends Canvas {
-
         int scaleHeight = 6 * datapointRenderSize;
 
         public GreyscalePlotScale () {
@@ -67,19 +66,154 @@ public class testPlotting extends Frame {
     }
 
     public class ColourshiftPlotCanvas extends Canvas {
-        // TODO
+
+        public ColourshiftPlotCanvas() {
+            setSize(xSize * datapointRenderSize, ySize * datapointRenderSize);
+        }
+
+        public void paint(Graphics g) {
+            Color colour;
+            for (int row = 0; row < ySize; row++) {
+                for (int col = 0; col < xSize; col++) {
+                    int red = 0;
+                    int green = 0;
+                    int blue = 0;
+                    if ((int) plotData[row][col] == 255) {
+                        red = green = blue = 255;
+                    } else if ((int) plotData[row][col] == 0) {
+                        red = green = blue = 0;
+                    } else if (((int) plotData[row][col] > 0) && ((int) plotData[row][col] <= 63)) {
+                        int temp = 4 * ((int) plotData[row][col]);
+                        blue = 255;
+                        green = temp;
+                    } else if(((int)plotData[row][col] > 63) && ((int)plotData[row][col] <= 127)) {
+                        int temp = 4 * ((int) plotData[row][col] - 64);
+                        green = 255;
+                        blue = 255 - temp;
+                    } else if (((int) plotData[row][col] > 127) && ((int) plotData[row][col] <= 191)) {
+                        int temp = 4 * ((int) plotData[row][col] - 128);
+                        green = 255;
+                        red = temp;
+                    } else if (((int) plotData[row][col] > 191) && ((int) plotData[row][col] <= 254)) {
+                        int temp = 4 * ((int)  plotData[row][col] - 192);
+                        red = 255;
+                        green = 255 - temp;
+                    }
+                    colour = new Color(red, green, blue);
+                    g.setColor(colour);
+                    g.fillRect(col * datapointRenderSize, row * datapointRenderSize, datapointRenderSize, datapointRenderSize);
+                }
+            }
+        }
     }
 
     public class ColourshiftPlotScale extends Canvas {
-        // TODO
+        int scaleHeight = 6 * datapointRenderSize;
+
+        ColourshiftPlotScale() {
+            setSize(xSize * datapointRenderSize, scaleHeight);
+        }
+
+        public void paint(Graphics g) {
+            Color color;
+            for (int row = 1; row < scaleHeight; row++) {
+                for (int col = 0; col < xSize; col++) {
+                    int scaleValue = 255 * col / (xSize - 1);
+                    int red = 0;
+                    int green = 0;
+                    int blue = 0;
+                    if (scaleValue == 255) {
+                        red = green = blue = 255;
+                    } else if ((scaleValue > 0) && (scaleValue <= 63)) {
+                        scaleValue = 4 * scaleValue;
+                        blue = 255;
+                        green = scaleValue;
+                    } else if ((scaleValue > 63) && (scaleValue <= 127)) {
+                        scaleValue = 4 * (scaleValue - 64);
+                        green = 255;
+                        blue = 255 - scaleValue;
+                    } else if ((scaleValue > 127) && (scaleValue <= 191)) {
+                        scaleValue = 4 * (scaleValue - 128);
+                        green = 255;
+                        red = scaleValue;
+                    } else if ((scaleValue > 191) && (scaleValue <= 254)) {
+                        scaleValue = 4 * (scaleValue - 192);
+                        red = 255;
+                        green = 255 - scaleValue;
+                    }
+                    color = new Color(red, green, blue);
+                    g.setColor(color);
+                    g.fillRect(col * datapointRenderSize, row * datapointRenderSize, datapointRenderSize, datapointRenderSize);
+                }
+            }
+        }
+    }
+
+    Color[] getColourPalette() {
+        Color[] colourPalette = {
+            Color.BLACK,
+            Color.GRAY,
+            Color.LIGHT_GRAY,
+            Color.BLUE,
+            new Color(100, 100, 255),
+            new Color(140, 140, 255),
+            new Color(175, 175, 255),
+            Color.CYAN,
+            new Color(140, 255, 255),
+            Color.GREEN,
+            new Color(140, 255, 140),
+            new Color(200, 255, 200),
+            Color.PINK,
+            new Color(255, 140, 255),
+            Color.MAGENTA,
+            new Color(255, 0, 140),
+            Color.RED,
+            new Color(255, 100, 0),
+            Color.ORANGE,
+            new Color(255, 225, 0),
+            Color.YELLOW,
+            new Color(255, 255, 150),
+            Color.WHITE};
+        return colourPalette;
     }
 
     public class ColourContourCanvas extends Canvas {
-        // TODO
+
+        public ColourContourCanvas() { setSize(xSize * datapointRenderSize, ySize * datapointRenderSize); }
+
+        public void paint(Graphics g) {
+            Color[] colorPalette = getColourPalette();
+            for (int row=0; row<ySize; row++) {
+                for (int col=0; col<xSize; col++) {
+                    int quantizedData = (int) (Math.round(plotData[row][col] * (colorPalette.length - 1) / 255));
+                    g.setColor(colorPalette[quantizedData]);
+                    g.fillRect(col*datapointRenderSize, row*datapointRenderSize, datapointRenderSize, datapointRenderSize);
+                }
+            }
+            if (axis) {
+                g.setColor(Color.RED);
+                g.drawLine(0, vertCenter, 2 * horizCenter, vertCenter);
+                g.drawLine(horizCenter, 0, horizCenter, 2 * vertCenter);
+            }
+        }
     }
 
     public class ColourContourScale extends Canvas {
-        // TODO
+        int scaleHeight = 6 * datapointRenderSize;
+
+        public ColourContourScale() { setSize(xSize*datapointRenderSize, scaleHeight); }
+
+        public void paint(Graphics g) {
+            Color[] colorPalette = getColourPalette();
+            for (int row=1; row<scaleHeight; row++) {
+                for (int col=0; col<xSize; col++) {
+                    double scaleValue = 255.0 * col / xSize;
+                    int quantizedData = (int) (Math.round(scaleValue * (colorPalette.length - 1) / 255));
+                    g.setColor(colorPalette[quantizedData]);
+                    g.fillRect(col*datapointRenderSize, row*datapointRenderSize, datapointRenderSize, datapointRenderSize);
+                }
+            }
+        }
     }
 
     public testPlotting(double[][] dataIn,int datapointRenderSize, boolean axis, int display, String title) {
@@ -206,13 +340,20 @@ public class testPlotting extends Frame {
         Integer xSize = 30;
         Integer ySize = 30;
         double[][] testInput = new double[ySize][xSize];
+        int datapointRenderSize = 20;
 
-        for(int row=0; row<ySize; row++){
-            for(int col=0; col<xSize; col++){
+        for (int row = 0; row < ySize; row++) {
+            for (int col = 0; col < xSize; col++) {
                 int xSquare = col * col;
                 int ySquare = row * row;
                 testInput[row][col] = xSquare + ySquare;
             }
         }
+        new testPlotting(testInput, datapointRenderSize, true, 0, "");
+        new testPlotting(testInput, datapointRenderSize, false, 1, "");
+        new testPlotting(testInput, datapointRenderSize, true, 2, "");
+        new testPlotting(testInput, datapointRenderSize, true, 3, "");
+        new testPlotting(testInput, datapointRenderSize, false, 4, "");
+        new testPlotting(testInput, datapointRenderSize, true, 5, "");
     }
 }
