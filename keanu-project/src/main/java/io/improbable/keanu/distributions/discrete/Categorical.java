@@ -12,7 +12,7 @@ import static java.util.Comparator.reverseOrder;
 
 public class Categorical {
 
-    public static IntegerTensor sample(int[] shape, IntegerTensor k, DoubleTensor p, KeanuRandom random) {
+    public static IntegerTensor sample(IntegerTensor k, DoubleTensor p, KeanuRandom random) {
         List<Integer> categories = k.asFlatList();
         List<Double> probabilities = p.asFlatList();
         List<CategoricalProbability> catProbabilities = new ArrayList<>();
@@ -33,8 +33,9 @@ public class Categorical {
         catProbabilities.sort(reverseOrder());
         double cumalativeSum = 0;
         for (CategoricalProbability catProb : catProbabilities) {
+            double probability = catProb.getProbability();
             catProb.setProbability(cumalativeSum);
-            cumalativeSum += catProb.getProbability();
+            cumalativeSum += probability;
         }
 
         double rand = random.nextDouble();
