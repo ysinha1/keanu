@@ -46,7 +46,7 @@ public class Categorical {
             }
         }
 
-        return IntegerTensor.scalar(chosenCategory.rank);
+        return IntegerTensor.scalar(chosenCategory.getRank());
     }
 
     public static class CategoricalProbability implements Comparable {
@@ -75,7 +75,7 @@ public class Categorical {
         public int compareTo(@NotNull Object o) {
             CategoricalProbability cat = (CategoricalProbability) o;
             double comparitorsProb = cat.getProbability();
-            return ((Double) getProbability()).compareTo(comparitorsProb);
+            return Double.compare(getProbability(), comparitorsProb);
         }
     }
 
