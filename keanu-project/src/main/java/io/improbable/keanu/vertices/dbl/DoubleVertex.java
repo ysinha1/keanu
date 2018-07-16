@@ -162,6 +162,7 @@ public abstract class DoubleVertex extends ContinuousVertex<DoubleTensor> implem
                     if (vertex instanceof DoubleVertex) {
                         stack.push((DoubleVertex) vertex);
                     } else {
+                        System.out.println(vertex.toString());
                         throw new IllegalArgumentException("Can only calculate Dual Numbers on a graph made of Doubles");
                     }
                 }
