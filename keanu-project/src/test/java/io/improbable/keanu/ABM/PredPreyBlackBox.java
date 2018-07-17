@@ -1,6 +1,7 @@
 package io.improbable.keanu.ABM;
 
 import io.improbable.keanu.algorithms.NetworkSamples;
+import io.improbable.keanu.algorithms.VertexSamples;
 import io.improbable.keanu.algorithms.mcmc.MetropolisHastings;
 import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.randomfactory.RandomFactory;
@@ -84,5 +85,11 @@ public class PredPreyBlackBox {
         fromVertices.addAll(integersIn);
 
         NetworkSamples samples = MetropolisHastings.getPosteriorSamples(simulationNet, fromVertices, 1000);
+        VertexSamples<DoubleTensor> preyReproductionGradientSamples = samples.get(doublesIn.get(0));
+        Double preyRepoductionGradientTotal = 0.0;
+        for (DoubleTensor vertexSample : preyReproductionGradientSamples.asList()) {
+            preyRepoductionGradientTotal += vertexSample.scalar();
+        }
+        System.out.println("Average prey reproduction gradient: " + (preyRepoductionGradientTotal / preyReproductionGradientSamples.asList().size()));
     }
 }
