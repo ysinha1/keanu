@@ -27,14 +27,16 @@ fun assimilateData(observations : DoubleArray): Array<TimestepState> {
     val rTimestepStates = arrayListOf<DoubleVertex>()
 
     for(obs in observations) {
-        val modelTimestep = ModelVertex(state)
-        val s = DoubleTensorArrayIndexingVertex(modelTimestep, 0)
-        val i = DoubleTensorArrayIndexingVertex(modelTimestep, 1)
-        val r = DoubleTensorArrayIndexingVertex(modelTimestep, 2)
+//        val modelTimestep = ModelVertex(state)
+        state = ModelVertex(state)
+        val s = DoubleTensorArrayIndexingVertex(state, 0)
+        val i = DoubleTensorArrayIndexingVertex(state, 1)
+        val r = DoubleTensorArrayIndexingVertex(state, 2)
         GaussianVertex(i, 0.5).observe(obs)
         sTimestepStates.add(s)
         iTimestepStates.add(i)
         rTimestepStates.add(r)
+//        state = modelTimestep
     }
 
     val bayesianNetwork = BayesianNetwork(state.connectedGraph)
