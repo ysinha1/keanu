@@ -88,8 +88,8 @@ fun getObservations(timestepStates: Array<TimestepState>): DoubleArray {
 
 fun testAbstractDiff() {
     val delta = 0.0001
-    val s = 96.0
-    val i = 4.0
+    val s = 960.0
+    val i = 40.0
     val r = 0.001
 
     var state = initializeState(s, i, r)
@@ -98,16 +98,17 @@ fun testAbstractDiff() {
 
     var state1 = initializeState(s + delta, i, r)
     val model1 = AbstractModel(state1.value)
+    model1.step()
 
-    var ds = model1.rhoS - model.rhoS
-    var di = model1.rhoI - model.rhoI
-    var dr = model1.rhoR - model.rhoR
+    var ds = (model1.rhoS - model.rhoS)/delta
+    var di = (model1.rhoI - model.rhoI)/delta
+    var dr = (model1.rhoR - model.rhoR)/delta
 
 //    println("ds $ds, di $di, dr $dr")
-    println("ds ${ds/delta}, di ${di/delta}, dr ${dr/delta}")
+    println("ds ${ds}, di ${di}, dr ${dr}")
 //    dual.partialDerivatives.withRespectTo(state)
 
-    println(dual.value)
+//    println("${model1.rhoS}, ${model1.rhoI}, ${model1.rhoR}")
     println(dual.partialDerivatives.withRespectTo(state))
 
 
@@ -125,9 +126,9 @@ fun testAbstractDiff() {
 
 fun initializeState(s: Double, i: Double, r: Double): DoubleVertex {
     val mu = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.0, 4.0, 0.01)))
-    mu.setAndCascade(doubleArrayOf(96.0, 4.0, 0.0))
     val sigma = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(1.0, 1.0, 1.0)))
-    sigma.setAndCascade(doubleArrayOf(1.0, 1.0, 1.0))
-    return GaussianVertex(mu, sigma)
+    val g = GaussianVertex(mu, sigma)
+    g.setAndCascade(doubleArrayOf(96.0, 4.0, 0.01))
+    return g
 }
 
