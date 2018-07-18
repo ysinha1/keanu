@@ -7,9 +7,9 @@ import org.apache.commons.math3.random.MersenneTwister
 import java.util.*
 
 class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
-    val Nsamples = 10000 // number of samples of the concrete model
+    val Nsamples = 200000 // number of samples of the concrete model
     val rand = MersenneTwister()
-    var concreteStates = createConcreteSamples()
+//    var concreteStates = Array<SIRModel>()
 
     var hasBeenCalled = 0
 
@@ -22,9 +22,9 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
     }
 
     fun step() {
-        concreteStates = createConcreteSamples()
+        val concreteStates = createConcreteSamples()
         concreteStates.forEach { model -> model.step() }
-        setStateFromConcreteSamples()
+        setStateFromConcreteSamples(concreteStates)
     }
 
     fun step(startState: DoubleTensor): DoubleTensor {
@@ -83,7 +83,7 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
 //
 //    }
 
-    fun calculateDualNumber(inDual: DualNumber?, inId: Long): DualNumber? {
+    fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
         hasBeenCalled++
 
 //        println("Shape of inDual value ${Arrays.toString(inDual!!.value.shape)}")
@@ -94,15 +94,18 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
 //        println("calculateDualNumber has been called $hasBeenCalled times")
 
         if (inDual == null) return null
+
+        println("calculating jacobian at ${inDual.value}")
         setStateFromTensor(inDual.value)
 
-        concreteStates = createConcreteSamples()
+        val concreteStates = createConcreteSamples()
 //        println("Created ${concreteStates.size} concrete samples")
         val inConcreteStates = asMatrix(concreteStates)  // 3xNsamples matrix
 //        println("inConcreteStates has shape of ${Arrays.toString(inConcreteStates.shape)}")
         concreteStates.forEach { it.step() }
-        setStateFromConcreteSamples()
+        setStateFromConcreteSamples(concreteStates)
         val outConcreteStates = asMatrix(concreteStates)
+        println("State at end of step is ${getStateAsTensor()}")
 //        println("outConcreteStates has shape of ${Arrays.toString(outConcreteStates.shape)}")
 
 //        println("inDual has ${inDual.value} values and ${inDual.partialDerivatives.asMap().size} partial derivatives")
@@ -129,12 +132,12 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         return jacobian
     }
 
-    fun calculateJacobianElementwise(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inDualValue: DoubleTensor): DoubleTensor {
+    fun calculateJacobianElementwise(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inAbstractState: DoubleTensor): DoubleTensor {
         val jacobian = DoubleTensor.zeros(intArrayOf(3, 3))
 
-        println("inConcreteStates shape ${Arrays.toString(inConcreteStates.shape)}")
-        println("outConcreteStates shape ${Arrays.toString(outConcreteStates.shape)}")
-        println("inDualValue shape ${Arrays.toString(inDualValue.shape)}")
+//        println("inConcreteStates shape ${Arrays.toString(inConcreteStates.shape)}")
+//        println("outConcreteStates shape ${Arrays.toString(outConcreteStates.shape)}")
+//        println("inAbstractState shape ${Arrays.toString(inAbstractState.shape)}")
 
         for (i in 0..2) {
             for (j in 0..2) {
@@ -142,10 +145,9 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
 
                 var element = 0.0
                 for (k in 0 until Nsamples) {
-                    element += (outConcreteStates.getValue(i, k) / Nsamples.toDouble()) *
-                        (inConcreteStates.getValue(j, k) / inDualValue.getValue(0, j) - a)
+                    element += outConcreteStates.getValue(i, k)*(inConcreteStates.getValue(j, k) - a) /
+                        (Nsamples.toDouble() * inAbstractState.getValue(0, j))
                 }
-
                 jacobian.setValue(element, i, j)
             }
         }
@@ -173,7 +175,7 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         return arrayOf(DoubleTensor.scalar(rhoS), DoubleTensor.scalar(rhoI), DoubleTensor.scalar(rhoR))
     }
 
-    fun setStateFromConcreteSamples() {
+    fun setStateFromConcreteSamples(concreteStates : Array<SIRModel>) {
         rhoS = concreteStates.sumBy { model -> model.S } / Nsamples.toDouble()
         rhoI = concreteStates.sumBy { model -> model.I } / Nsamples.toDouble()
         rhoR = concreteStates.sumBy { model -> model.R } / Nsamples.toDouble()

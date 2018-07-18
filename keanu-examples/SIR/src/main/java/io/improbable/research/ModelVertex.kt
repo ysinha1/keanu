@@ -13,7 +13,7 @@ class ModelVertex : DoubleUnaryOpLambda<DoubleTensor> {
             model.step(it)
             model.getStateAsTensor()
         }, {
-            model.calculateDualNumber(it[inVertex], inVertex.id)
+            model.calculateDualNumber(it[inVertex])
         }) {
         this.model = model
     }

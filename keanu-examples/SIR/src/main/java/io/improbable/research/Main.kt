@@ -9,7 +9,7 @@ import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex
 import org.apache.commons.math3.random.MersenneTwister
 import java.io.FileWriter
-import java.util.*
+
 
 fun main(args : Array<String>) {
 //    println("Running concrete model")
@@ -87,33 +87,29 @@ fun getObservations(timestepStates: Array<TimestepState>): DoubleArray {
 }
 
 fun testAbstractDiff() {
-    val delta = 0.0001
+    val deltai = 0.5
     val s = 960.0
     val i = 40.0
-    val r = 0.001
+    val r = 5.0
+
+//    val model = AbstractModel(s,i,r)
+//    model.step()
+//    val model1 = AbstractModel(s, i+deltai,r)
+//    model1.step()
+//
+//    var ds = (model1.rhoS - model.rhoS)/deltai
+//    var di = (model1.rhoI - model.rhoI)/deltai
+//    var dr = (model1.rhoR - model.rhoR)/deltai
+//
+//    println("ds'/di $ds, di'/di $di, dr'/di $dr")
 
     var state = initializeState(s, i, r)
-    val model = AbstractModel(state.value)
-    val dual = model.calculateDualNumber(state.dualNumber, state.id)!!
+    val model2 = AbstractModel(s,i,r)
+    val dual = model2.calculateDualNumber(state.dualNumber)!!
+    val jacobian = dual.partialDerivatives.withRespectTo(state)
 
-    var state1 = initializeState(s + delta, i, r)
-    val model1 = AbstractModel(state1.value)
-    model1.step()
-
-    var ds = (model1.rhoS - model.rhoS)/delta
-    var di = (model1.rhoI - model.rhoI)/delta
-    var dr = (model1.rhoR - model.rhoR)/delta
-
-//    println("ds $ds, di $di, dr $dr")
-    println("ds ${ds}, di ${di}, dr ${dr}")
-//    dual.partialDerivatives.withRespectTo(state)
-
-//    println("${model1.rhoS}, ${model1.rhoI}, ${model1.rhoR}")
-    println(dual.partialDerivatives.withRespectTo(state))
-
-
-
-
+    println("Jacobian is:")
+    println(jacobian)
 
 //    var state2 : DoubleVertex = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.1, 4.0, 0.01)))
 //    val model2 = AbstractModel(state.value)
@@ -124,11 +120,50 @@ fun testAbstractDiff() {
 //    GaussianVertex(intArrayOf(1, 3), 0.0, 1.0)
 }
 
+fun testConcreteDiff() {
+    val S = 960
+    val I = 40
+    val R = 0
+    val rand = MersenneTwister()
+    var ds1_di0 = 0.0
+    var di1_di0 = 0.0
+    var dr1_di0 = 0.0
+    val Nsamples = 1000000
+
+    for(i in 1..Nsamples) {
+        val model1 = SIRModel(S,I,R,rand)
+        val model2 = SIRModel(S,I+1,R,rand)
+        model1.step()
+        model2.step()
+        ds1_di0 += (model2.S-model1.S)/(1.0*Nsamples)
+        di1_di0 += (model2.I-model1.I)/(1.0*Nsamples)
+        dr1_di0 += (model2.R-model1.R)/(1.0*Nsamples)
+    }
+
+    println("$ds1_di0 $di1_di0 $dr1_di0")
+}
+
+fun testAbstractFiniteDiff() {
+    val S = 960.0
+    val I = 40.0
+    val R = 0.01
+    val di = 0.5
+
+    val model1 = AbstractModel(S,I,R)
+    val model2 = AbstractModel(S,I+di,R)
+    model1.step()
+    model2.step()
+    val ds1_di0 = (model2.rhoS-model1.rhoS)/di
+    val di1_di0 = (model2.rhoI-model1.rhoI)/di
+    val dr1_di0 = (model2.rhoR-model1.rhoR)/di
+
+    println("$ds1_di0 $di1_di0 $dr1_di0")
+}
+
+
 fun initializeState(s: Double, i: Double, r: Double): DoubleVertex {
-    val mu = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.0, 4.0, 0.01)))
-    val sigma = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(1.0, 1.0, 1.0)))
-    val g = GaussianVertex(mu, sigma)
-    g.setAndCascade(doubleArrayOf(96.0, 4.0, 0.01))
+    val g = GaussianVertex(intArrayOf(1,3),0.0,1.0)
+    g.setValue(doubleArrayOf(s, i, r))
     return g
 }
 
