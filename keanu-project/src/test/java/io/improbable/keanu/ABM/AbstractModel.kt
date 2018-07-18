@@ -1,12 +1,17 @@
 package io.improbable.keanu.ABM
 
+import io.improbable.keanu.distributions.discrete.Poisson
 import io.improbable.keanu.research.Array2D
+import io.improbable.keanu.tensor.Tensor
 import io.improbable.keanu.tensor.intgr.IntegerTensor
+import io.improbable.keanu.vertices.bool.probabilistic.Flip
+import io.improbable.keanu.vertices.intgr.probabilistic.PoissonVertex
+import org.apache.commons.math3.distribution.PoissonDistribution
 
 class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangement: Pair<Int, Int>,
                     var quadrantPreyPopulation: IntArray, var quadrantPredatorPopulation: IntArray) {
 
-    public enum class Agents { PREY, PREDATOR }
+    public enum class Agents { PREY, PREDATOR, VACANT }
 
     val numberOfQuadrants = quadrantArrangement.first * quadrantArrangement.second
     val tensorShape = IntArray(2)
@@ -45,17 +50,57 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         // simulation because the Agent supertype requires knowledge of the simulation. This is potentially poor form
         // and may be should be fixed.
 
-        // iterate through quadrants
-        var quadrant_1 = Array2D<Agents>(quadrantDimensions.first * quadrantArrangement.first,
-                                  quadrantDimensions.second * quadrantArrangement.second,
-            {i, j ->
-                if (flip is heads...)) {
-                   // place prey
+        var quadrants = Array<Array2D<Agents>>(numberOfQuadrants, { quadrantNumber ->
+            return Array2D(quadrantDimensions.first * quadrantArrangement.first,
+                           quadrantDimensions.second * quadrantArrangement.second,
+                { i, j ->
+                    var targetPreyPopulationToSpawn = PoissonDistribution(quadrantPreyPopulation[quadrantNumber].toDouble()).sample().toDouble()
+                    var probabilityPerGridSquare = targetPreyPopulationToSpawn / (quadrantDimensions.first * quadrantDimensions.second)
+                    if (Flip(probabilityPerGridSquare).sampleUsingDefaultRandom().scalar()) {
+                        return@Array2D Agents.PREY
+                    } else {
+                        return@Array2D Agents.VACANT
+                    }
+                })
+        })
+        var quadrantNumber = 0
+        for (quadrant in quadrants) {
+            var nullCounter = 0
+            for (i in 0..quadrant.iSize()) {
+                for (j in 0..quadrant.jSize()) {
+                    if (quadrant[i, j] == Agents.VACANT) {
+                        nullCounter += 1
+                    }
                 }
             }
-            // compute new flip probability and iterate through again to place the predators
+            var targetPredatorPopulationToSpawn = PoissonDistribution(quadrantPredatorPopulation[quadrantNumber].toDouble()).sample().toDouble()
+            var probabilityPerGridSquare = targetPredatorPopulationToSpawn / nullCounter
+            for (i in 0..quadrant.iSize()) {
+                for (j in 0..quadrant.jSize()) {
+                    if (quadrant[i, j] == Agents.VACANT) {
+                        if (Flip(probabilityPerGridSquare).sampleUsingDefaultRandom().scalar()) {
+                            quadrant[i, j] = Agents.PREDATOR
+                        }
+                    }
+                }
+            }
+            quadrantNumber += 1
+        }
 
-            // combine into grid
+        var grid = Array2D<Agents>(quadrantArrangement.first * quadrantDimensions.first,
+                                   quadrantArrangement.second * quadrantDimensions.second,
+            { i, j ->
+                for (qX in 0..quadrantArrangement.first) {
+                    for (qY in 0..quadrantArrangement.second) {
+                        if (qX * quadrantDimensions.first <= i && i < (qX+1) * quadrantDimensions.first
+                        && qY * quadrantDimensions.second <= j && i < (qX+1) * quadrantDimensions.second) {
+                            var quadrantNumber = qX + qY * quadrantArrangement.first
+                            var quadrant = quadrants[quadrantNumber]
+                            return@Array2D quadrant[i-qX*quadrantDimensions.first, j-qY*quadrantDimensions.second]
+                        }
+                    }
+                }
+        })
 
         return grid
     }
