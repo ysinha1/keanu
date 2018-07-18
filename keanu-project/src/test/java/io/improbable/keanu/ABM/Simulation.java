@@ -19,6 +19,7 @@ public class Simulation {
     private Double predReproductionGradient;
     private OutputWriter output = new OutputWriter();
     private ArrayList<Agent> agentsKilledDuringStep = new ArrayList<>();
+    public Integer dumpFrequency = 1;
 
     public Simulation(int XSIZE, int YSIZE, VertexBackedRandomFactory random, Integer timesteps,
                       Integer initialNumberOfPrey, Integer initialNumberOfPredators,
@@ -45,7 +46,6 @@ public class Simulation {
 
     public void step() {
         ArrayList<Agent> agentsToStep = new ArrayList<>();
-        agentsKilledDuringStep = new ArrayList<>();
         for (Agent[] subset: grid) {
             for (Agent agent: subset) {
                 if (agent != null) {
@@ -60,12 +60,17 @@ public class Simulation {
         }
     }
 
+    private void housekeeping() {
+        System.out.println("Time: " + currentTime + "\t Predator population: " + numberOfPredators + "\t Prey population: " + numberOfPrey);
+        output.dumpToJSON(currentTime.doubleValue(), numberOfPrey, numberOfPredators, grid);
+        if (currentTime%dumpFrequency == 0) {PredPreyPlotter.plotPredPrey(grid, currentTime.doubleValue()); }
+        agentsKilledDuringStep = new ArrayList<>();
+    }
+
     public void run() {
         while (currentTime < timesteps) {
-            output.dumpToJSON(currentTime+0.0, numberOfPrey, numberOfPredators, grid);
             step();
-            System.out.println("Time: " + currentTime + "\t Predator population: " + numberOfPredators + "\t Prey population: " + numberOfPrey);
-            output.dumpToJSON(currentTime+0.9, numberOfPrey, numberOfPredators, grid);
+            housekeeping();
             currentTime++;
         }
     }

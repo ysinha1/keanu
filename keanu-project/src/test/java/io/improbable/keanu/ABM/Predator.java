@@ -12,6 +12,7 @@ public class Predator extends Agent {
     }
 
     public void step() {
+        hasEaten = false;
         super.step();
         hunt();
         controlPopulation();

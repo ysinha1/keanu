@@ -14,6 +14,7 @@ public class PredPreyGenerateObservations {
             0.06,
             0.03);
 
+        simulation.dumpFrequency = 75;
         simulation.run();
 
         System.out.println("Final number of Prey: " + simulation.numberOfPrey);

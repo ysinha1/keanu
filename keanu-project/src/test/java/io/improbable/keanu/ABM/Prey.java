@@ -18,7 +18,6 @@ public class Prey extends Agent {
     }
 
     private void controlPopulation(long proximatePrey) {
-
         if (proximatePrey > 5 && random.nextDouble(0,2) > 1) {
             sim.removeAgent(xLocation, yLocation);
         } else if (random.nextDouble(0, 1) < (preyReproductionGradient * proximatePrey) + preyReproductionConstant) {
