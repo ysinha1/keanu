@@ -93,7 +93,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
                 for (qX in 0..quadrantArrangement.first) {
                     for (qY in 0..quadrantArrangement.second) {
                         if (qX * quadrantDimensions.first <= i && i < (qX+1) * quadrantDimensions.first
-                        && qY * quadrantDimensions.second <= j && i < (qX+1) * quadrantDimensions.second) {
+                        && qY * quadrantDimensions.second <= j && j < (qY+1) * quadrantDimensions.second) {
                             var quadrantNumber = qX + qY * quadrantArrangement.first
                             var quadrant = quadrants[quadrantNumber]
                             return@Array2D quadrant[i-qX*quadrantDimensions.first, j-qY*quadrantDimensions.second]
