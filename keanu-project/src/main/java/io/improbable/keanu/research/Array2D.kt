@@ -40,6 +40,14 @@ open class Array2D<T>(iSize: Int, jSize: Int, vals: (Int, Int) -> T) : IArray2D<
         return out
     }
 
+    fun mergeHorizontally(leftArray: IArray2D<T>, rightArray: IArray2D<T>) {
+        if (leftArray.jSize() != rightArray.jSize()) {
+            throw IllegalArgumentException("In order to merge horizontally, both array's vertical dimensions must be the same")
+        }
+    }
+
+    // TODO merge vertical function
+
     open class RotateClockwise90<T>(var data: IArray2D<T>) : IArray2D<T> {
         override fun get(i: Int, j: Int): T {
             return data.get(data.iSize() - j - 1, i)
