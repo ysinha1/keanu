@@ -1,6 +1,7 @@
 package io.improbable.keanu.ABM;
 
 import io.improbable.keanu.research.VertexBackedRandomFactory;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
 import java.util.function.BiConsumer;
@@ -37,6 +38,12 @@ public class Simulation {
         output.initialiseJSON(XSIZE, YSIZE, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
         initialiseSimulation(initialNumberOfPrey, initialNumberOfPredators);
     }
+
+    public Simulation(Pair<Integer, Integer> quadrantDimensions, Pair<Integer, Integer> quadrantArrangement, Agent[][] grid, Double preyReproductionGradient, Double preyReproductionConstant,
+                      Double predReproductionGradient) {
+        // Todo - to interface with abstract model, needs a constructor which allows a (initialised?) state to be fed in
+    }
+
 
     private void initialiseSimulation(int numberOfPrey, int numberOfPredators) {
         randomSpawnPopulation(numberOfPredators, this::spawnPredator);
