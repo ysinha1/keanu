@@ -4,10 +4,9 @@ import io.improbable.keanu.tensor.dbl.DoubleTensor
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber
 import org.apache.commons.math3.distribution.PoissonDistribution
 import org.apache.commons.math3.random.MersenneTwister
-import java.util.*
 
 class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
-    val Nsamples = 1000 // number of samples of the concrete model
+    val Nsamples = 10000 // number of samples of the concrete model
     val rand = MersenneTwister()
     var concreteStates = createConcreteSamples()
 
@@ -86,7 +85,12 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
     fun calculateDualNumber(inDual: DualNumber?, inId: Long): DualNumber? {
         hasBeenCalled++
 
-        println("calculateDualNumber has been called $hasBeenCalled times")
+//        println("Shape of inDual value ${Arrays.toString(inDual!!.value.shape)}")
+//        println("Shape of inDual pd ${Arrays.toString(inDual!!.partialDerivatives.asMap().entries.first().value.shape)}")
+//        println("inDual pd ${inDual!!.partialDerivatives.asMap().entries.first().value}")
+
+
+//        println("calculateDualNumber has been called $hasBeenCalled times")
 
         if (inDual == null) return null
         setStateFromTensor(inDual.value)
@@ -100,26 +104,17 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         val outConcreteStates = asMatrix(concreteStates)
 //        println("outConcreteStates has shape of ${Arrays.toString(outConcreteStates.shape)}")
 
-        println("inDual has ${inDual.value} values and ${inDual.partialDerivatives.asMap().size} partial derivatives")
+//        println("inDual has ${inDual.value} values and ${inDual.partialDerivatives.asMap().size} partial derivatives")
         val jacobian = calculateJacobian(inConcreteStates, outConcreteStates, inDual.value)
-        println("Jacobian has shape ${Arrays.toString(jacobian.shape)}")
+//        println("Jacobian has shape ${Arrays.toString(jacobian.shape)}")
 
         val values = DoubleTensor.create(doubleArrayOf(rhoS, rhoI, rhoR))
-        val partialDerivatives = if (inDual.partialDerivatives.asMap().isEmpty()) {
-            mapOf(inId to jacobian.matrixMultiply(DoubleTensor.create(doubleArrayOf(1.0, 1.0, 1.0)).transpose()))
-        } else {
-            inDual.partialDerivatives.asMap().mapValues {
-                jacobian.matrixMultiply(it.value)
-            }
+
+        val partialDerivatives = inDual.partialDerivatives.asMap().mapValues {
+            jacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1)).reshape(1, 3, 1, 3)
         }
 
-//        val partialDerivatives = inDual.partialDerivatives.asMap().mapValues {
-//            jacobian.matrixMultiply(it.value)
-//        }
-
         val dual = DualNumber(values, partialDerivatives)
-
-//        println("Dual has ${values.length} values and ${partialDerivatives.size} partial derivatives of length ${partialDerivatives.values.first().length}")
 
         return dual
     }
