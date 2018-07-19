@@ -1,5 +1,7 @@
 package io.improbable.keanu.ABM;
 
+import io.improbable.keanu.research.Array2D;
+import io.improbable.keanu.research.TriFunction;
 import io.improbable.keanu.research.VertexBackedRandomFactory;
 import org.apache.commons.math3.util.Pair;
 
@@ -23,7 +25,7 @@ public class Simulation {
     public Integer dumpFrequency = 1;
 
     public Simulation(int XSIZE, int YSIZE, VertexBackedRandomFactory random, Integer timesteps,
-                      Integer initialNumberOfPrey, Integer initialNumberOfPredators,
+                      Agent[][] initialState,
                       Double preyReproductionGradient, Double preyReproductionConstant,
                       Double predReproductionGradient) {
         assert XSIZE >= 3 || YSIZE >= 3: "Domain size must be 3x3 or greater";
@@ -31,24 +33,48 @@ public class Simulation {
         this.preyReproductionGradient = preyReproductionGradient;
         this.preyReproductionConstant = preyReproductionConstant;
         this.predReproductionGradient = predReproductionGradient;
-
-        grid = new Agent[XSIZE][YSIZE];
         this.random = random;
-
         output.initialiseJSON(XSIZE, YSIZE, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
-        initialiseSimulation(initialNumberOfPrey, initialNumberOfPredators);
+
+
     }
 
-    public Simulation(Pair<Integer, Integer> quadrantDimensions, Pair<Integer, Integer> quadrantArrangement, Agent[][] grid, Double preyReproductionGradient, Double preyReproductionConstant,
+    public Simulation(int XSIZE, int YSIZE, VertexBackedRandomFactory random, Integer timesteps,
+                      Integer initialNumberOfPrey, Integer initialNumberOfPredators,
+                      Double preyReproductionGradient, Double preyReproductionConstant,
                       Double predReproductionGradient) {
-        // Todo - to interface with abstract model, needs a constructor which allows a (initialised?) state to be fed in
+//        Agent[][] startGrid = new Agent[XSIZE][YSIZE];
+
+        Agent[][] startGrid = initialiseSimulation(startGrid, initialNumberOfPrey, initialNumberOfPredators);
+        Simulation(XSIZE, YSIZE, random, startGrid, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
+    }
+
+    public Simulation(Array2D<AbstractModel.Agents> grid, Double preyReproductionGradient, Double preyReproductionConstant,
+                      Double predReproductionGradient) {
+        int XSIZE = grid.iSize();
+        int YSIZE = grid.jSize();
+        int timesteps = 1;
+        Agent[][] startGrid = new Agent[XSIZE][YSIZE];
+        for (int i=0; i<XSIZE; i++) {
+            for (int j=0; j<YSIZE; j++) {
+                if (grid.get(i, j) == AbstractModel.Agents.PREY) {
+                    startGrid = spawnPrey(startGrid, i, j);
+                } else if (grid.get(i, j) == AbstractModel.Agents.PREDATOR) {
+                    startGrid = spawnPredator(startGrid, i, j);
+                }
+            }
+        }
+        // TODO complete this constructor
+//        Simulation(XSIZE, YSIZE, ...)
+
     }
 
 
-    private void initialiseSimulation(int numberOfPrey, int numberOfPredators) {
-        randomSpawnPopulation(numberOfPredators, this::spawnPredator);
-        randomSpawnPopulation(numberOfPrey, this::spawnPrey);
+    private Agent[][] initialiseSimulation(Agent[][] startGrid, int numberOfPrey, int numberOfPredators) {
+        startGrid = randomSpawnPopulation(startGrid, numberOfPredators, this::spawnPredator);
+        startGrid = randomSpawnPopulation(startGrid, numberOfPrey, this::spawnPrey);
         System.out.println("Simulation initialised");
+        return startGrid;
     }
 
     public void step() {
@@ -82,20 +108,35 @@ public class Simulation {
         }
     }
 
-    private void randomSpawnPopulation(Integer numberToSpawn, BiConsumer<Integer, Integer> function) {
+    private Agent[][] randomSpawnPopulation(Agent[][] startGrid, Integer numberToSpawn, TriFunction<Agent[][], Integer, Integer, Agent[][]> function) {
         int i = 0;
         while (i < numberToSpawn) {
-            int proposedX = random.nextDouble(0, grid.length).intValue();
-            int proposedY = random.nextDouble(0, grid[0].length).intValue();
+            int proposedX = random.nextDouble(0, startGrid.length).intValue();
+            int proposedY = random.nextDouble(0, startGrid[0].length).intValue();
             if (getXY(proposedX, proposedY) == null) {
-                function.accept(proposedX, proposedY);
+                startGrid = function.apply(startGrid, proposedX, proposedY);
                 i++;
             }
         }
+        return startGrid;
     }
 
     public Agent getXY(int xLocation, int yLocation) {
         return grid[(xLocation+grid.length)%grid.length][(yLocation+grid[0].length)%grid[0].length];
+    }
+
+    public Agent[][] spawnPrey(Agent[][] startGrid, int startX, int startY) {
+        startGrid[startX][startY] = new Prey(this, startX, startY, preyReproductionGradient, preyReproductionConstant);
+        numberOfPrey += 1;
+        System.out.println("- Prey spawned at: " + startX + ", " + startY + "\t\t Total count: " + numberOfPrey);
+        return startGrid;
+    }
+
+    public Agent[][] spawnPredator(Agent[][] startGrid, int startX, int startY) {
+        startGrid[startX][startY] = new Predator(this, startX, startY, predReproductionGradient);
+        numberOfPredators += 1;
+        System.out.println("- Predator spawned at: " + startX + ", " + startY + "\t\t Total count: " + numberOfPredators);
+        return startGrid;
     }
 
     public void spawnPrey(int startX, int startY) {
