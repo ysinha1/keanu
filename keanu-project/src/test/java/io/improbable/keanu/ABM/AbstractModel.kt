@@ -63,8 +63,8 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         var quadrantNumber = 0
         for (quadrant in quadrants) {
             var nullCounter = 0
-            for (i in 0..quadrant.iSize()) {
-                for (j in 0..quadrant.jSize()) {
+            for (i in 0 until quadrant.iSize()) {
+                for (j in 0 until quadrant.jSize()) {
                     if (quadrant[i, j] == Agents.VACANT) {
                         nullCounter += 1
                     }
@@ -72,8 +72,8 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
             }
             var targetPredatorPopulationToSpawn = PoissonDistribution(quadrantPredatorPopulation[quadrantNumber].toDouble()).sample().toDouble()
             var probabilityPerGridSquare = targetPredatorPopulationToSpawn / nullCounter
-            for (i in 0..quadrant.iSize()) {
-                for (j in 0..quadrant.jSize()) {
+            for (i in 0 until quadrant.iSize()) {
+                for (j in 0 until quadrant.jSize()) {
                     if (quadrant[i, j] == Agents.VACANT) {
                         if (Flip(probabilityPerGridSquare).sampleUsingDefaultRandom().scalar()) {
                             quadrant[i, j] = Agents.PREDATOR
@@ -86,9 +86,9 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
 
         var quadrantRows = Array(quadrantArrangement.second, {_ -> Array2D(1, 1, {_, _ -> Agents.VACANT})})
         var gridRow = quadrants[0]
-        for (j in 0..quadrantArrangement.second) {
-            for (i in 0 until quadrantArrangement.first) {
-                var gridRow = quadrants[i].horizontallyStack(quadrants[i+1])
+        for (j in 0 until quadrantArrangement.second) {
+            for (i in 1 until quadrantArrangement.first) {
+                var gridRow = gridRow.horizontallyStack(quadrants[i])
             }
             quadrantRows[j] = gridRow
         }
@@ -110,7 +110,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         if (T.rank != 2 && T.shape[0] != 2 && T.shape[1] != numberOfQuadrants) {
             throw IllegalArgumentException("The initial population tensor is the wrong rank or shape for the number of quadrants and agent types")
         }
-        for (i in 0 .. numberOfQuadrants) {
+        for (i in 0 until numberOfQuadrants) {
             quadrantPreyPopulation[i] = T.getValue(0, i)
             quadrantPredatorPopulation[i] = T.getValue(0, i)
         }
@@ -118,7 +118,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
 
     fun createTensorFromState (quadrantPreyPopulation: IntArray, quadrantPredatorPopulation: IntArray): IntegerTensor {
         var T = IntegerTensor.create(tensorShape)
-        for (i in 0 .. numberOfQuadrants) {
+        for (i in 0 until numberOfQuadrants) {
             T.setValue(quadrantPreyPopulation[i], 0, i)
             T.setValue(quadrantPredatorPopulation[i], 1, i)
         }
