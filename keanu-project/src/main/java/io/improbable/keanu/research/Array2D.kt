@@ -40,13 +40,33 @@ open class Array2D<T>(iSize: Int, jSize: Int, vals: (Int, Int) -> T) : IArray2D<
         return out
     }
 
-    fun mergeHorizontally(leftArray: IArray2D<T>, rightArray: IArray2D<T>) {
+    fun horizontallyStack(leftArray: IArray2D<T>, rightArray: IArray2D<T>) : Array2D<T> {
         if (leftArray.jSize() != rightArray.jSize()) {
             throw IllegalArgumentException("In order to merge horizontally, both array's vertical dimensions must be the same")
         }
+        return Array2D(leftArray.iSize()+rightArray.iSize(), leftArray.jSize(),
+            { i, j ->
+                if (i < leftArray.iSize()) {
+                    return@Array2D leftArray[i, j]
+                } else {
+                    return@Array2D rightArray[i+leftArray.iSize(), j]
+                }
+        })
     }
 
-    // TODO merge vertical function
+    fun verticallyStack(topArray: IArray2D<T>, bottomArray: IArray2D<T>) : Array2D<T> {
+        if (topArray.iSize() != bottomArray.iSize()) {
+            throw IllegalArgumentException("In order to merge vertically, both array's horizontal dimensions must be the same")
+        }
+        return Array2D(topArray.iSize(), topArray.jSize()+bottomArray.jSize(),
+            { i, j ->
+                if (j < topArray.jSize()) {
+                    return@Array2D topArray[i, j]
+                } else {
+                    return@Array2D bottomArray[i,j+topArray.jSize()]
+                }
+            })
+    }
 
     open class RotateClockwise90<T>(var data: IArray2D<T>) : IArray2D<T> {
         override fun get(i: Int, j: Int): T {

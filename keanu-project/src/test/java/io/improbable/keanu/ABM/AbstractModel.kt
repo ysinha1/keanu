@@ -1,11 +1,8 @@
 package io.improbable.keanu.ABM
 
-import io.improbable.keanu.distributions.discrete.Poisson
 import io.improbable.keanu.research.Array2D
-import io.improbable.keanu.tensor.Tensor
 import io.improbable.keanu.tensor.intgr.IntegerTensor
 import io.improbable.keanu.vertices.bool.probabilistic.Flip
-import io.improbable.keanu.vertices.intgr.probabilistic.PoissonVertex
 import org.apache.commons.math3.distribution.PoissonDistribution
 
 class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangement: Pair<Int, Int>,
