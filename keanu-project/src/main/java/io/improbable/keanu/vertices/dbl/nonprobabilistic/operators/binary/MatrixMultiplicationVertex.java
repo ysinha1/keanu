@@ -10,20 +10,26 @@ import java.util.Map;
 
 public class MatrixMultiplicationVertex extends DoubleBinaryOpVertex {
 
-    public MatrixMultiplicationVertex(DoubleVertex a, DoubleVertex b) {
-        super(getResultingShape(a.getShape(), b.getShape()), a, b);
+    /**
+     * Matrix multiplies one vertex by another. C = AB
+     *
+     * @param left vertex A
+     * @param right vertex B
+     */
+    public MatrixMultiplicationVertex(DoubleVertex left, DoubleVertex right) {
+        super(getResultingShape(left.getShape(), right.getShape()), left, right);
     }
 
     @Override
     public DualNumber calculateDualNumber(Map<Vertex, DualNumber> dualNumbers) {
-        DualNumber aDual = dualNumbers.get(a);
-        DualNumber bDual = dualNumbers.get(b);
-        return aDual.matrixMultiplyBy(bDual);
+        DualNumber leftDual = dualNumbers.get(left);
+        DualNumber rightDual = dualNumbers.get(right);
+        return leftDual.matrixMultiplyBy(rightDual);
     }
 
     @Override
-    protected DoubleTensor op(DoubleTensor a, DoubleTensor b) {
-        return a.matrixMultiply(b);
+    protected DoubleTensor op(DoubleTensor left, DoubleTensor right) {
+        return left.matrixMultiply(right);
     }
 
     private static int[] getResultingShape(int[] left, int[] right) {
