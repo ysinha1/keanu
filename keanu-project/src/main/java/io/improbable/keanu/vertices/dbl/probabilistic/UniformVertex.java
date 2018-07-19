@@ -18,9 +18,13 @@ public class UniformVertex extends ProbabilisticDouble {
     private final DoubleVertex xMax;
 
     /**
+     * One xMin or xMax or both that match a proposed tensor shape of Uniform Vertex
+     * <p>
+     * If all provided parameters are scalar then the proposed shape determines the shape
+     *
      * @param tensorShape desired tensor shape
-     * @param xMin        inclusive
-     * @param xMax        exclusive
+     * @param xMin        the inclusive lower bound of the Uniform with either the same shape as specified for this vertex or a scalar
+     * @param xMax        the exclusive upper bound of the Uniform with either the same shape as specified for this vertex or a scalar
      */
     public UniformVertex(int[] tensorShape, DoubleVertex xMin, DoubleVertex xMax) {
 
@@ -32,6 +36,13 @@ public class UniformVertex extends ProbabilisticDouble {
         setValue(DoubleTensor.placeHolder(tensorShape));
     }
 
+    /**
+     * One to one constructor for mapping some shape of mu and sigma to
+     * a matching shaped Uniform Vertex
+     *
+     * @param xMin the inclusive lower bound of the Uniform with either the same shape as specified for this vertex or a scalar
+     * @param xMax the exclusive upper bound of the Uniform with either the same shape as specified for this vertex or a scalar
+     */
     public UniformVertex(DoubleVertex xMin, DoubleVertex xMax) {
         this(checkHasSingleNonScalarShapeOrAllScalar(xMin.getShape(), xMax.getShape()), xMin, xMax);
     }
@@ -75,12 +86,11 @@ public class UniformVertex extends ProbabilisticDouble {
 
     @Override
     public Map<Long, DoubleTensor> dLogPdf(DoubleTensor value) {
+        DoubleTensor dLogPdx = DoubleTensor.zeros(this.xMax.getShape());
+        dLogPdx = dLogPdx.setWithMaskInPlace(value.getGreaterThanMask(xMax.getValue()), Double.NEGATIVE_INFINITY);
+        dLogPdx = dLogPdx.setWithMaskInPlace(value.getLessThanOrEqualToMask(xMin.getValue()), Double.POSITIVE_INFINITY);
 
-        DoubleTensor dlogPdf = DoubleTensor.zeros(this.xMax.getShape());
-        dlogPdf = dlogPdf.setWithMaskInPlace(value.getGreaterThanMask(xMax.getValue()), Double.NEGATIVE_INFINITY);
-        dlogPdf = dlogPdf.setWithMaskInPlace(value.getLessThanOrEqualToMask(xMin.getValue()), Double.POSITIVE_INFINITY);
-
-        return singletonMap(getId(), dlogPdf);
+        return singletonMap(getId(), dLogPdx);
     }
 
     @Override
