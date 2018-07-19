@@ -11,7 +11,7 @@ import org.apache.commons.math3.random.MersenneTwister
 import java.io.FileWriter
 
 
-fun main(args : Array<String>) {
+fun main(args: Array<String>) {
 //    println("Running concrete model")
 //    val concreteTimestepStates = runConcrete()
 //    println("Getting observations")
@@ -19,17 +19,19 @@ fun main(args : Array<String>) {
 //    println("Running probabilistic data assimilation")
 //    val probabilisticTimestepStates = assimilateData(observations)
 
-    testAbstractDiff()
+    testAbstractDiffS()
+    testAbstractDiffI()
+    testAbstractDiffR()
 }
 
-fun assimilateData(observations : DoubleArray): Array<TimestepState> {
-    var state : DoubleVertex = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.0, 4.0, 0.01)))
+fun assimilateData(observations: DoubleArray): Array<TimestepState> {
+    var state: DoubleVertex = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.0, 4.0, 0.01)))
 
     val sTimestepStates = arrayListOf<DoubleVertex>()
     val iTimestepStates = arrayListOf<DoubleVertex>()
     val rTimestepStates = arrayListOf<DoubleVertex>()
 
-    for(obs in observations) {
+    for (obs in observations) {
 //        val modelTimestep = ModelVertex(state)
         state = ModelVertex(state)
         val s = DoubleTensorArrayIndexingVertex(state, 0)
@@ -55,10 +57,10 @@ fun assimilateData(observations : DoubleArray): Array<TimestepState> {
 }
 
 fun runAbstract() {
-    val file : FileWriter? = null
+    val file: FileWriter? = null
     //file = FileWriter("data.out")
     val model = AbstractModel(96.0, 4.0, 0.01)
-    for(step in 1..40) {
+    for (step in 1..40) {
         model.step()
         val out = "$step ${model.rhoS} ${model.rhoI} ${model.rhoR}\n"
         file?.write(out)
@@ -67,7 +69,7 @@ fun runAbstract() {
     file?.close()
 }
 
-fun runConcrete() : Array<TimestepState> {
+fun runConcrete(): Array<TimestepState> {
     val STEPS = 40
 //    val file = FileWriter("data.out")
     val model = SIRModel(96, 4, 0, MersenneTwister())
@@ -86,39 +88,141 @@ fun getObservations(timestepStates: Array<TimestepState>): DoubleArray {
     return timestepStates.map { ts -> ts.i }.toDoubleArray()
 }
 
-fun testAbstractDiff() {
-    val deltai = 0.5
+fun testAbstractDiffS() {
+    val ds = 0.1
     val s = 960.0
     val i = 40.0
     val r = 5.0
 
-//    val model = AbstractModel(s,i,r)
-//    model.step()
-//    val model1 = AbstractModel(s, i+deltai,r)
-//    model1.step()
-//
-//    var ds = (model1.rhoS - model.rhoS)/deltai
-//    var di = (model1.rhoI - model.rhoI)/deltai
-//    var dr = (model1.rhoR - model.rhoR)/deltai
-//
-//    println("ds'/di $ds, di'/di $di, dr'/di $dr")
-
     var state = initializeState(s, i, r)
-    val model2 = AbstractModel(s,i,r)
-    val dual = model2.calculateDualNumber(state.dualNumber)!!
+    val model1 = AbstractModel(s, i, r)
+    val dual = model1.calculateDualNumber(state.dualNumber)!!
     val jacobian = dual.partialDerivatives.withRespectTo(state)
+
+    val model2 = AbstractModel(s + ds, i, r)
+    model2.step()
+
+    val ds1_ds0 = (model2.rhoS - model1.rhoS) / ds
+    val di1_ds0 = (model2.rhoI - model1.rhoI) / ds
+    val dr1_ds0 = (model2.rhoR - model1.rhoR) / ds
 
     println("Jacobian is:")
     println(jacobian)
 
-//    var state2 : DoubleVertex = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.1, 4.0, 0.01)))
-//    val model2 = AbstractModel(state.value)
-//    val dual2 = model.calculateDualNumber(state.dualNumber, state.id)!!
-//    println(dual2.value)
-//    println(dual2.partialDerivatives.withRespectTo(state))
-//
-//    GaussianVertex(intArrayOf(1, 3), 0.0, 1.0)
+    val dSout_dSin = jacobian.getValue(0, 0, 0, 0)
+    val dSout_dIin = jacobian.getValue(0, 0, 0, 1)
+    val dSout_dRin = jacobian.getValue(0, 0, 0, 2)
+    val dIout_dSin = jacobian.getValue(0, 1, 0, 0)
+    val dIout_dIin = jacobian.getValue(0, 1, 0, 1)
+    val dIout_dRin = jacobian.getValue(0, 1, 0, 2)
+    val dRout_dSin = jacobian.getValue(0, 2, 0, 0)
+    val dRout_dIin = jacobian.getValue(0, 2, 0, 1)
+    val dRout_dRin = jacobian.getValue(0, 2, 0, 2)
+
+    println("ds1_ds0 finite = $ds1_ds0, calculated = $dSout_dSin")
+    println("di1_ds0 finite = $di1_ds0, calculated = $dIout_dSin")
+    println("dr1_ds0 finite = $dr1_ds0, calculated = $dRout_dSin")
+    println("dSout_dSin = $dSout_dSin")
+    println("dSout_dIin = $dSout_dIin")
+    println("dSout_dRin = $dSout_dRin")
+    println("dIout_dSin = $dIout_dSin")
+    println("dIout_dIin = $dIout_dIin")
+    println("dIout_dRin = $dIout_dRin")
+    println("dRout_dSin = $dRout_dSin")
+    println("dRout_dIin = $dRout_dIin")
+    println("dRout_dRin = $dRout_dRin")
 }
+
+fun testAbstractDiffI() {
+    val di = 0.1
+    val s = 960.0
+    val i = 40.0
+    val r = 5.0
+
+    var state = initializeState(s, i, r)
+    val model1 = AbstractModel(s, i, r)
+    val dual = model1.calculateDualNumber(state.dualNumber)!!
+    val jacobian = dual.partialDerivatives.withRespectTo(state)
+
+    val model2 = AbstractModel(s, i + di, r)
+    model2.step()
+
+    val ds1_di0 = (model2.rhoS - model1.rhoS) / di
+    val di1_di0 = (model2.rhoI - model1.rhoI) / di
+    val dr1_di0 = (model2.rhoR - model1.rhoR) / di
+
+    println("Jacobian is:")
+    println(jacobian)
+
+    val dSout_dSin = jacobian.getValue(0, 0, 0, 0)
+    val dSout_dIin = jacobian.getValue(0, 0, 0, 1)
+    val dSout_dRin = jacobian.getValue(0, 0, 0, 2)
+    val dIout_dSin = jacobian.getValue(0, 1, 0, 0)
+    val dIout_dIin = jacobian.getValue(0, 1, 0, 1)
+    val dIout_dRin = jacobian.getValue(0, 1, 0, 2)
+    val dRout_dSin = jacobian.getValue(0, 2, 0, 0)
+    val dRout_dIin = jacobian.getValue(0, 2, 0, 1)
+    val dRout_dRin = jacobian.getValue(0, 2, 0, 2)
+
+    println("ds1_di0 finite = $ds1_di0, calculated = $dSout_dIin")
+    println("di1_di0 finite = $di1_di0, calculated = $dIout_dIin")
+    println("dr1_di0 finite = $dr1_di0, calculated = $dRout_dIin")
+    println("dSout_dSin = $dSout_dSin")
+    println("dSout_dIin = $dSout_dIin")
+    println("dSout_dRin = $dSout_dRin")
+    println("dIout_dSin = $dIout_dSin")
+    println("dIout_dIin = $dIout_dIin")
+    println("dIout_dRin = $dIout_dRin")
+    println("dRout_dSin = $dRout_dSin")
+    println("dRout_dIin = $dRout_dIin")
+    println("dRout_dRin = $dRout_dRin")
+}
+
+fun testAbstractDiffR() {
+    val dr = 0.1
+    val s = 960.0
+    val i = 40.0
+    val r = 5.0
+
+    var state = initializeState(s, i, r)
+    val model1 = AbstractModel(s, i, r)
+    val dual = model1.calculateDualNumber(state.dualNumber)!!
+    val jacobian = dual.partialDerivatives.withRespectTo(state)
+
+    val model2 = AbstractModel(s, i, r + dr)
+    model2.step()
+
+    val ds1_dr0 = (model2.rhoS - model1.rhoS) / dr
+    val di1_dr0 = (model2.rhoI - model1.rhoI) / dr
+    val dr1_dr0 = (model2.rhoR - model1.rhoR) / dr
+
+    println("Jacobian is:")
+    println(jacobian)
+
+    val dSout_dSin = jacobian.getValue(0, 0, 0, 0)
+    val dSout_dIin = jacobian.getValue(0, 0, 0, 1)
+    val dSout_dRin = jacobian.getValue(0, 0, 0, 2)
+    val dIout_dSin = jacobian.getValue(0, 1, 0, 0)
+    val dIout_dIin = jacobian.getValue(0, 1, 0, 1)
+    val dIout_dRin = jacobian.getValue(0, 1, 0, 2)
+    val dRout_dSin = jacobian.getValue(0, 2, 0, 0)
+    val dRout_dIin = jacobian.getValue(0, 2, 0, 1)
+    val dRout_dRin = jacobian.getValue(0, 2, 0, 2)
+
+    println("ds1_dr0 finite = $ds1_dr0, calculated = $dSout_dRin")
+    println("di1_dr0 finite = $di1_dr0, calculated = $dIout_dRin")
+    println("dr1_dr0 finite = $dr1_dr0, calculated = $dRout_dRin")
+    println("dSout_dSin = $dSout_dSin")
+    println("dSout_dIin = $dSout_dIin")
+    println("dSout_dRin = $dSout_dRin")
+    println("dIout_dSin = $dIout_dSin")
+    println("dIout_dIin = $dIout_dIin")
+    println("dIout_dRin = $dIout_dRin")
+    println("dRout_dSin = $dRout_dSin")
+    println("dRout_dIin = $dRout_dIin")
+    println("dRout_dRin = $dRout_dRin")
+}
+
 
 fun testConcreteDiff() {
     val S = 960
@@ -130,14 +234,14 @@ fun testConcreteDiff() {
     var dr1_di0 = 0.0
     val Nsamples = 1000000
 
-    for(i in 1..Nsamples) {
-        val model1 = SIRModel(S,I,R,rand)
-        val model2 = SIRModel(S,I+1,R,rand)
+    for (i in 1..Nsamples) {
+        val model1 = SIRModel(S, I, R, rand)
+        val model2 = SIRModel(S, I + 1, R, rand)
         model1.step()
         model2.step()
-        ds1_di0 += (model2.S-model1.S)/(1.0*Nsamples)
-        di1_di0 += (model2.I-model1.I)/(1.0*Nsamples)
-        dr1_di0 += (model2.R-model1.R)/(1.0*Nsamples)
+        ds1_di0 += (model2.S - model1.S) / (1.0 * Nsamples)
+        di1_di0 += (model2.I - model1.I) / (1.0 * Nsamples)
+        dr1_di0 += (model2.R - model1.R) / (1.0 * Nsamples)
     }
 
     println("$ds1_di0 $di1_di0 $dr1_di0")
@@ -149,20 +253,22 @@ fun testAbstractFiniteDiff() {
     val R = 0.01
     val di = 0.5
 
-    val model1 = AbstractModel(S,I,R)
-    val model2 = AbstractModel(S,I+di,R)
+    val model1 = AbstractModel(S, I, R)
+    val model2 = AbstractModel(S, I + di, R)
     model1.step()
     model2.step()
-    val ds1_di0 = (model2.rhoS-model1.rhoS)/di
-    val di1_di0 = (model2.rhoI-model1.rhoI)/di
-    val dr1_di0 = (model2.rhoR-model1.rhoR)/di
+    val ds1_di0 = (model2.rhoS - model1.rhoS) / di
+    val di1_di0 = (model2.rhoI - model1.rhoI) / di
+    val dr1_di0 = (model2.rhoR - model1.rhoR) / di
 
     println("$ds1_di0 $di1_di0 $dr1_di0")
 }
 
 
 fun initializeState(s: Double, i: Double, r: Double): DoubleVertex {
-    val g = GaussianVertex(intArrayOf(1,3),0.0,1.0)
+    val mu = ConstantDoubleVertex(doubleArrayOf(s, i, r))
+    val sigma = ConstantDoubleVertex(doubleArrayOf(1.0, 1.0, 1.0))
+    val g = GaussianVertex(intArrayOf(1, 3), mu, sigma)
     g.setValue(doubleArrayOf(s, i, r))
     return g
 }

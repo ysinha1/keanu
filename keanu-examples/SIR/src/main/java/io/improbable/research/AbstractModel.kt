@@ -39,50 +39,6 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         return doubleArrayOf(rhoS, rhoI, rhoR)
     }
 
-//    fun calculateDualNumber(sDual: DualNumber?, iDual: DualNumber?, rDual: DualNumber?,
-//                            sId: Long, iId: Long, rId: Long): DualNumber? {
-//        if (sDual == null || iDual == null || rDual == null) return null
-//        setState(sDual.value.scalar(), iDual.value.scalar(), rDual.value.scalar())
-//
-//        concreteStates = createConcreteSamples()
-//        println("Created ${concreteStates.size} concrete samples")
-//        val inConcreteStates = asMatrix(concreteStates)  // 3xNsamples matrix
-//        println("inConcreteStates has shape of ${Arrays.toString(inConcreteStates.shape)}")
-//        concreteStates.forEach { it.step() }
-//        setStateFromConcreteSamples()
-//        val outConcreteStates = asMatrix(concreteStates)
-//        println("outConcreteStates has shape of ${Arrays.toString(outConcreteStates.shape)}")
-//
-//        val inDualValue = DoubleTensor.create(doubleArrayOf(sDual.value.scalar(), iDual.value.scalar(), rDual.value.scalar()))
-//        val jacobian = calculateJacobian(inConcreteStates, outConcreteStates, inDualValue)
-//        println("Jacobian has shape ${Arrays.toString(jacobian.shape)}")
-//
-//        val values = DoubleTensor.create(doubleArrayOf(rhoS, rhoI, rhoR))
-//
-//        val sPD = if (sDual.partialDerivatives.asMap().isEmpty()) {
-//            jacobian.matrixMultiply(DoubleTensor.ONE_SCALAR)
-//        } else {
-//            jacobian.matrixMultiply(sDual.partialDerivatives.asMap().values.first())
-//        }
-//
-//        jacobian.matrixMultiply(iDual.partialDerivatives.asMap().values.first())
-//        jacobian.matrixMultiply(rDual.partialDerivatives.asMap().values.first())
-//
-////        val partialDerivatives = inDual.partialDerivatives.asMap.mapValues {
-////            jacobian.matrixMultiply(it.value)
-////        }
-//
-//        val dual = DualNumber(values, partialDerivatives)
-//
-//        println("Dual has ${values.length} values and ${partialDerivatives.size} partial derivatives")
-//
-//        return dual
-//    }
-//
-//    private fun dx0_dx1(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor): Double {
-//
-//    }
-
     fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
         hasBeenCalled++
 
@@ -95,7 +51,7 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
 
         if (inDual == null) return null
 
-        println("calculating jacobian at ${inDual.value}")
+//        println("calculating jacobian at ${inDual.value}")
         setStateFromTensor(inDual.value)
 
         val concreteStates = createConcreteSamples()
@@ -105,7 +61,7 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         concreteStates.forEach { it.step() }
         setStateFromConcreteSamples(concreteStates)
         val outConcreteStates = asMatrix(concreteStates)
-        println("State at end of step is ${getStateAsTensor()}")
+//        println("State at end of step is ${getStateAsTensor()}")
 //        println("outConcreteStates has shape of ${Arrays.toString(outConcreteStates.shape)}")
 
 //        println("inDual has ${inDual.value} values and ${inDual.partialDerivatives.asMap().size} partial derivatives")
