@@ -12,7 +12,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
 
     val numberOfQuadrants = quadrantArrangement.first * quadrantArrangement.second
     val tensorShape = IntArray(2)
-    var concreteStates = createConcreteSamples()
+//    var concreteStates = createConcreteSamples()
     val numberOfConcreteSamples = 1000
 
     init {
@@ -24,15 +24,15 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
     }
 
     fun step () {
-        concreteStates = createConcreteSamples()
+//        concreteStates = createConcreteSamples()
         // Todo complete
     }
 
-    fun createConcreteSamples () : Array<Simulation> {
-        return Array(numberOfConcreteSamples, {
-            Simulation()
-        }
-    }
+//    fun createConcreteSamples () : Array<Simulation> {
+//        return Array(numberOfConcreteSamples, {
+//            Simulation()
+//        }
+//    }
 
     fun createGridSample () : Array2D<Agents> {
 
@@ -84,29 +84,27 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
             quadrantNumber += 1
         }
 
-        var grid = Array2D<Agents>(quadrantArrangement.first * quadrantDimensions.first,
-                                   quadrantArrangement.second * quadrantDimensions.second,
-            { i, j ->
-                for (qX in 0..quadrantArrangement.first) {
-                    for (qY in 0..quadrantArrangement.second) {
-                        if (qX * quadrantDimensions.first <= i && i < (qX+1) * quadrantDimensions.first
-                        && qY * quadrantDimensions.second <= j && j < (qY+1) * quadrantDimensions.second) {
-                            var quadrantNumber = qX + qY * quadrantArrangement.first
-                            var quadrant = quadrants[quadrantNumber]
-                            return@Array2D quadrant[i-qX*quadrantDimensions.first, j-qY*quadrantDimensions.second]
-                        }
-                    }
-                }
-        })
+        var quadrantRows = Array(quadrantArrangement.second, {_ -> Array2D(1, 1, {_, _ -> Agents.VACANT})})
+        var gridRow = quadrants[0]
+        for (j in 0..quadrantArrangement.second) {
+            for (i in 0 until quadrantArrangement.first) {
+                var gridRow = quadrants[i].horizontallyStack(quadrants[i+1])
+            }
+            quadrantRows[j] = gridRow
+        }
+        var grid = quadrantRows[0]
+        for (i in 1 until quadrantArrangement.second) {
+            grid = grid.verticallyStack(quadrantRows[i])
+        }
 
         return grid
     }
 
-    fun step (initialPopulationTensor: IntegerTensor): IntegerTensor {
-        setStateFromTensor(initialPopulationTensor)
-        step()
-        return createTensorFromState()
-    }
+//    fun step (initialPopulationTensor: IntegerTensor): IntegerTensor {
+//        setStateFromTensor(initialPopulationTensor)
+//        step()
+//        return createTensorFromState()
+//    }
 
     fun setStateFromTensor (T: IntegerTensor) {
         if (T.rank != 2 && T.shape[0] != 2 && T.shape[1] != numberOfQuadrants) {

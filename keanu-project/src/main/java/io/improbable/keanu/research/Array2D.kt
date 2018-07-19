@@ -40,30 +40,30 @@ open class Array2D<T>(iSize: Int, jSize: Int, vals: (Int, Int) -> T) : IArray2D<
         return out
     }
 
-    fun horizontallyStack(leftArray: IArray2D<T>, rightArray: IArray2D<T>) : Array2D<T> {
-        if (leftArray.jSize() != rightArray.jSize()) {
+    fun horizontallyStack(rightArray: IArray2D<T>) : Array2D<T> {
+        if (jSize() != rightArray.jSize()) {
             throw IllegalArgumentException("In order to merge horizontally, both array's vertical dimensions must be the same")
         }
-        return Array2D(leftArray.iSize()+rightArray.iSize(), leftArray.jSize(),
+        return Array2D(iSize()+rightArray.iSize(), jSize(),
             { i, j ->
-                if (i < leftArray.iSize()) {
-                    return@Array2D leftArray[i, j]
+                if (i < iSize()) {
+                    return@Array2D this[i, j]
                 } else {
-                    return@Array2D rightArray[i+leftArray.iSize(), j]
+                    return@Array2D rightArray[i-iSize(), j]
                 }
         })
     }
 
-    fun verticallyStack(topArray: IArray2D<T>, bottomArray: IArray2D<T>) : Array2D<T> {
-        if (topArray.iSize() != bottomArray.iSize()) {
+    fun verticallyStack(bottomArray: IArray2D<T>) : Array2D<T> {
+        if (iSize() != bottomArray.iSize()) {
             throw IllegalArgumentException("In order to merge vertically, both array's horizontal dimensions must be the same")
         }
-        return Array2D(topArray.iSize(), topArray.jSize()+bottomArray.jSize(),
+        return Array2D(iSize(), jSize()+bottomArray.jSize(),
             { i, j ->
-                if (j < topArray.jSize()) {
-                    return@Array2D topArray[i, j]
+                if (j < jSize()) {
+                    return@Array2D this[i, j]
                 } else {
-                    return@Array2D bottomArray[i,j+topArray.jSize()]
+                    return@Array2D bottomArray[i,j-jSize()]
                 }
             })
     }
