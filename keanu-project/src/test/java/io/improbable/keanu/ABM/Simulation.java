@@ -3,10 +3,8 @@ package io.improbable.keanu.ABM;
 import io.improbable.keanu.research.Array2D;
 import io.improbable.keanu.research.TriFunction;
 import io.improbable.keanu.research.VertexBackedRandomFactory;
-import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
-import java.util.function.BiConsumer;
 
 public class Simulation {
 
@@ -35,25 +33,26 @@ public class Simulation {
         this.predReproductionGradient = predReproductionGradient;
         this.random = random;
         output.initialiseJSON(XSIZE, YSIZE, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
-
-
     }
 
     public Simulation(int XSIZE, int YSIZE, VertexBackedRandomFactory random, Integer timesteps,
                       Integer initialNumberOfPrey, Integer initialNumberOfPredators,
                       Double preyReproductionGradient, Double preyReproductionConstant,
                       Double predReproductionGradient) {
-//        Agent[][] startGrid = new Agent[XSIZE][YSIZE];
-
-        Agent[][] startGrid = initialiseSimulation(startGrid, initialNumberOfPrey, initialNumberOfPredators);
-        Simulation(XSIZE, YSIZE, random, startGrid, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
+        assert XSIZE >= 3 || YSIZE >= 3: "Domain size must be 3x3 or greater";
+        this.timesteps = timesteps;
+        this.preyReproductionGradient = preyReproductionGradient;
+        this.preyReproductionConstant = preyReproductionConstant;
+        this.predReproductionGradient = predReproductionGradient;
+        this.random = random;
+        this.grid = initialiseSimulation(new Agent[XSIZE][YSIZE], initialNumberOfPrey, initialNumberOfPredators);
+        output.initialiseJSON(XSIZE, YSIZE, preyReproductionGradient, preyReproductionConstant, predReproductionGradient);
     }
 
     public Simulation(Array2D<AbstractModel.Agents> grid, Double preyReproductionGradient, Double preyReproductionConstant,
                       Double predReproductionGradient) {
         int XSIZE = grid.iSize();
         int YSIZE = grid.jSize();
-        int timesteps = 1;
         Agent[][] startGrid = new Agent[XSIZE][YSIZE];
         for (int i=0; i<XSIZE; i++) {
             for (int j=0; j<YSIZE; j++) {
@@ -64,11 +63,14 @@ public class Simulation {
                 }
             }
         }
-        // TODO complete this constructor
-//        Simulation(XSIZE, YSIZE, ...)
-
+        assert XSIZE >= 3 || YSIZE >= 3: "Domain size must be 3x3 or greater";
+        this.timesteps = 1;
+        this.preyReproductionGradient = preyReproductionGradient;
+        this.preyReproductionConstant = preyReproductionConstant;
+        this.predReproductionGradient = predReproductionGradient;
+        this.random = new VertexBackedRandomFactory(100, 100);
+        this.grid = startGrid;
     }
-
 
     private Agent[][] initialiseSimulation(Agent[][] startGrid, int numberOfPrey, int numberOfPredators) {
         startGrid = randomSpawnPopulation(startGrid, numberOfPredators, this::spawnPredator);

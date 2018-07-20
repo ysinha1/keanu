@@ -23,17 +23,22 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         tensorShape[1] = numberOfQuadrants
     }
 
+    fun step (initialPopulationTensor: IntegerTensor): IntegerTensor {
+        setStateFromTensor(initialPopulationTensor)
+        step()
+        return createTensorFromState()
+    }
+
     fun step () {
         var concreteStates = createConcreteSamples()
         concreteStates.forEach { model -> model.step() }
         setStateFromConcreteSamples(concreteStates)
-        // Todo complete
     }
 
     fun createConcreteSamples () : Array<Simulation> {
         return Array(numberOfConcreteSamples, {
-            Simulation()
-        }
+            Simulation(createConcreteSampleStartGrid(), 0.02,0.06, 0.03)
+        })
     }
 
     fun createConcreteSampleStartGrid () : Array2D<Agents> {
@@ -90,10 +95,25 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         return grid
     }
 
-    fun step (initialPopulationTensor: IntegerTensor): IntegerTensor {
-        setStateFromTensor(initialPopulationTensor)
-        step()
-        return createTensorFromState()
+    fun mapConcreteSampleToAbstractSpace (concreteState: Simulation) : Pair<IntArray, IntArray> {
+        var abstractState = Pair(IntArray(numberOfQuadrants), IntArray(numberOfQuadrants))
+        for (quadCol in 0 until quadrantArrangement.first) {
+            for (quadRow in 0 until quadrantArrangement.second) {
+                var quadIndex = quadCol + quadRow * quadrantArrangement.first
+                var offset = Pair(quadCol*quadrantDimensions.first, quadRow*quadrantDimensions.second)
+                for (col in 0 until quadrantDimensions.first) {
+                    for (row in 0 until quadrantDimensions.second) {
+                        var candidate = concreteState.getXY(col + offset.first, col + offset.second)
+                        if (candidate is Prey) {
+                            abstractState.first[quadIndex] +=1
+                        } else if (candidate is Predator) {
+                            abstractState.second[quadIndex] += 1
+                        }
+                    }
+                }
+            }
+        }
+        return abstractState
     }
 
     fun setStateFromTensor (T: IntegerTensor) {
@@ -107,7 +127,20 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
     }
 
     fun setStateFromConcreteSamples (samples: Array<Simulation>) {
-//        rhoS = concreteStates.sumBy { model -> model.S } / Nsamples.toDouble()
+        var abstractSamples = Array(samples.size, {i ->
+            mapConcreteSampleToAbstractSpace(samples[i])
+        })
+        var sum = Pair(IntArray(numberOfQuadrants), IntArray(numberOfQuadrants))
+        for (sample in abstractSamples) {
+            for (quadrant in 0 until numberOfQuadrants) {
+                sum.first[quadrant] += sample.first[quadrant]
+                sum.second[quadrant] += sample.second[quadrant]
+            }
+        }
+        for (quadrant in 0 until numberOfQuadrants) {
+            quadrantPreyPopulation[quadrant] = sum.first[quadrant] / numberOfConcreteSamples
+            quadrantPredatorPopulation[quadrant] = sum.second[quadrant] / numberOfConcreteSamples
+        }
     }
 
     fun createTensorFromState (): IntegerTensor {
