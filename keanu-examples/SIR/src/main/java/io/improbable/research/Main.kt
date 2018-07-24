@@ -12,39 +12,44 @@ import java.io.FileWriter
 
 
 fun main(args: Array<String>) {
-//    println("Running concrete model")
-//    val concreteTimestepStates = runConcrete()
-//    println("Getting observations")
-//    val observations = getObservations(concreteTimestepStates)
-//    println("Running probabilistic data assimilation")
-//    val probabilisticTimestepStates = assimilateData(observations)
+    assimilateData()
 
-    testAbstractDiffS()
-    testAbstractDiffI()
-    testAbstractDiffR()
+//    testAbstractDiffS()
+//    testAbstractDiffI()
+//    testAbstractDiffR()
+
+//    testTensorSplit()
 }
 
-fun assimilateData(observations: DoubleArray): Array<TimestepState> {
-    var state: DoubleVertex = ConstantDoubleVertex(DoubleTensor.create(doubleArrayOf(96.0, 4.0, 0.01)))
+
+
+fun assimilateData(): Array<TimestepState> {
+    println("Running concrete model")
+    val concreteTimestepStates = runConcrete()
+    println("Getting observations")
+    val observations = getObservations(concreteTimestepStates)
+    println("Running probabilistic data assimilation")
+
+    var state: DoubleVertex = initializeState(960.0, 40.0, 1.00)
 
     val sTimestepStates = arrayListOf<DoubleVertex>()
     val iTimestepStates = arrayListOf<DoubleVertex>()
     val rTimestepStates = arrayListOf<DoubleVertex>()
 
     for (obs in observations) {
-//        val modelTimestep = ModelVertex(state)
         state = ModelVertex(state)
-        val s = DoubleTensorArrayIndexingVertex(state, 0)
-        val i = DoubleTensorArrayIndexingVertex(state, 1)
-        val r = DoubleTensorArrayIndexingVertex(state, 2)
-        GaussianVertex(i, 0.5).observe(obs)
+        val s = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 1), intArrayOf(0, 1))
+        val i = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 2), intArrayOf(0, 2))
+        val r = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 2), intArrayOf(0, 2))
+        GaussianVertex(i, 1.0).observe(obs)
         sTimestepStates.add(s)
         iTimestepStates.add(i)
         rTimestepStates.add(r)
-//        state = modelTimestep
     }
 
     val bayesianNetwork = BayesianNetwork(state.connectedGraph)
+    println("Bayesian network has ${state.connectedGraph.size} vertices")
+
     val gradientOptimizer = GradientOptimizer(bayesianNetwork)
     gradientOptimizer.maxAPosteriori(10000)
 
@@ -88,8 +93,35 @@ fun getObservations(timestepStates: Array<TimestepState>): DoubleArray {
     return timestepStates.map { ts -> ts.i }.toDoubleArray()
 }
 
+fun testTensorSplit() {
+    val di = 1.0
+    val s = 960.0
+    val i = 40.0
+    val r = 5.0
+
+    var state = initializeState(s, i, r)
+    val model = ModelVertex(state)
+    val dual = model.dualNumber
+    val jacobian = dual.partialDerivatives.withRespectTo(state)
+
+    val model2 = AbstractModel(s, i + di, r)
+    model2.step()
+
+    val extracted = DoubleTensorArrayIndexingVertex(model, intArrayOf(0, 1), intArrayOf(0, 1))
+    val extractedJacobian = extracted.dualNumber.partialDerivatives.withRespectTo(state)
+
+    println("Jacobian is:")
+    println(jacobian)
+
+    println("Extracted value = " + extracted.value.scalar())
+    println("Extracted Jacobian is:")
+    println(extractedJacobian)
+}
+
 fun testAbstractDiffS() {
-    val ds = 0.1
+    println("Testing abstract diff with respect to S")
+
+    val ds = 1.0
     val s = 960.0
     val i = 40.0
     val r = 5.0
@@ -131,10 +163,13 @@ fun testAbstractDiffS() {
     println("dRout_dSin = $dRout_dSin")
     println("dRout_dIin = $dRout_dIin")
     println("dRout_dRin = $dRout_dRin")
+    println()
 }
 
 fun testAbstractDiffI() {
-    val di = 0.1
+    println("Testing abstract diff with respect to I")
+
+    val di = 1.0
     val s = 960.0
     val i = 40.0
     val r = 5.0
@@ -176,10 +211,13 @@ fun testAbstractDiffI() {
     println("dRout_dSin = $dRout_dSin")
     println("dRout_dIin = $dRout_dIin")
     println("dRout_dRin = $dRout_dRin")
+    println()
 }
 
 fun testAbstractDiffR() {
-    val dr = 0.1
+    println("Testing abstract diff with respect to R")
+
+    val dr = 1.0
     val s = 960.0
     val i = 40.0
     val r = 5.0
@@ -221,6 +259,7 @@ fun testAbstractDiffR() {
     println("dRout_dSin = $dRout_dSin")
     println("dRout_dIin = $dRout_dIin")
     println("dRout_dRin = $dRout_dRin")
+    println()
 }
 
 

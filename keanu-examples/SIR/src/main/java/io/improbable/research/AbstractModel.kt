@@ -4,10 +4,9 @@ import io.improbable.keanu.tensor.dbl.DoubleTensor
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber
 import org.apache.commons.math3.distribution.PoissonDistribution
 import org.apache.commons.math3.random.MersenneTwister
-import java.util.*
 
 class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
-    val Nsamples = 200000 // number of samples of the concrete model
+    val Nsamples = 10000 // number of samples of the concrete model
     val rand = MersenneTwister()
 //    var concreteStates = Array<SIRModel>()
 
@@ -42,31 +41,21 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
     fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
         hasBeenCalled++
 
-//        println("Shape of inDual value ${Arrays.toString(inDual!!.value.shape)}")
-//        println("Shape of inDual pd ${Arrays.toString(inDual!!.partialDerivatives.asMap().entries.first().value.shape)}")
-//        println("inDual pd ${inDual!!.partialDerivatives.asMap().entries.first().value}")
-
-
-//        println("calculateDualNumber has been called $hasBeenCalled times")
+        println("calculateDualNumber has been called $hasBeenCalled times")
 
         if (inDual == null) return null
 
-//        println("calculating jacobian at ${inDual.value}")
+        println("calculating jacobian at ${inDual.value}")
         setStateFromTensor(inDual.value)
 
         val concreteStates = createConcreteSamples()
-//        println("Created ${concreteStates.size} concrete samples")
         val inConcreteStates = asMatrix(concreteStates)  // 3xNsamples matrix
-//        println("inConcreteStates has shape of ${Arrays.toString(inConcreteStates.shape)}")
         concreteStates.forEach { it.step() }
         setStateFromConcreteSamples(concreteStates)
         val outConcreteStates = asMatrix(concreteStates)
-//        println("State at end of step is ${getStateAsTensor()}")
-//        println("outConcreteStates has shape of ${Arrays.toString(outConcreteStates.shape)}")
+        println("State at end of step is ${getStateAsTensor()}")
 
-//        println("inDual has ${inDual.value} values and ${inDual.partialDerivatives.asMap().size} partial derivatives")
-        val jacobian = calculateJacobianElementwise(inConcreteStates, outConcreteStates, inDual.value)
-//        println("Jacobian has shape ${Arrays.toString(jacobian.shape)}")
+        val jacobian = calculateJacobian(inConcreteStates, outConcreteStates, inDual.value)
 
         val values = DoubleTensor.create(doubleArrayOf(rhoS, rhoI, rhoR))
 
@@ -79,7 +68,7 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         return dual
     }
 
-    fun calculateJacobian(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inDualValue: DoubleTensor): DoubleTensor {
+    fun calculateJacobianTensor(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inDualValue: DoubleTensor): DoubleTensor {
         val a = (inConcreteStates.sum(1) / inDualValue) / Nsamples.toDouble()
         val jacobian =
             ((outConcreteStates.reshape(3, 1, Nsamples)).tensorMultiply(inConcreteStates.reshape(1, 3, Nsamples), intArrayOf(1), intArrayOf(0)).sum(2) * inDualValue.reciprocal() -
@@ -88,12 +77,8 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         return jacobian
     }
 
-    fun calculateJacobianElementwise(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inAbstractState: DoubleTensor): DoubleTensor {
+    fun calculateJacobian(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inAbstractState: DoubleTensor): DoubleTensor {
         val jacobian = DoubleTensor.zeros(intArrayOf(3, 3))
-
-//        println("inConcreteStates shape ${Arrays.toString(inConcreteStates.shape)}")
-//        println("outConcreteStates shape ${Arrays.toString(outConcreteStates.shape)}")
-//        println("inAbstractState shape ${Arrays.toString(inAbstractState.shape)}")
 
         for (i in 0..2) {
             for (j in 0..2) {
