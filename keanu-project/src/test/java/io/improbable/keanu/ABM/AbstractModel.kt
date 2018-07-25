@@ -79,7 +79,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
                 { i, j ->
                     var targetPreyPopulationToSpawn = PoissonDistribution(quadrantPreyPopulationLambda[quadrantNumber].toDouble()).sample().toDouble()
                     var probabilityPerGridSquare = targetPreyPopulationToSpawn / (quadrantDimensions.first * quadrantDimensions.second)
-                    if (Flip(probabilityPerGridSquare).sampleUsingDefaultRandom().scalar()) {
+                    if (Flip(probabilityPerGridSquare).sample().scalar()) {
                         return@Array2D Agents.PREY
                     } else {
                         return@Array2D Agents.VACANT
@@ -101,7 +101,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
             for (i in 0 until quadrant.iSize()) {
                 for (j in 0 until quadrant.jSize()) {
                     if (quadrant[i, j] == Agents.VACANT) {
-                        if (Flip(probabilityPerGridSquare).sampleUsingDefaultRandom().scalar()) {
+                        if (Flip(probabilityPerGridSquare).sample().scalar()) {
                             quadrant[i, j] = Agents.PREDATOR
                         }
                     }

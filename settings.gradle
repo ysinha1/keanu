@@ -4,3 +4,4 @@ include 'keanu-project',
         'keanu-examples:starter'
 include 'halo'
 
+        'keanu-examples:coalMiningDisasters'
