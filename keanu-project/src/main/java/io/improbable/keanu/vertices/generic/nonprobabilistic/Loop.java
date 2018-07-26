@@ -1,7 +1,6 @@
 package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
-import java.util.function.Function;
-
+import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.bool.BoolVertex;
@@ -18,15 +17,15 @@ public class Loop<T> {
         return new Loop(start);
     }
 
-    public LoopBodyBuilder apply(Function<T, T> lambda) {
+    public LoopBodyBuilder apply(BayesianNetwork lambda) {
         return new LoopBodyBuilder(start, lambda);
     }
 
     public static class LoopBodyBuilder<T> {
         private final Vertex<Tensor<T>> start;
-        private final Function<Tensor<T>, Tensor<T>> lambda;
+        private final BayesianNetwork lambda;
 
-        public LoopBodyBuilder(Vertex start, Function<Tensor<T>, Tensor<T>> lambda) {
+        public LoopBodyBuilder(Vertex start, BayesianNetwork lambda) {
             this.start = start;
             this.lambda = lambda;
         }

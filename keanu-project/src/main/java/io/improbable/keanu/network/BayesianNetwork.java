@@ -1,13 +1,18 @@
 package io.improbable.keanu.network;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import io.improbable.keanu.algorithms.graphtraversal.TopologicalSort;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import io.improbable.keanu.vertices.generic.nonprobabilistic.PlaceholderVertex;
 
 public class BayesianNetwork {
 
@@ -18,6 +23,8 @@ public class BayesianNetwork {
     //Lazy evaluated
     private List<Vertex<DoubleTensor>> continuousLatentVertices;
     private List<Vertex> discreteLatentVertices;
+    private List<Vertex> inputVertices;
+    private List<Vertex> outputVertices;
 
     public BayesianNetwork(Set<? extends Vertex> vertices) {
 
@@ -31,6 +38,15 @@ public class BayesianNetwork {
 
         latentVertices = latentAndObservedVertices.stream()
             .filter(v -> !v.isObserved())
+            .collect(Collectors.toList());
+
+        inputVertices = vertices.stream()
+            .filter(v -> v.getParents().isEmpty())
+            .filter(v -> v instanceof PlaceholderVertex)
+            .collect(Collectors.toList());
+
+        outputVertices = vertices.stream()
+            .filter(v -> v.getChildren().isEmpty())
             .collect(Collectors.toList());
     }
 
@@ -48,6 +64,14 @@ public class BayesianNetwork {
 
     public List<Vertex> getObservedVertices() {
         return observedVertices;
+    }
+
+    public Collection<Vertex> getInputVertices() {
+        return inputVertices;
+    }
+
+    public Collection<Vertex> getOutputVertices() {
+        return outputVertices;
     }
 
     public double getLogOfMasterP() {

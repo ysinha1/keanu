@@ -2,14 +2,12 @@ package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.function.Function;
-
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import io.improbable.keanu.tensor.intgr.IntegerTensor;
+import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.bool.BoolVertex;
 import io.improbable.keanu.vertices.bool.probabilistic.Flip;
@@ -29,8 +27,7 @@ public class LoopVertexTest {
         log.info("Setting up");
         IntegerVertex times = ConstantVertex.of(4);
         IntegerVertex start = ConstantVertex.of(0);
-//        InputVertex x = new InputVertex(start);
-        Function<IntegerTensor, IntegerTensor> lambda = t -> t.plus(1);
+        BayesianNetwork lambda = buildIncrementNetwork();
         NumberLoopVertex<Integer> loop = Loop.startingFrom(start).apply(lambda).times(times);
         log.info("Sample");
         assertEquals(4, loop.sample().scalar().intValue());
@@ -49,7 +46,8 @@ public class LoopVertexTest {
         log.info("Setting up");
         BoolVertex condition = new Flip(0.5);
         IntegerVertex start = ConstantVertex.of(0);
-        Function<IntegerTensor, IntegerTensor> lambda = t -> t.plus(1);
+        BayesianNetwork lambda = buildIncrementNetwork();
+
         LoopVertex<Integer> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
         log.info("Sample");
         assertEquals(5, loop.sample().scalar().intValue());
@@ -61,5 +59,31 @@ public class LoopVertexTest {
         assertEquals(0, loop.sample().scalar().intValue());
         log.info("getValue");
         assertEquals(0, loop.getValue().scalar().intValue());
+    }
+
+    private BayesianNetwork buildIncrementNetwork() {
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        IntegerVertex output = ConstantVertex.of(1).plus(input);
+        return new BayesianNetwork(output.getConnectedGraph());
+    }
+
+    @Test
+    public void theConditionCanBeDependentOnTheLambda() {
+//        log.info("Setting up");
+//        Function<IntegerTensor, BooleanTensor> condition = t -> t.lessThan(5);
+//        IntegerVertex start = ConstantVertex.of(0);
+//        BayesianNetwork lambda = buildIncrementNetwork();
+//
+//        LoopVertex<Integer> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
+//        log.info("Sample");
+//        assertEquals(5, loop.sample().scalar().intValue());
+//        log.info("getValue");
+//        assertEquals(5, loop.getValue().scalar().intValue());
+//        log.info("setAndCascade");
+//        condition.observe(false);
+//        log.info("Sample");
+//        assertEquals(0, loop.sample().scalar().intValue());
+//        log.info("getValue");
+//        assertEquals(0, loop.getValue().scalar().intValue());
     }
 }

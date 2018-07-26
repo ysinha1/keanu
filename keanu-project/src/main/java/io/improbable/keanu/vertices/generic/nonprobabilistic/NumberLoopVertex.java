@@ -1,33 +1,37 @@
 package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
-import java.util.function.Function;
+import com.google.common.collect.Iterables;
 
+import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.intgr.IntegerTensor;
-import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.intgr.IntegerVertex;
-import io.improbable.keanu.vertices.intgr.nonprobabilistic.operators.unary.IntegerUnaryOpLambda;
 
 public class NumberLoopVertex<T> extends LoopVertex<T> {
 
     private final IntegerVertex times;
     private final Vertex<Tensor<T>> start;
-    private final Vertex<Tensor<T>> lambda;
-    private final Vertex<Tensor<T>> currentValue;
+    private final BayesianNetwork lambda;
+    private final Vertex<Tensor<T>> input;
+    private final Vertex<Tensor<T>> output;
 
-    public NumberLoopVertex(Vertex<Tensor<T>> start, Function<Tensor<T>,Tensor<T>> lambda, IntegerVertex times) {
+    public NumberLoopVertex(Vertex<Tensor<T>> start, BayesianNetwork lambda, IntegerVertex times) {
         this.times = times;
         this.start = start;
-        this.currentValue = ConstantVertex.of(start.getValue());
-        this.lambda = new IntegerUnaryOpLambda(start.getShape(), currentValue, lambda);
-        setParents(start, this.lambda, times);
+        this.lambda = lambda;
+        setParents(start, times);
+
+        input = Iterables.getOnlyElement(lambda.getInputVertices());
+        output = Iterables.getOnlyElement(lambda.getOutputVertices());
+
+        input.setAndCascade(start.getValue());
     }
 
     @Override
     public Tensor<T> getDerivedValue() {
-        return currentValue.getValue();
+        return output.getValue();
     }
 
     @Override
@@ -35,8 +39,8 @@ public class NumberLoopVertex<T> extends LoopVertex<T> {
         Tensor<T> value = start.getValue();
         IntegerTensor numTimes = times.sample();
         for (int i=0; i < numTimes.scalar().intValue(); i++) {
-            currentValue.setValue(value);
-            value = lambda.sample(random);
+            input.setAndCascade(value);
+            value = output.sample(random);
         }
         return value;
     }

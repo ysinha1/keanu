@@ -1,14 +1,14 @@
 package io.improbable.keanu.tensor.intgr;
 
+import java.util.Arrays;
+import java.util.function.Function;
+
 import io.improbable.keanu.kotlin.IntegerOperators;
 import io.improbable.keanu.tensor.NumberTensor;
 import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.bool.BooleanTensor;
 
-import java.util.Arrays;
-import java.util.function.Function;
-
-public interface IntegerTensor extends NumberTensor<Integer>, IntegerOperators<IntegerTensor> {
+public interface IntegerTensor extends NumberTensor<Integer, IntegerTensor>, IntegerOperators<IntegerTensor> {
 
     IntegerTensor ZERO_SCALAR = scalar(0);
 
@@ -114,10 +114,6 @@ public interface IntegerTensor extends NumberTensor<Integer>, IntegerOperators<I
     IntegerTensor getLessThanMask(IntegerTensor lessThanThis);
 
     IntegerTensor getLessThanOrEqualToMask(IntegerTensor lessThanThis);
-
-    IntegerTensor setWithMaskInPlace(IntegerTensor mask, int value);
-
-    IntegerTensor setWithMask(IntegerTensor mask, int value);
 
     IntegerTensor apply(Function<Integer, Integer> function);
 

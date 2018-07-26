@@ -1,14 +1,13 @@
 package io.improbable.keanu.tensor.dbl;
 
-import io.improbable.keanu.tensor.NumberTensor;
-import io.improbable.keanu.tensor.Tensor;
-import io.improbable.keanu.tensor.bool.BooleanTensor;
-import io.improbable.keanu.tensor.intgr.IntegerTensor;
-
 import java.util.Arrays;
 import java.util.function.Function;
 
-public interface DoubleTensor extends NumberTensor<Double> {
+import io.improbable.keanu.tensor.NumberTensor;
+import io.improbable.keanu.tensor.Tensor;
+import io.improbable.keanu.tensor.bool.BooleanTensor;
+
+public interface DoubleTensor extends NumberTensor<Double, DoubleTensor> {
 
     DoubleTensor ZERO_SCALAR = scalar(0.0);
 
@@ -136,10 +135,6 @@ public interface DoubleTensor extends NumberTensor<Double> {
     DoubleTensor getLessThanMask(DoubleTensor lessThanThis);
 
     DoubleTensor getLessThanOrEqualToMask(DoubleTensor lessThanThis);
-
-    DoubleTensor setWithMaskInPlace(DoubleTensor mask, double value);
-
-    DoubleTensor setWithMask(DoubleTensor mask, double value);
 
     DoubleTensor abs();
 
