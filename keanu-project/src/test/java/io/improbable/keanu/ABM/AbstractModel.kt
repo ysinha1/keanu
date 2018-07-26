@@ -13,7 +13,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
 
     val numberOfQuadrants = quadrantArrangement.first * quadrantArrangement.second
     val tensorShape = IntArray(2)
-    var hasBeenCalled = 0
+    var hasBeenCalled = false
     val numberOfConcreteSamples = 1000
 
     init {
@@ -43,42 +43,53 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
     }
 
     fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
-        // TODO
-        hasBeenCalled++
+
+        // Dual number for each population should be value: tensor of shape numberOfQuadrants, partialDerivative: tensor of shape numberOfQuadrants by numberOfQuadrants
+        // Full state should therefore be a dual with value: tensor of shape 2 by numberOfQuadrants, partialDerivative: tensor of shape ?
+        // TODO decompose the dual then recompose it after?
+
+        hasBeenCalled = true
         if (inDual == null) return null
 
         setStateFromTensor(inDual.value)
         val concreteStates = createConcreteSamples()
-        val inConcreteStates = concreteStatesAsTensor(concreteStates)
+        val inConcretePreyStates = concretePreyStatesAsTensor(concreteStates)
+        var inConcretePredatorStates = concretePredatorStatesAsTensor(concreteStates)
+
         concreteStates.forEach { it.step() }
         setStateFromConcreteSamples(concreteStates)
-        val outConcreteStates = concreteStatesAsTensor(concreteStates)
-        val jacobian = calculateJacobianElementwise(inConcreteStates, outConcreteStates, inDual.value)
-        val values = DoubleTensor.create(doubleArrayOf( // todo insert state doubles
-        ))
-        val partialDerivatives = inDual.partialDerivatives.asMap().mapValues {
-            jacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1)).reshape(
-                // todo
-            )
+
+        val outConcretePreyStates = concretePreyStatesAsTensor(concreteStates)
+        var outConcretePredatorStates = concretePredatorStatesAsTensor(concreteStates)
+
+        val preyJacobian = calculateJacobian(inConcretePreyStates, outConcretePreyStates, inDual.value) // TODO need to slice the prey part of inDual.value
+        val predatorJacobian = calculateJacobian(inConcretePredatorStates, outConcretePredatorStates, inDual.value) // TODO as above
+
+        val preyValues = DoubleTensor.create( quadrantPreyPopulationLambda )
+        val predatorValues = DoubleTensor.create( quadrantPredatorPopulationLambda)
+
+        val preyPartialDerivatives = inDual.partialDerivatives.asMap().mapValues {
+            preyJacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1))
+                .reshape(1, numberOfQuadrants, 1, numberOfQuadrants)
         }
         return DualNumber(values, partialDerivatives)
     }
 
-    fun calculateJacobian(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor,
-                          inDualValue: DoubleTensor): DoubleTensor {
-        // TODO
-        val a = (inConcreteSamples.sum(1) / inDualValue) / numberOfConcreteSamples.toDouble() // TODO check we're summing over correct dimension(s)
+    fun calculateJacobianTensor(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor,
+                                inAbstractState: DoubleTensor): DoubleTensor {
+        val a = (inConcreteSamples.sum(1) / inAbstractState) / numberOfConcreteSamples.toDouble()
         return (
-            outConcreteSamples.reshape(3, 1, numberOfConcreteSamples)
-                .tensorMultiply(inConcreteSamples.reshape(1, 3, numberOfConcreteSamples), intArrayOf(1), intArrayOf(0))
+            outConcreteSamples.reshape(numberOfQuadrants, 1, numberOfConcreteSamples)
+                .tensorMultiply(inConcreteSamples.reshape(1, numberOfQuadrants, numberOfConcreteSamples),
+                                                          intArrayOf(1), intArrayOf(0))
                 .sum(2)
-                * inDualValue.reciprocal()
+                * inAbstractState.reciprocal()
                 - outConcreteSamples.sum(1).matrixMultiply(a)
             ) / numberOfConcreteSamples.toDouble()
     }
 
-    fun calculateJacobianElementwise(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor, inAbstractState: DoubleTensor): DoubleTensor {
-        // TODO
+    fun calculateJacobian(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor,
+                          inAbstractState: DoubleTensor): DoubleTensor {
         val jacobian = DoubleTensor.zeros(intArrayOf(numberOfQuadrants, numberOfQuadrants))
         for (i in 0 until numberOfQuadrants) {
             for (j in 0 until numberOfQuadrants) {
@@ -94,13 +105,24 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         return jacobian
     }
 
-    fun concreteStatesAsTensor(samples: Array<Simulation>): DoubleTensor {
-        // TODO
+    fun concretePreyStatesAsTensor(samples: Array<Simulation>): DoubleTensor {
+        return concreteStatesAsTensor(samples, "Prey")
+    }
+
+    fun concretePredatorStatesAsTensor(samples: Array<Simulation>): DoubleTensor {
+        return concreteStatesAsTensor(samples, "Predator")
+    }
+
+    fun concreteStatesAsTensor(samples: Array<Simulation>, stateID: String): DoubleTensor {
         val s = DoubleTensor.zeros(intArrayOf(numberOfQuadrants, samples.size)) // todo add another dimension for pred / prey
         for (sample in 0 until samples.size) {
             var abstractSample = mapConcreteSampleToAbstractSpace(samples[sample])
             for (quadrant in 0 until numberOfQuadrants) {
-                s.setValue(abstractSample.first[quadrant], quadrant, sample)
+                if (stateID == "Prey") {
+                    s.setValue(abstractSample.first[quadrant], quadrant, sample)
+                } else if (stateID == "Predator") {
+                    s.setValue(abstractSample.second[quadrant], quadrant, sample)
+                }
             }
         }
         return s
