@@ -43,9 +43,13 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
 
     fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
 
-        // Dual number for each population should be value: tensor of shape numberOfQuadrants, partialDerivative: tensor of shape numberOfQuadrants by numberOfQuadrants
-        // Full state should therefore be a dual with value: tensor of shape 2 by numberOfQuadrants, partialDerivative: tensor of shape 2 by numberOfQuadrants by 2 by numberOfQuadrants
-        // TODO decompose the dual then recompose it after?
+        // Dual number for each population should be value:
+        //     value: tensor of shape numberOfQuadrants,
+        //     partialDerivative: tensor of shape numberOfQuadrants by numberOfQuadrants
+        // Full state should therefore be a dual with
+        //     value: tensor of shape 2 by numberOfQuadrants,
+        //     partialDerivative: tensor of shape 2 by numberOfQuadrants by 2 by numberOfQuadrants
+        // TODO decompose the dual then recompose it after? is this clearer than in bulk... or even correct?
 
         if (inDual == null) return null
 
