@@ -9,7 +9,7 @@ import org.apache.commons.math3.distribution.PoissonDistribution
 class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangement: Pair<Int, Int>,
                     var quadrantPreyPopulationLambda: DoubleArray, var quadrantPredatorPopulationLambda: DoubleArray) {
 
-    public enum class Agents { PREY, PREDATOR, VACANT }
+    enum class Agents { PREY, PREDATOR, VACANT }
 
     val numberOfQuadrants = quadrantArrangement.first * quadrantArrangement.second
     val tensorShape = IntArray(2)
@@ -24,25 +24,26 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         tensorShape[1] = numberOfQuadrants
     }
 
-    fun step (initialPopulationTensor: DoubleTensor): DoubleTensor {
+    fun step(initialPopulationTensor: DoubleTensor): DoubleTensor {
         setStateFromTensor(initialPopulationTensor)
         step()
         return createTensorFromState()
     }
 
-    fun step () {
+    fun step() {
         var concreteStates = createConcreteSamples()
         concreteStates.forEach { model -> model.step() }
         setStateFromConcreteSamples(concreteStates)
     }
 
-    fun createConcreteSamples () : Array<Simulation> {
+    fun createConcreteSamples(): Array<Simulation> {
         return Array(numberOfConcreteSamples, {
-            Simulation(createConcreteSampleStartGrid(), 0.02,0.06, 0.03)
+            Simulation(createConcreteSampleStartGrid(), 0.02, 0.06, 0.03)
         })
     }
 
-    fun calculateDualNumber (inDual: DualNumber?): DualNumber? {
+    fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
+        // TODO
         hasBeenCalled++
         if (inDual == null) return null
 
@@ -54,28 +55,61 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         val outConcreteStates = concreteStatesAsTensor(concreteStates)
         val jacobian = calculateJacobianElementwise(inConcreteStates, outConcreteStates, inDual.value)
         val values = DoubleTensor.create(doubleArrayOf( // todo insert state doubles
-             ))
+        ))
         val partialDerivatives = inDual.partialDerivatives.asMap().mapValues {
             jacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1)).reshape(
                 // todo
-            )}
+            )
+        }
         return DualNumber(values, partialDerivatives)
-
     }
 
-    fun calculateJacobianElementwise(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor,
-                                     inAbstractState: DoubleTensor) : DoubleTensor {
-
-    }
-
-    fun concreteStatesAsTensor (samples: Array<Simulation>) : DoubleTensor {
+    fun calculateJacobian(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor,
+                          inDualValue: DoubleTensor): DoubleTensor {
         // TODO
+        val a = (inConcreteSamples.sum(1) / inDualValue) / numberOfConcreteSamples.toDouble() // TODO check we're summing over correct dimension(s)
+        return (
+            outConcreteSamples.reshape(3, 1, numberOfConcreteSamples)
+                .tensorMultiply(inConcreteSamples.reshape(1, 3, numberOfConcreteSamples), intArrayOf(1), intArrayOf(0))
+                .sum(2)
+                * inDualValue.reciprocal()
+                - outConcreteSamples.sum(1).matrixMultiply(a)
+            ) / numberOfConcreteSamples.toDouble()
     }
 
-    fun createConcreteSampleStartGrid () : Array2D<Agents> {
+    fun calculateJacobianElementwise(inConcreteSamples: DoubleTensor, outConcreteSamples: DoubleTensor, inAbstractState: DoubleTensor): DoubleTensor {
+        // TODO
+        val jacobian = DoubleTensor.zeros(intArrayOf(numberOfQuadrants, numberOfQuadrants))
+        for (i in 0 until numberOfQuadrants) {
+            for (j in 0 until numberOfQuadrants) {
+                val a = inConcreteSamples.sum(1).getValue(j) / numberOfConcreteSamples.toDouble()
+                var element = 0.0
+                for (sample in 0 until numberOfConcreteSamples) {
+                    element += outConcreteSamples.getValue(i, sample) * (inConcreteSamples.getValue(j, sample) - a) /
+                        (numberOfConcreteSamples.toDouble() * inAbstractState.getValue(0, j))
+                }
+                jacobian.setValue(element, i, j)
+            }
+        }
+        return jacobian
+    }
+
+    fun concreteStatesAsTensor(samples: Array<Simulation>): DoubleTensor {
+        // TODO
+        val s = DoubleTensor.zeros(intArrayOf(numberOfQuadrants, samples.size)) // todo add another dimension for pred / prey
+        for (sample in 0 until samples.size) {
+            var abstractSample = mapConcreteSampleToAbstractSpace(samples[sample])
+            for (quadrant in 0 until numberOfQuadrants) {
+                s.setValue(abstractSample.first[quadrant], quadrant, sample)
+            }
+        }
+        return s
+    }
+
+    fun createConcreteSampleStartGrid(): Array2D<Agents> {
         var quadrants = Array<Array2D<Agents>>(numberOfQuadrants, { quadrantNumber ->
             return Array2D(quadrantDimensions.first * quadrantArrangement.first,
-                           quadrantDimensions.second * quadrantArrangement.second,
+                quadrantDimensions.second * quadrantArrangement.second,
                 { i, j ->
                     var targetPreyPopulationToSpawn = PoissonDistribution(quadrantPreyPopulationLambda[quadrantNumber].toDouble()).sample().toDouble()
                     var probabilityPerGridSquare = targetPreyPopulationToSpawn / (quadrantDimensions.first * quadrantDimensions.second)
@@ -110,7 +144,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
             quadrantNumber += 1
         }
 
-        var quadrantRows = Array(quadrantArrangement.second, {_ -> Array2D(1, 1, {_, _ -> Agents.VACANT})})
+        var quadrantRows = Array(quadrantArrangement.second, { _ -> Array2D(1, 1, { _, _ -> Agents.VACANT }) })
         var gridRow = quadrants[0]
         for (j in 0 until quadrantArrangement.second) {
             for (i in 1 until quadrantArrangement.first) {
@@ -126,19 +160,19 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         return grid
     }
 
-    fun mapConcreteSampleToAbstractSpace (concreteState: Simulation) : Pair<IntArray, IntArray> {
-        var abstractState = Pair(IntArray(numberOfQuadrants), IntArray(numberOfQuadrants))
+    fun mapConcreteSampleToAbstractSpace(concreteState: Simulation): Pair<DoubleArray, DoubleArray> {
+        var abstractState = Pair(DoubleArray(numberOfQuadrants), DoubleArray(numberOfQuadrants))
         for (quadCol in 0 until quadrantArrangement.first) {
             for (quadRow in 0 until quadrantArrangement.second) {
                 var quadIndex = quadCol + quadRow * quadrantArrangement.first
-                var offset = Pair(quadCol*quadrantDimensions.first, quadRow*quadrantDimensions.second)
+                var offset = Pair(quadCol * quadrantDimensions.first, quadRow * quadrantDimensions.second)
                 for (col in 0 until quadrantDimensions.first) {
                     for (row in 0 until quadrantDimensions.second) {
                         var candidate = concreteState.getXY(col + offset.first, col + offset.second)
                         if (candidate is Prey) {
-                            abstractState.first[quadIndex] +=1
+                            abstractState.first[quadIndex] = abstractState.first[quadIndex] + 1
                         } else if (candidate is Predator) {
-                            abstractState.second[quadIndex] += 1
+                            abstractState.second[quadIndex] = abstractState.second[quadIndex] + 1
                         }
                     }
                 }
@@ -147,7 +181,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         return abstractState
     }
 
-    fun setStateFromTensor (T: DoubleTensor) {
+    fun setStateFromTensor(T: DoubleTensor) {
         if (T.rank != 2 && T.shape[0] != 2 && T.shape[1] != numberOfQuadrants) {
             throw IllegalArgumentException("The initial population tensor is the wrong rank or shape for the number of quadrants and agent types")
         }
@@ -157,8 +191,8 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         }
     }
 
-    fun setStateFromConcreteSamples (samples: Array<Simulation>) {
-        var abstractSamples = Array(samples.size, {i ->
+    fun setStateFromConcreteSamples(samples: Array<Simulation>) {
+        var abstractSamples = Array(samples.size, { i ->
             mapConcreteSampleToAbstractSpace(samples[i])
         })
         var sum = Pair(DoubleArray(numberOfQuadrants), DoubleArray(numberOfQuadrants))
@@ -174,7 +208,7 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         }
     }
 
-    fun createTensorFromState (): DoubleTensor {
+    fun createTensorFromState(): DoubleTensor {
         var T = DoubleTensor.create(0.0, tensorShape)
         for (i in 0 until numberOfQuadrants) {
             T.setValue(quadrantPreyPopulationLambda[i], 0, i)
@@ -182,6 +216,4 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         }
         return T
     }
-
-
 }
