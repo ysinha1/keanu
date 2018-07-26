@@ -13,7 +13,6 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
 
     val numberOfQuadrants = quadrantArrangement.first * quadrantArrangement.second
     val tensorShape = IntArray(2)
-    var hasBeenCalled = false
     val numberOfConcreteSamples = 1000
 
     init {
@@ -45,10 +44,9 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
     fun calculateDualNumber(inDual: DualNumber?): DualNumber? {
 
         // Dual number for each population should be value: tensor of shape numberOfQuadrants, partialDerivative: tensor of shape numberOfQuadrants by numberOfQuadrants
-        // Full state should therefore be a dual with value: tensor of shape 2 by numberOfQuadrants, partialDerivative: tensor of shape ?
+        // Full state should therefore be a dual with value: tensor of shape 2 by numberOfQuadrants, partialDerivative: tensor of shape 2 by numberOfQuadrants by 2 by numberOfQuadrants
         // TODO decompose the dual then recompose it after?
 
-        hasBeenCalled = true
         if (inDual == null) return null
 
         setStateFromTensor(inDual.value)
@@ -62,16 +60,35 @@ class AbstractModel(val quadrantDimensions: Pair<Int, Int>, val quadrantArrangem
         val outConcretePreyStates = concretePreyStatesAsTensor(concreteStates)
         var outConcretePredatorStates = concretePredatorStatesAsTensor(concreteStates)
 
-        val preyJacobian = calculateJacobian(inConcretePreyStates, outConcretePreyStates, inDual.value) // TODO need to slice the prey part of inDual.value
-        val predatorJacobian = calculateJacobian(inConcretePredatorStates, outConcretePredatorStates, inDual.value) // TODO as above
+        val preyPreyJacobian = calculateJacobian(inConcretePreyStates, outConcretePreyStates, inDual.value[0]) // TODO need to wait for next K release
+        val predatorPredatorJacobian = calculateJacobian(inConcretePredatorStates, outConcretePredatorStates, inDual.value[1]) // TODO as above
+        val preyPredatorJacobian = calculateJacobian(inConcretePreyStates, outConcretePredatorStates, inDual.value[0]) // TODO need to wait for next K release
+        val predatorPreyJacobian = calculateJacobian(inConcretePredatorStates, outConcretePreyStates, inDual.value[1]) // TODO as above
 
         val preyValues = DoubleTensor.create( quadrantPreyPopulationLambda )
-        val predatorValues = DoubleTensor.create( quadrantPredatorPopulationLambda)
+        val predatorValues = DoubleTensor.create( quadrantPredatorPopulationLambda )
+        val values = DoubleTensor.zeros(intArrayOf(2, numberOfQuadrants))
+        values[0] = preyValues
+        values[1] = predatorValues
 
-        val preyPartialDerivatives = inDual.partialDerivatives.asMap().mapValues {
-            preyJacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1))
-                .reshape(1, numberOfQuadrants, 1, numberOfQuadrants)
-        }
+        val partialDerivatives = DoubleTensor.zeros(intArrayOf(2, numberOfQuadrants, 2, numberOfQuadrants))
+        // TODO this may very well be nonsense nonsense nonsense
+//        partialDerivatives[0, :, 0, :] = inDual.partialDerivatives[0, :, 0, :].asMap().mapValues {
+//            preyPreyJacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1))
+//                .reshape(1, numberOfQuadrants, 1, numberOfQuadrants)
+//        }
+//        partialDerivatives[1, :, 1, :] = inDual.partialDerivatives[1, :, 1, :].asMap().mapValues {
+//            predatorPredatorJacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1))
+//                .reshape(1, numberOfQuadrants, 1, numberOfQuadrants)
+//        }
+//        partialDerivatives[0, :, 1, :] = inDual.partialDerivatives[0, :, 1, :].asMap().mapValues {
+//            preyPredatorJacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1))
+//                .reshape(1, numberOfQuadrants, 1, numberOfQuadrants)
+//        }
+//        partialDerivatives[1, :, 0, :] = inDual.partialDerivatives[1, : 0, :].asMap().mapValues {
+//            predatorPreyJacobian.tensorMultiply(it.value, intArrayOf(1), intArrayOf(1))
+//                .reshape(1, numberOfQuadrants, 1, numberOfQuadrants)
+//        }
         return DualNumber(values, partialDerivatives)
     }
 
