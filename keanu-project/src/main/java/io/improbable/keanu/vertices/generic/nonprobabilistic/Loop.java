@@ -37,5 +37,9 @@ public class Loop<T> {
         public WhileLoopVertex<T> whilst(BoolVertex condition) {
             return new WhileLoopVertex<T>(start, lambda, condition);
         }
+
+        public LoopVertex<T> whilst(BayesianNetwork condition) {
+            return new WhileLoopVertex<T>(start, lambda, condition);
+        }
     }
 }

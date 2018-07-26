@@ -1,10 +1,16 @@
 package io.improbable.keanu.vertices.intgr;
 
+import java.util.Map;
+import java.util.function.Function;
+
 import io.improbable.keanu.kotlin.IntegerOperators;
+import io.improbable.keanu.tensor.NumberTensor;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.tensor.intgr.IntegerTensor;
 import io.improbable.keanu.vertices.DiscreteVertex;
 import io.improbable.keanu.vertices.Vertex;
+import io.improbable.keanu.vertices.bool.BoolVertex;
+import io.improbable.keanu.vertices.bool.nonprobabilistic.operators.binary.compare.GreaterThanVertex;
 import io.improbable.keanu.vertices.intgr.nonprobabilistic.CastIntegerVertex;
 import io.improbable.keanu.vertices.intgr.nonprobabilistic.ConstantIntegerVertex;
 import io.improbable.keanu.vertices.intgr.nonprobabilistic.operators.binary.IntegerAdditionVertex;
@@ -14,9 +20,6 @@ import io.improbable.keanu.vertices.intgr.nonprobabilistic.operators.binary.Inte
 import io.improbable.keanu.vertices.intgr.nonprobabilistic.operators.unary.IntegerAbsVertex;
 import io.improbable.keanu.vertices.intgr.nonprobabilistic.operators.unary.IntegerSumVertex;
 import io.improbable.keanu.vertices.intgr.nonprobabilistic.operators.unary.IntegerUnaryOpLambda;
-
-import java.util.Map;
-import java.util.function.Function;
 
 public abstract class IntegerVertex extends DiscreteVertex<IntegerTensor> implements IntegerOperators<IntegerVertex> {
 
@@ -149,4 +152,7 @@ public abstract class IntegerVertex extends DiscreteVertex<IntegerTensor> implem
         return getValue().getValue(index);
     }
 
+    public <T extends NumberTensor<?,?>> BoolVertex greaterThan(Vertex<? extends T> rhs) {
+        return new GreaterThanVertex<>(this, rhs);
+    }
 }
