@@ -1,12 +1,13 @@
 package io.improbable.keanu.tensor.generic;
 
-import io.improbable.keanu.tensor.Tensor;
-import io.improbable.keanu.tensor.TensorShape;
+import static java.util.Arrays.copyOf;
+
+import static io.improbable.keanu.tensor.TensorShape.getFlatIndex;
 
 import java.util.Arrays;
 
-import static io.improbable.keanu.tensor.TensorShape.getFlatIndex;
-import static java.util.Arrays.copyOf;
+import io.improbable.keanu.tensor.Tensor;
+import io.improbable.keanu.tensor.TensorShape;
 
 public class GenericTensor<T> implements Tensor<T> {
 
@@ -188,5 +189,19 @@ public class GenericTensor<T> implements Tensor<T> {
         if (data.length > 0 && !(data[0] instanceof Number)) {
             throw new IllegalStateException(data[0].getClass().getName() + " cannot be converted to number");
         }
+    }
+
+    @Override
+    public String toString() {
+        T[] dataPreview = null;
+        if (data != null) {
+            dataPreview = Arrays.copyOf(data, Math.min(data.length, 100));
+        }
+
+        return "GenericTensor{" +
+            "data=" + Arrays.toString(dataPreview) +
+            ", shape=" + Arrays.toString(shape) +
+            ", stride=" + Arrays.toString(stride) +
+            '}';
     }
 }

@@ -1,16 +1,23 @@
 package io.improbable.keanu.vertices;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import io.improbable.keanu.algorithms.graphtraversal.DiscoverGraph;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
 import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 public abstract class Vertex<T> {
-
+    public Logger log = LoggerFactory.getLogger(this.getClass());
     public static final AtomicLong ID_GENERATOR = new AtomicLong(0L);
 
     private long uuid = ID_GENERATOR.getAndIncrement();
@@ -105,12 +112,14 @@ public abstract class Vertex<T> {
      * @param value the observed value
      */
     public void setValue(T value) {
+        log.trace("Setting value to " + value);
         if (!this.observed) {
             this.value = value;
         }
     }
 
     public T getValue() {
+        log.trace("Getting value");
         return hasValue() ? value : lazyEval();
     }
 

@@ -1,16 +1,18 @@
 package io.improbable.keanu.tensor.bool;
 
+import static java.util.Arrays.copyOf;
+
+import static io.improbable.keanu.tensor.TensorShape.getFlatIndex;
+
+import java.util.Arrays;
+
+import org.apache.commons.lang3.ArrayUtils;
+
 import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.TensorShape;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.tensor.generic.GenericTensor;
 import io.improbable.keanu.tensor.intgr.IntegerTensor;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.Arrays;
-
-import static io.improbable.keanu.tensor.TensorShape.getFlatIndex;
-import static java.util.Arrays.copyOf;
 
 public class SimpleBooleanTensor implements BooleanTensor {
 
@@ -353,4 +355,19 @@ public class SimpleBooleanTensor implements BooleanTensor {
     public Boolean[] asFlatArray() {
         return ArrayUtils.toObject(data);
     }
+
+    @Override
+    public String toString() {
+        boolean[] dataPreview = null;
+        if (data != null) {
+            dataPreview = Arrays.copyOf(data, Math.min(data.length,100));
+        }
+
+        return "SimpleBooleanTensor{" +
+            "data=" + Arrays.toString(dataPreview) +
+            ", shape=" + Arrays.toString(shape) +
+            ", stride=" + Arrays.toString(stride) +
+            '}';
+    }
+
 }

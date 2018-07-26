@@ -1,36 +1,42 @@
 package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
+import java.util.function.Function;
+
 import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.vertices.Vertex;
+import io.improbable.keanu.vertices.bool.BoolVertex;
 import io.improbable.keanu.vertices.intgr.IntegerVertex;
 
-public class Loop {
-    private final IntegerVertex times;
+public class Loop<T> {
+    private final Vertex<T> start;
 
-    private Loop(IntegerVertex times) {
-        this.times = times;
+    public Loop(Vertex<T> start) {
+        this.start = start;
     }
 
-    public LoopBodyBuilder startingFrom(IntegerVertex start) {
-        return new LoopBodyBuilder(times, start);
+    public static <T> Loop startingFrom(Vertex<T> start) {
+        return new Loop(start);
     }
 
-    public static Loop times(IntegerVertex times) {
-        return new Loop(times);
+    public LoopBodyBuilder apply(Function<T, T> lambda) {
+        return new LoopBodyBuilder(start, lambda);
     }
+
     public static class LoopBodyBuilder<T> {
+        private final Vertex<Tensor<T>> start;
+        private final Function<Tensor<T>, Tensor<T>> lambda;
 
-        private final IntegerVertex times;
-        private final Vertex<? extends Tensor<T>> start;
-
-        public LoopBodyBuilder(IntegerVertex times, Vertex<? extends Tensor<T>> start) {
-
-            this.times = times;
+        public LoopBodyBuilder(Vertex start, Function<Tensor<T>, Tensor<T>> lambda) {
             this.start = start;
+            this.lambda = lambda;
         }
 
-        public LoopVertex apply(Vertex<? extends Tensor<T>> lambda) {
-            return new LoopVertex<T>(lambda.getShape(), times, start, lambda);
+        public NumberLoopVertex<T> times(IntegerVertex times) {
+            return new NumberLoopVertex<T>(start, lambda, times);
+        }
+
+        public WhileLoopVertex<T> whilst(BoolVertex condition) {
+            return new WhileLoopVertex<T>(start, lambda, condition);
         }
     }
 }

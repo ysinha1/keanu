@@ -20,6 +20,6 @@ public class InputVertex<T> extends NonProbabilistic<Tensor<T>> {
 
     @Override
     public Tensor<T> sample(KeanuRandom random) {
-        return null;
+        return start.sample(random);
     }
 }
