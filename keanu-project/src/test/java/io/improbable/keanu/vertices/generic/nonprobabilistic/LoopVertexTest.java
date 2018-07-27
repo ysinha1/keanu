@@ -29,7 +29,7 @@ public class LoopVertexTest {
     public void youCanLoopNTimes() {
         log.info("***** Setting up");
         DoubleVertex start = ConstantVertex.of(0.);
-        BayesianNetwork lambda = buildIncrementNetwork();
+        BayesianNetwork lambda = buildPlusPlusIncrement();
         IntegerVertex times = ConstantVertex.of(4);
         NumberLoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).times(times);
         log.info("***** getValue");
@@ -48,7 +48,7 @@ public class LoopVertexTest {
     public void youCanChangeTheNumberOfTimesToLoop() {
         log.info("***** Setting up");
         DoubleVertex start = ConstantVertex.of(0.);
-        BayesianNetwork lambda = buildIncrementNetwork();
+        BayesianNetwork lambda = buildPlusPlusIncrement();
         IntegerVertex times = ConstantVertex.of(4);
         NumberLoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).times(times);
         log.info("***** setAndCascade");
@@ -63,7 +63,7 @@ public class LoopVertexTest {
     public void youCanLoopWhileAConditionIsMet() {
         log.info("***** Setting up ******");
         DoubleVertex start = ConstantVertex.of(0.);
-        BayesianNetwork lambda = buildIncrementNetwork();
+        BayesianNetwork lambda = buildPlusPlusIncrement();
         BoolVertex condition = new Flip(0.5);
 
         LoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
@@ -83,7 +83,7 @@ public class LoopVertexTest {
     public void theConditionCanBeDependentOnTheLambda() {
         log.info("Setting up");
         DoubleVertex start = ConstantVertex.of(0.);
-        BayesianNetwork lambda = buildIncrementNetwork();
+        BayesianNetwork lambda = buildPlusPlusIncrement();
         BayesianNetwork condition = buildLessThanConstantNetwork();
 
         LoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
@@ -96,11 +96,12 @@ public class LoopVertexTest {
         log.info("getValue");
         assertEquals(5, loop.getValue().scalar().doubleValue(), 1e-8);
     }
+
     @Test
     public void theConditionCanBeProbabilistic() {
         log.info("Setting up");
         DoubleVertex start = ConstantVertex.of(0.);
-        BayesianNetwork lambda = buildIncrementNetwork();
+        BayesianNetwork lambda = buildPlusPlusIncrement();
         BayesianNetwork condition = buildLessThanVariableNetwork();
 
         LoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
@@ -114,10 +115,33 @@ public class LoopVertexTest {
         assertEquals(9, loop.getValue().scalar().doubleValue(), 1e-8);
     }
 
+    @Test
+    public void theLambdaCanBeProbabilistic() {
+        log.info("Setting up");
+        DoubleVertex start = ConstantVertex.of(0.);
+        BayesianNetwork lambda = buildPlusVariableIncrement();
+        BayesianNetwork condition = buildLessThanConstantNetwork();
 
-    private BayesianNetwork buildIncrementNetwork() {
+        LoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
+        log.info("Sample");
+        assertEquals(5.14940222, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(5.42348173, loop.getValue().scalar().doubleValue(), 1e-8);
+        log.info("Sample");
+        assertEquals(5.06548962, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(5.42348173, loop.getValue().scalar().doubleValue(), 1e-8);
+    }
+
+    private BayesianNetwork buildPlusPlusIncrement() {
         PlaceholderVertex input = new PlaceholderVertex(1, 1);;
         Vertex output = ConstantVertex.of(1.).plus(input);
+        return new BayesianNetwork(output.getConnectedGraph());
+    }
+
+    private BayesianNetwork buildPlusVariableIncrement() {
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        Vertex output = new GaussianVertex(0., 1.).plus(input);
         return new BayesianNetwork(output.getConnectedGraph());
     }
 
