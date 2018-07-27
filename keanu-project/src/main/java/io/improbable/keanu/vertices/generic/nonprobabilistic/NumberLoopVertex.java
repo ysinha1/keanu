@@ -13,15 +13,13 @@ public class NumberLoopVertex<T> extends LoopVertex<T> {
 
     private final IntegerVertex times;
     private final Vertex<Tensor<T>> start;
-    private final BayesianNetwork lambda;
     private final Vertex<Tensor<T>> input;
     private final Vertex<Tensor<T>> output;
 
     public NumberLoopVertex(Vertex<Tensor<T>> start, BayesianNetwork lambda, IntegerVertex times) {
         this.times = times;
         this.start = start;
-        this.lambda = lambda;
-        setParents(start, times);
+        setParents(times);
 
         input = Iterables.getOnlyElement(lambda.getInputVertices());
         output = Iterables.getOnlyElement(lambda.getOutputVertices());
@@ -31,7 +29,13 @@ public class NumberLoopVertex<T> extends LoopVertex<T> {
 
     @Override
     public Tensor<T> getDerivedValue() {
-        return output.getValue();
+        Tensor<T> value = start.getValue();
+        IntegerTensor numTimes = times.sample();
+        for (int i=0; i < numTimes.scalar().intValue(); i++) {
+            input.setAndCascade(value);
+            value = output.getValue();
+        }
+        return value;
     }
 
     @Override

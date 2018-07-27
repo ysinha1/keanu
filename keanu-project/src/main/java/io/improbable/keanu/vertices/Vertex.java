@@ -112,7 +112,7 @@ public abstract class Vertex<T> {
      * @param value the observed value
      */
     public void setValue(T value) {
-        log.trace(String.format("setValue(%s)", value));
+        log.trace("setValue({})", value);
         if (!this.observed) {
             this.value = value;
         }
@@ -120,12 +120,12 @@ public abstract class Vertex<T> {
 
     public T getValue() {
         if (hasValue()) {
-            log.trace(String.format("getValue() --> %s", value));
+            log.trace("getValue() --> {}", value);
             return value;
         } else {
-            log.trace(String.format("getValue() --> evaluating"));
+            log.trace("getValue() --> evaluating");
             T newValue = lazyEval();
-            log.trace(String.format("getValue() --> %s", newValue));
+            log.trace("getValue() --> {}", newValue);
             return newValue;
         }
     }
@@ -172,6 +172,7 @@ public abstract class Vertex<T> {
      * @param value the value to be observed
      */
     public void observe(T value) {
+        log.trace("observe({})", value);
         this.value = value;
         this.observed = true;
     }
