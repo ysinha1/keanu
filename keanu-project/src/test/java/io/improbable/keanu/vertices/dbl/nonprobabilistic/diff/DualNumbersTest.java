@@ -1,25 +1,115 @@
 package io.improbable.keanu.vertices.dbl.nonprobabilistic.diff;
 
-import io.improbable.keanu.tensor.dbl.DoubleTensor;
-import io.improbable.keanu.vertices.dbl.DoubleVertex;
-import io.improbable.keanu.vertices.dbl.nonprobabilistic.operators.unary.LogVertex;
-import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
-import org.junit.Before;
-import org.junit.Test;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
+import org.hamcrest.Description;
+import org.hamcrest.Matcher;
+import org.hamcrest.TypeSafeDiagnosingMatcher;
+import org.junit.Before;
+import org.junit.Test;
+
+import io.improbable.keanu.tensor.Tensor;
+import io.improbable.keanu.tensor.dbl.DoubleTensor;
+import io.improbable.keanu.vertices.ConstantVertex;
+import io.improbable.keanu.vertices.dbl.DoubleVertex;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.operators.unary.LogVertex;
+import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
+import io.improbable.keanu.vertices.dbl.probabilistic.UniformVertex;
 
 public class DualNumbersTest {
 
     DoubleVertex vA;
     DoubleVertex vB;
 
+    DoubleVertex variable;
+
     @Before
     public void setup() {
         vA = new GaussianVertex(1.0, 0.0);
         vB = new GaussianVertex(2.0, 0.0);
+        variable = new UniformVertex(0., 1.);  // any probabilistic vertex would do
+
+        DoubleTensor t = DoubleTensor.eye(5);
+        Double scalar = t.scalar();
+        assertEquals(scalar, 1., 1e-10);
+    }
+
+    @Test
+    public void theDerivativeOf2xIs2() {
+        ConstantDoubleVertex y = ConstantVertex.of(2.);
+        DoubleVertex result = variable.times(y);
+        assertThat(result.getDualNumber().getPartialDerivatives().withRespectTo(variable), isScalarWithValue(equalTo(2.)));
+    }
+
+    @Test
+    public void theDerivativeOfXSquaredIs2X() {
+        DoubleVertex x = new UniformVertex(0., 1.);
+        DoubleVertex result = x.pow(2);
+        DualNumber dualNumber = result.getDualNumber();
+        assertThat(dualNumber.getPartialDerivatives().withRespectTo(x), isScalarWithValue(equalTo(2. * x.getValue().scalar())));
+    }
+
+    @Test
+    public void theDerivativeOfLogXIs1OverX() {
+        DoubleVertex result = variable.log();
+        DualNumber dualNumber = result.getDualNumber();
+        assertThat(dualNumber.getPartialDerivatives().withRespectTo(variable), isScalarWithValue(equalTo(1./variable.getValue().scalar())));
+    }
+
+    @Test
+    public void theDualOfASumIsItsValue() {
+        DoubleVertex result = ConstantVertex.of(6.).plus(ConstantVertex.of(7.));
+        assertThat(result.getDualNumber().getValue(), isScalarWithValue(equalTo(13.)));
+    }
+
+    @Test
+    public void theDerivativeWithRespectToAConstantIsZero() {
+        ConstantDoubleVertex x = ConstantVertex.of(2.);
+        ConstantDoubleVertex y = ConstantVertex.of(3.);
+        DoubleVertex result = x.times(y).log();
+        assertThat(result.getDualNumber().getPartialDerivatives().withRespectTo(x), isScalarWithValue(equalTo(0.)));
+    }
+
+    @Test
+    public void theDualOfAProbabilisticVertexIsItsSampledValue() {
+        assertThat(
+            new UniformVertex(0., 1.).getDualNumber().getValue(),
+            isScalarWithValue(both(greaterThan(0.)).and(lessThan(1.)))
+        );
+    }
+
+
+    @Test
+    public void whenYouObserveAVertexYouFixItsValue() {
+        UniformVertex uniformVertex = new UniformVertex(0., 1.);
+        uniformVertex.observe(0.42);
+        assertThat(
+            uniformVertex.getDualNumber().getValue(),
+            isScalarWithValue(equalTo(0.42))
+        );
+    }
+
+    private <T> Matcher<Tensor<T>> isScalarWithValue(Matcher<T> value) {
+        return new TypeSafeDiagnosingMatcher<Tensor<T>>() {
+            @Override
+            protected boolean matchesSafely(Tensor<T> item, Description mismatchDescription) {
+                mismatchDescription.appendValue(item);
+                return item.isScalar() && value.matches(item.getValue(0));
+            }
+
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Scalar with value ").appendValue(value);
+            }
+        };
     }
 
     @Test
