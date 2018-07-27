@@ -14,6 +14,7 @@ import io.improbable.keanu.vertices.bool.BoolVertex;
 import io.improbable.keanu.vertices.bool.probabilistic.Flip;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
 import io.improbable.keanu.vertices.intgr.IntegerVertex;
 
 public class LoopVertexTest {
@@ -78,18 +79,6 @@ public class LoopVertexTest {
         assertEquals(0., loop.getValue().scalar().doubleValue(), 1e-8);
     }
 
-    private BayesianNetwork buildIncrementNetwork() {
-        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
-        Vertex output = ConstantVertex.of(1.).plus(input);
-        return new BayesianNetwork(output.getConnectedGraph());
-    }
-
-    private BayesianNetwork buildLessThanConstantNetwork() {
-        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
-        BoolVertex output = ConstantVertex.of(5).greaterThan(input);
-        return new BayesianNetwork(output.getConnectedGraph());
-    }
-
     @Test
     public void theConditionCanBeDependentOnTheLambda() {
         log.info("Setting up");
@@ -102,5 +91,46 @@ public class LoopVertexTest {
         assertEquals(5, loop.sample().scalar().doubleValue(), 1e-8);
         log.info("getValue");
         assertEquals(5, loop.getValue().scalar().doubleValue(), 1e-8);
+        log.info("Sample");
+        assertEquals(5, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(5, loop.getValue().scalar().doubleValue(), 1e-8);
+    }
+    @Test
+    public void theConditionCanBeProbabilistic() {
+        log.info("Setting up");
+        DoubleVertex start = ConstantVertex.of(0.);
+        BayesianNetwork lambda = buildIncrementNetwork();
+        BayesianNetwork condition = buildLessThanVariableNetwork();
+
+        LoopVertex<Double> loop = Loop.startingFrom(start).apply(lambda).whilst(condition);
+        log.info("Sample");
+        assertEquals(11, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(11, loop.getValue().scalar().doubleValue(), 1e-8);
+        log.info("Sample");
+        assertEquals(9, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(9, loop.getValue().scalar().doubleValue(), 1e-8);
+    }
+
+
+    private BayesianNetwork buildIncrementNetwork() {
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        Vertex output = ConstantVertex.of(1.).plus(input);
+        return new BayesianNetwork(output.getConnectedGraph());
+    }
+
+    private BayesianNetwork buildLessThanConstantNetwork() {
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        BoolVertex output = ConstantVertex.of(5).greaterThan(input);
+        return new BayesianNetwork(output.getConnectedGraph());
+    }
+
+    private BayesianNetwork buildLessThanVariableNetwork() {
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);
+        BoolVertex output = new GaussianVertex( 10., 2.).greaterThan(input);
+        return new BayesianNetwork(output.getConnectedGraph());
+
     }
 }
