@@ -17,7 +17,7 @@ import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
 public abstract class Vertex<T> {
-    public Logger log = LoggerFactory.getLogger(this.getClass());
+    protected Logger log = LoggerFactory.getLogger(this.getClass());
     public static final AtomicLong ID_GENERATOR = new AtomicLong(0L);
 
     private long uuid = ID_GENERATOR.getAndIncrement();
@@ -112,15 +112,22 @@ public abstract class Vertex<T> {
      * @param value the observed value
      */
     public void setValue(T value) {
-        log.trace("Setting value to " + value);
+        log.trace(String.format("setValue(%s)", value));
         if (!this.observed) {
             this.value = value;
         }
     }
 
     public T getValue() {
-        log.trace("Getting value");
-        return hasValue() ? value : lazyEval();
+        if (hasValue()) {
+            log.trace(String.format("getValue() --> %s", value));
+            return value;
+        } else {
+            log.trace(String.format("getValue() --> evaluating"));
+            T newValue = lazyEval();
+            log.trace(String.format("getValue() --> %s", newValue));
+            return newValue;
+        }
     }
 
     protected T getRawValue() {
