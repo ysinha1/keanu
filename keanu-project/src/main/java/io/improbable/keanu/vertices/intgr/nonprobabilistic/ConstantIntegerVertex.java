@@ -1,9 +1,13 @@
 package io.improbable.keanu.vertices.intgr.nonprobabilistic;
 
-import io.improbable.keanu.tensor.intgr.IntegerTensor;
-import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import java.util.Map;
 
-public class ConstantIntegerVertex extends NonProbabilisticInteger {
+import io.improbable.keanu.tensor.intgr.IntegerTensor;
+import io.improbable.keanu.vertices.dbl.Differentiable;
+import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber;
+
+public class ConstantIntegerVertex extends NonProbabilisticInteger implements Differentiable {
 
     public ConstantIntegerVertex(IntegerTensor constant) {
         setValue(constant);
@@ -25,5 +29,10 @@ public class ConstantIntegerVertex extends NonProbabilisticInteger {
     @Override
     public IntegerTensor getDerivedValue() {
         return getValue();
+    }
+
+    @Override
+    public DualNumber calculateDualNumber(Map<Differentiable, DualNumber> dualNumbers) {
+        return DualNumber.createConstant(getValue().toDouble());
     }
 }

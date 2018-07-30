@@ -7,6 +7,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.collect.Iterables;
+
 import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.Vertex;
@@ -14,7 +16,10 @@ import io.improbable.keanu.vertices.bool.BoolVertex;
 import io.improbable.keanu.vertices.bool.probabilistic.Flip;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.CastDoubleVertex;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
+import io.improbable.keanu.vertices.dbl.probabilistic.UniformVertex;
 import io.improbable.keanu.vertices.intgr.IntegerVertex;
 
 public class LoopVertexTest {
@@ -115,6 +120,44 @@ public class LoopVertexTest {
         assertEquals(9, loop.getValue().scalar().doubleValue(), 1e-8);
     }
 
+
+    @Test
+    public void theLambdaCanBeDependentOnTheLoopsParents() {
+        log.info("Setting up");
+        DoubleVertex x = new GaussianVertex(0, 1);
+        BayesianNetwork lambda = buildPlusPlusIncrement();
+        BayesianNetwork condition = buildLessThanConstantNetwork();
+
+        LoopVertex<Double> loop = Loop.startingFrom(x).apply(lambda).whilst(condition);
+        loop.addParent(x);
+        log.info("Sample");
+        assertEquals(5.05531947, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(5.05531947, loop.getValue().scalar().doubleValue(), 1e-8);
+        log.info("Sample");
+        assertEquals(5.05531947, loop.sample().scalar().doubleValue(), 1e-8);
+        log.info("getValue");
+        assertEquals(5.05531947, loop.getValue().scalar().doubleValue(), 1e-8);
+    }
+
+
+    @Test
+    public void youCanCalculateTheDual() {
+        log.info("***** Setting up");
+        DoubleVertex x = new UniformVertex(2., 2.);
+        BayesianNetwork lambda = buildPolynomial(); // x -> x^2 + 1
+        IntegerVertex times = ConstantVertex.of(2);
+
+        LoopVertex<Double> loop = Loop.startingFrom(x).apply(lambda).times(times);
+        log.info("***** getValue");
+        assertEquals(26., loop.getValue().scalar().doubleValue(), 1e-8); // x -> (x^2 + 1)^2 + 1 = x^4 + 2x^2 + 2
+        DualNumber dualNumber = loop.getDualNumber();
+        assertEquals(26., dualNumber.getValue().scalar(), 1e-8);
+        Vertex input = Iterables.getOnlyElement(lambda.getInputVertices());
+        assertEquals(40., dualNumber.getPartialDerivatives().withRespectTo(x).scalar().doubleValue(), 1e-8); // x -> 4x^3 + 4x
+
+    }
+
     @Test
     public void theLambdaCanBeProbabilistic() {
         log.info("Setting up");
@@ -134,19 +177,25 @@ public class LoopVertexTest {
     }
 
     private BayesianNetwork buildPlusPlusIncrement() {
-        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);
         Vertex output = ConstantVertex.of(1.).plus(input);
         return new BayesianNetwork(output.getConnectedGraph());
     }
 
+    private BayesianNetwork buildPolynomial() {
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);
+        Vertex output = new CastDoubleVertex(input).pow(2.).plus(1.);
+        return new BayesianNetwork(output.getConnectedGraph());
+    }
+
     private BayesianNetwork buildPlusVariableIncrement() {
-        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);
         Vertex output = new GaussianVertex(0., 1.).plus(input);
         return new BayesianNetwork(output.getConnectedGraph());
     }
 
     private BayesianNetwork buildLessThanConstantNetwork() {
-        PlaceholderVertex input = new PlaceholderVertex(1, 1);;
+        PlaceholderVertex input = new PlaceholderVertex(1, 1);
         BoolVertex output = ConstantVertex.of(5).greaterThan(input);
         return new BayesianNetwork(output.getConnectedGraph());
     }

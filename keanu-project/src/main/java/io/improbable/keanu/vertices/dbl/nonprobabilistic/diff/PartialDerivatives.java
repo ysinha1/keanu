@@ -270,4 +270,10 @@ public class PartialDerivatives {
         );
     }
 
+    @Override
+    public String toString() {
+        return "PartialDerivatives{" +
+            derivativeWithRespectTo +
+            '}';
+    }
 }

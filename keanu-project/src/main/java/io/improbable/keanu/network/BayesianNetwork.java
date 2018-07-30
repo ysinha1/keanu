@@ -23,7 +23,7 @@ public class BayesianNetwork {
     //Lazy evaluated
     private List<Vertex<DoubleTensor>> continuousLatentVertices;
     private List<Vertex> discreteLatentVertices;
-    private List<Vertex> inputVertices;
+    private List<PlaceholderVertex> inputVertices;
     private List<Vertex> outputVertices;
 
     public BayesianNetwork(Set<? extends Vertex> vertices) {
@@ -43,6 +43,7 @@ public class BayesianNetwork {
         inputVertices = vertices.stream()
             .filter(v -> v.getParents().isEmpty())
             .filter(v -> v instanceof PlaceholderVertex)
+            .map(v -> (PlaceholderVertex) v)
             .collect(Collectors.toList());
 
         outputVertices = vertices.stream()
@@ -66,7 +67,7 @@ public class BayesianNetwork {
         return observedVertices;
     }
 
-    public Collection<Vertex> getInputVertices() {
+    public Collection<PlaceholderVertex> getInputVertices() {
         return inputVertices;
     }
 

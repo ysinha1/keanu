@@ -1,9 +1,15 @@
 package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
-import io.improbable.keanu.tensor.dbl.DoubleTensor;
-import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import java.util.Map;
 
-public class PlaceholderVertex extends NonProbabilistic<DoubleTensor> {
+import io.improbable.keanu.tensor.dbl.DoubleTensor;
+import io.improbable.keanu.vertices.dbl.Differentiable;
+import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber;
+
+public class PlaceholderVertex extends NonProbabilistic<DoubleTensor> implements Differentiable {
+
+    private DualNumber dualNumber;
 
     public PlaceholderVertex(int... shape) {
         setValue(DoubleTensor.placeHolder(shape));
@@ -17,5 +23,14 @@ public class PlaceholderVertex extends NonProbabilistic<DoubleTensor> {
     @Override
     public DoubleTensor sample(KeanuRandom random) {
         return getValue();
+    }
+
+    public void setDualNumber(DualNumber dualNumber) {
+        this.dualNumber = dualNumber;
+    }
+
+    @Override
+    public DualNumber calculateDualNumber(Map<Differentiable, DualNumber> dualNumbers) {
+        return dualNumber;
     }
 }
