@@ -1,12 +1,13 @@
 package io.improbable.keanu.vertices.dbl.nonprobabilistic;
 
+import java.util.Map;
+
 import io.improbable.keanu.tensor.NumberTensor;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.Vertex;
+import io.improbable.keanu.vertices.dbl.Differentiable;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber;
-
-import java.util.Map;
 
 public class CastDoubleVertex extends NonProbabilisticDouble {
 
@@ -28,7 +29,12 @@ public class CastDoubleVertex extends NonProbabilisticDouble {
     }
 
     @Override
-    public DualNumber calculateDualNumber(Map<Vertex, DualNumber> dualNumbers) {
-        throw new UnsupportedOperationException("CastDoubleTensorVertex is non-differentiable");
+    public DualNumber calculateDualNumber(Map<Differentiable, DualNumber> dualNumbers) {
+        if (inputVertex instanceof Differentiable) {
+            return ((Differentiable) inputVertex).calculateDualNumber(dualNumbers);
+        } else {
+            throw new UnsupportedOperationException("CastDoubleTensorVertex is non-differentiable");
+
+        }
     }
 }
