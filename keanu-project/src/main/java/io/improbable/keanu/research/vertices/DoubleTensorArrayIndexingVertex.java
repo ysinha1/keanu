@@ -11,21 +11,21 @@ import java.util.stream.Collectors;
 
 public class DoubleTensorArrayIndexingVertex extends DoubleUnaryOpLambda<DoubleTensor> {
 
-    public DoubleTensorArrayIndexingVertex(Vertex<DoubleTensor> input, int[] valueIndex, int[] dualIndex) {
+    public DoubleTensorArrayIndexingVertex(Vertex<DoubleTensor> input, int[] index) {
         super(Tensor.SCALAR_SHAPE, input,
-            (DoubleTensor in) -> extractFromTensor(in, valueIndex),
+            (DoubleTensor in) -> extractFromTensor(in, index),
             (Map<Vertex, DualNumber> duals) -> {
                 DualNumber inDual = duals.get(input);
-                return extractDualNumberByIndex(inDual, valueIndex, dualIndex);
+                return extractDualNumberByIndex(inDual, index);
             });
     }
 
-    private static DualNumber extractDualNumberByIndex(DualNumber dual, int[] valueIndex, int[] dualIndex) {
-        System.out.println("Extracting dual number");
-        DoubleTensor extractedValueTensor = extractFromTensor(dual.getValue(), valueIndex);
+    private static DualNumber extractDualNumberByIndex(DualNumber dual, int[] index) {
+//        System.out.println("Extracting dual number");
+        DoubleTensor extractedValueTensor = extractFromTensor(dual.getValue(), index);
         Map<Long, DoubleTensor> extractedPartialDerivatives = new HashMap<>();
         for (Map.Entry<Long, DoubleTensor> entry : dual.getPartialDerivatives().asMap().entrySet()) {
-            DoubleTensor extractedPartialDerivative = extractFromTensor(entry.getValue(), dualIndex);
+            DoubleTensor extractedPartialDerivative = extractFromTensor(entry.getValue(), index);
             extractedPartialDerivatives.put(entry.getKey(), extractedPartialDerivative);
         }
 
@@ -43,29 +43,29 @@ public class DoubleTensorArrayIndexingVertex extends DoubleUnaryOpLambda<DoubleT
         }
 
 
-        System.out.println("Extracted shape = " + Arrays.toString(extractedShape));
+//        System.out.println("Extracted shape = " + Arrays.toString(extractedShape));
         List<int[]> indexes = new ArrayList<>();
 
         discoverIndexes(indexes, shape, new int[shape.length], 0);
         List<int[]> matchingIndexes = indexes.stream().filter(i -> startMatches(index, i)).collect(Collectors.toList());
 
-        System.out.println("Indexes:");
-        for (int[] idx : indexes) {
-            System.out.println(Arrays.toString(idx));
-        }
-
-        System.out.println("Matching indexes:");
-        for (int[] idx : matchingIndexes) {
-            System.out.println(Arrays.toString(idx));
-        }
+////        System.out.println("Indexes:");
+//        for (int[] idx : indexes) {
+//            System.out.println(Arrays.toString(idx));
+//        }
+//
+////        System.out.println("Matching indexes:");
+//        for (int[] idx : matchingIndexes) {
+//            System.out.println(Arrays.toString(idx));
+//        }
 
         DoubleTensor extractedTensor = DoubleTensor.zeros(extractedShape);
-        System.out.println("Extracted tensor has shape " + Arrays.toString(extractedTensor.getShape()));
+//        System.out.println("Extracted tensor has shape " + Arrays.toString(extractedTensor.getShape()));
 
         for (int[] matchingIndex : matchingIndexes) {
             int[] extractedIndex = Arrays.copyOfRange(matchingIndex, extractedShapeLength, matchingIndex.length);
             double value = doubleTensor.getValue(matchingIndex);
-            System.out.println("Setting index " + Arrays.toString(extractedIndex) + " to " + value + " from index " + Arrays.toString(matchingIndex));
+//            System.out.println("Setting index " + Arrays.toString(extractedIndex) + " to " + value + " from index " + Arrays.toString(matchingIndex));
             extractedTensor.setValue(value, extractedIndex);
         }
 

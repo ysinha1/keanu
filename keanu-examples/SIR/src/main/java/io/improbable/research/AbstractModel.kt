@@ -1,27 +1,25 @@
 package io.improbable.research
 
 import io.improbable.keanu.tensor.dbl.DoubleTensor
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.DualNumber
 import org.apache.commons.math3.distribution.PoissonDistribution
 import org.apache.commons.math3.random.MersenneTwister
 
-class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
+class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double, val name: String = "") {
     val Nsamples = 10000 // number of samples of the concrete model
     val rand = MersenneTwister()
-//    var concreteStates = Array<SIRModel>()
+    var upstreamAbstractModel: AbstractModel? = null
+    var concreteStates = arrayOf<SIRModel>()
 
     var hasBeenCalled = 0
 
-    constructor(T: DoubleTensor) :
-        this(T.getValue(0), T.getValue(1), T.getValue(2)) {
-    }
-
-    constructor(s: DoubleTensor, i: DoubleTensor, r: DoubleTensor) :
-        this(s.scalar(), i.scalar(), r.scalar()) {
+    constructor(T: DoubleTensor, name: String = "") :
+        this(T.getValue(0), T.getValue(1), T.getValue(2), name) {
+//        println("AbstractModel created with rhoS = $rhoS, rhoI = $rhoI, rhoR = $rhoR")
     }
 
     fun step() {
-        val concreteStates = createConcreteSamples()
         concreteStates.forEach { model -> model.step() }
         setStateFromConcreteSamples(concreteStates)
     }
@@ -45,15 +43,15 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
 
         if (inDual == null) return null
 
-        println("calculating jacobian at ${inDual.value}")
+//        println("calculating jacobian at ${inDual.value}")
         setStateFromTensor(inDual.value)
 
-        val concreteStates = createConcreteSamples()
+        setConcreteStates()
         val inConcreteStates = asMatrix(concreteStates)  // 3xNsamples matrix
         concreteStates.forEach { it.step() }
         setStateFromConcreteSamples(concreteStates)
         val outConcreteStates = asMatrix(concreteStates)
-        println("State at end of step is ${getStateAsTensor()}")
+//        println("State at end of step is ${getStateAsTensor()}")
 
         val jacobian = calculateJacobian(inConcreteStates, outConcreteStates, inDual.value)
 
@@ -66,6 +64,54 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
         val dual = DualNumber(values, partialDerivatives)
 
         return dual
+    }
+
+    fun setConcreteStates() {
+        if (concreteStates.isEmpty()) {
+            createConcreteStates()
+        }
+
+        if (upstreamAbstractModel == null) {
+            println("Sampling concrete states from abstract state (no upstream abstract model)")
+            val sPoisson = PoissonDistribution(rhoS)
+            val iPoisson = PoissonDistribution(rhoI)
+            val rPoisson = PoissonDistribution(rhoR)
+
+            for (i in 0 until Nsamples) {
+                val concreteState = concreteStates[i]
+                concreteState.S = sPoisson.sample()
+                concreteState.I = iPoisson.sample()
+                concreteState.R = rPoisson.sample()
+            }
+        } else {
+            println("Setting concrete states from upstream")
+            for (i in 0 until Nsamples) {
+                val upstreamConcreteState = upstreamAbstractModel!!.concreteStates[i]
+                val concreteState = concreteStates[i]
+                concreteState.S = upstreamConcreteState.S
+                concreteState.I = upstreamConcreteState.I
+                concreteState.R = upstreamConcreteState.R
+            }
+        }
+    }
+
+    fun createConcreteStates() {
+        println("Creating concrete states")
+        val sPoisson = PoissonDistribution(rhoS)
+        val iPoisson = PoissonDistribution(rhoI)
+        val rPoisson = PoissonDistribution(rhoR)
+
+        concreteStates = Array(Nsamples, {
+            SIRModel(
+                sPoisson.sample(),
+                iPoisson.sample(),
+                rPoisson.sample(),
+//                PoissonDistribution(rhoS).sample(),
+//                PoissonDistribution(rhoI).sample(),
+//                PoissonDistribution(rhoR).sample(),
+                rand
+            )
+        })
     }
 
     fun calculateJacobianTensor(inConcreteStates: DoubleTensor, outConcreteStates: DoubleTensor, inDualValue: DoubleTensor): DoubleTensor {
@@ -130,16 +176,7 @@ class AbstractModel(var rhoS: Double, var rhoI: Double, var rhoR: Double) {
             s.setValue(samples[i].R.toDouble(), 2, i)
         }
         return s
-    }
 
-    fun createConcreteSamples(): Array<SIRModel> {
-        return Array(Nsamples, {
-            SIRModel(
-                PoissonDistribution(rhoS).sample(),
-                PoissonDistribution(rhoI).sample(),
-                PoissonDistribution(rhoR).sample(),
-                rand
-            )
-        })
+        ConstantDoubleVertex(0.0).value.setValue(1.0, 0, 0)
     }
 }

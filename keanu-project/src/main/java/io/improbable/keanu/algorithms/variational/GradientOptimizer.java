@@ -24,7 +24,7 @@ public class GradientOptimizer extends Optimizer {
 
     public static final NonLinearConjugateGradientOptimizer DEFAULT_OPTIMIZER = new NonLinearConjugateGradientOptimizer(
         NonLinearConjugateGradientOptimizer.Formula.POLAK_RIBIERE,
-        new SimpleValueChecker(1e-8, 1e-8)
+        new SimpleValueChecker(1e-5, 1e-5)
     );
 
     private final BayesianNetwork bayesNet;

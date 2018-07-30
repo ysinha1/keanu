@@ -9,15 +9,15 @@ import io.improbable.keanu.vertices.dbl.nonprobabilistic.operators.unary.DoubleU
 //class ModelVertexNoTensor : DoubleTernaryOpLambda<DoubleTensor, DoubleTensor, DoubleTensor> {
 //    val model: AbstractModel
 //
-//    constructor(s: Vertex<DoubleTensor>, i: Vertex<DoubleTensor>, r: Vertex<DoubleTensor>, model: AbstractModel = AbstractModel(s.value, i.value, r.value)) :
-//        super(intArrayOf(1, 3), s, i, r,
-//            { s: DoubleTensor, i: DoubleTensor, r: DoubleTensor ->
-//                model.setState(s.scalar(), i.scalar(), r.scalar())
+//    constructor(S: Vertex<DoubleTensor>, I: Vertex<DoubleTensor>, R: Vertex<DoubleTensor>, model: AbstractModel = AbstractModel(S.value, I.value, R.value)) :
+//        super(intArrayOf(1, 3), s, I, R,
+//            { s: DoubleTensor, I: DoubleTensor, R: DoubleTensor ->
+//                model.setState(s.scalar(), I.scalar(), R.scalar())
 //                model.step()
 //                model.getStateAsTensor()
 //            },
 //            { dualMap: Map<out Vertex<out Any>, DualNumber> ->
-//                model.calculateDualNumber(dualMap.get(s)!!, dualMap[i]!!, dualMap[r]!!, s.id, i.id, r.id)
+//                model.calculateDualNumber(dualMap.get(S)!!, dualMap[I]!!, dualMap[R]!!, S.id, I.id, R.id)
 //            }) {
 //
 //        this.model = model

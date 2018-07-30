@@ -7,7 +7,7 @@ import io.improbable.keanu.vertices.dbl.nonprobabilistic.operators.unary.DoubleU
 class ModelVertex : DoubleUnaryOpLambda<DoubleTensor> {
     val model : AbstractModel
 
-    constructor(inVertex : Vertex<DoubleTensor>, model : AbstractModel = AbstractModel(inVertex.value)) :
+    constructor(inVertex : Vertex<DoubleTensor>, model : AbstractModel = AbstractModel(inVertex.value), name: String = "") :
         super(inVertex, {
             model.setStateFromTensor(it)
             model.step(it)

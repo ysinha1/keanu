@@ -3,13 +3,20 @@ package io.improbable.research
 import io.improbable.keanu.algorithms.variational.GradientOptimizer
 import io.improbable.keanu.network.BayesianNetwork
 import io.improbable.keanu.research.vertices.DoubleTensorArrayIndexingVertex
-import io.improbable.keanu.tensor.dbl.DoubleTensor
 import io.improbable.keanu.vertices.dbl.DoubleVertex
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex
 import org.apache.commons.math3.random.MersenneTwister
 import java.io.FileWriter
 
+
+val Sconcrete = 960
+val Iconcrete = 40
+val Rconcrete = 1
+val S = 960.0
+val I = 40.0
+val R = 1.0
+val steps = 10
 
 fun main(args: Array<String>) {
     assimilateData()
@@ -21,8 +28,6 @@ fun main(args: Array<String>) {
 //    testTensorSplit()
 }
 
-
-
 fun assimilateData(): Array<TimestepState> {
     println("Running concrete model")
     val concreteTimestepStates = runConcrete()
@@ -30,21 +35,38 @@ fun assimilateData(): Array<TimestepState> {
     val observations = getObservations(concreteTimestepStates)
     println("Running probabilistic data assimilation")
 
-    var state: DoubleVertex = initializeState(960.0, 40.0, 1.00)
+    var state: DoubleVertex = initializeState(S, I, R)
 
+    val states = arrayListOf<ModelVertex>()
     val sTimestepStates = arrayListOf<DoubleVertex>()
     val iTimestepStates = arrayListOf<DoubleVertex>()
     val rTimestepStates = arrayListOf<DoubleVertex>()
 
+    var count = 0
     for (obs in observations) {
-        state = ModelVertex(state)
-        val s = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 1), intArrayOf(0, 1))
-        val i = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 2), intArrayOf(0, 2))
-        val r = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 2), intArrayOf(0, 2))
+        val timestep = ModelVertex(state, name = "$count")
+        state = timestep
+        states.add(timestep)
+        val s = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 0))
+        val i = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 1))
+        val r = DoubleTensorArrayIndexingVertex(state, intArrayOf(0, 2))
         GaussianVertex(i, 1.0).observe(obs)
         sTimestepStates.add(s)
         iTimestepStates.add(i)
         rTimestepStates.add(r)
+        count++
+    }
+
+    println("out of loop")
+
+//    for (modelVertex in states) {
+//        println("${modelVertex.model.rhoS}, ${modelVertex.model.rhoI}, ${modelVertex.model.rhoR}")
+//    }
+
+//    println("${states.first().model.rhoS}, ${states.first().model.rhoI}, ${states.first().model.rhoR}")
+//    val firstModel = states.first().model.createConcreteStates()
+    for (i in 1 until steps) {
+        states[i].model.upstreamAbstractModel = states[i - 1].model
     }
 
     val bayesianNetwork = BayesianNetwork(state.connectedGraph)
@@ -64,8 +86,8 @@ fun assimilateData(): Array<TimestepState> {
 fun runAbstract() {
     val file: FileWriter? = null
     //file = FileWriter("data.out")
-    val model = AbstractModel(96.0, 4.0, 0.01)
-    for (step in 1..40) {
+    val model = AbstractModel(S, I, R)
+    for (step in 1..steps) {
         model.step()
         val out = "$step ${model.rhoS} ${model.rhoI} ${model.rhoR}\n"
         file?.write(out)
@@ -75,10 +97,9 @@ fun runAbstract() {
 }
 
 fun runConcrete(): Array<TimestepState> {
-    val STEPS = 40
 //    val file = FileWriter("data.out")
-    val model = SIRModel(96, 4, 0, MersenneTwister())
-    val timestepStates = Array(STEPS, { i ->
+    val model = SIRModel(Sconcrete, Iconcrete, Rconcrete, MersenneTwister())
+    val timestepStates = Array(steps, { i ->
         model.step()
 //        file.write("$step ${model.S} ${model.I} ${model.R}\n")
 //        println("$step ${model.S} ${model.I} ${model.R}")
@@ -95,19 +116,16 @@ fun getObservations(timestepStates: Array<TimestepState>): DoubleArray {
 
 fun testTensorSplit() {
     val di = 1.0
-    val s = 960.0
-    val i = 40.0
-    val r = 5.0
 
-    var state = initializeState(s, i, r)
+    var state = initializeState(S, I, R)
     val model = ModelVertex(state)
     val dual = model.dualNumber
     val jacobian = dual.partialDerivatives.withRespectTo(state)
 
-    val model2 = AbstractModel(s, i + di, r)
+    val model2 = AbstractModel(S, I + di, R)
     model2.step()
 
-    val extracted = DoubleTensorArrayIndexingVertex(model, intArrayOf(0, 1), intArrayOf(0, 1))
+    val extracted = DoubleTensorArrayIndexingVertex(model, intArrayOf(0, 1))
     val extractedJacobian = extracted.dualNumber.partialDerivatives.withRespectTo(state)
 
     println("Jacobian is:")
@@ -122,16 +140,13 @@ fun testAbstractDiffS() {
     println("Testing abstract diff with respect to S")
 
     val ds = 1.0
-    val s = 960.0
-    val i = 40.0
-    val r = 5.0
 
-    var state = initializeState(s, i, r)
-    val model1 = AbstractModel(s, i, r)
+    var state = initializeState(S, I, R)
+    val model1 = AbstractModel(S, I, R)
     val dual = model1.calculateDualNumber(state.dualNumber)!!
     val jacobian = dual.partialDerivatives.withRespectTo(state)
 
-    val model2 = AbstractModel(s + ds, i, r)
+    val model2 = AbstractModel(S + ds, I, R)
     model2.step()
 
     val ds1_ds0 = (model2.rhoS - model1.rhoS) / ds
@@ -170,16 +185,13 @@ fun testAbstractDiffI() {
     println("Testing abstract diff with respect to I")
 
     val di = 1.0
-    val s = 960.0
-    val i = 40.0
-    val r = 5.0
 
-    var state = initializeState(s, i, r)
-    val model1 = AbstractModel(s, i, r)
+    var state = initializeState(S, I, R)
+    val model1 = AbstractModel(S, I, R)
     val dual = model1.calculateDualNumber(state.dualNumber)!!
     val jacobian = dual.partialDerivatives.withRespectTo(state)
 
-    val model2 = AbstractModel(s, i + di, r)
+    val model2 = AbstractModel(S, I + di, R)
     model2.step()
 
     val ds1_di0 = (model2.rhoS - model1.rhoS) / di
@@ -218,16 +230,13 @@ fun testAbstractDiffR() {
     println("Testing abstract diff with respect to R")
 
     val dr = 1.0
-    val s = 960.0
-    val i = 40.0
-    val r = 5.0
 
-    var state = initializeState(s, i, r)
-    val model1 = AbstractModel(s, i, r)
+    var state = initializeState(S, I, R)
+    val model1 = AbstractModel(S, I, R)
     val dual = model1.calculateDualNumber(state.dualNumber)!!
     val jacobian = dual.partialDerivatives.withRespectTo(state)
 
-    val model2 = AbstractModel(s, i, r + dr)
+    val model2 = AbstractModel(S, I, R + dr)
     model2.step()
 
     val ds1_dr0 = (model2.rhoS - model1.rhoS) / dr
@@ -264,9 +273,6 @@ fun testAbstractDiffR() {
 
 
 fun testConcreteDiff() {
-    val S = 960
-    val I = 40
-    val R = 0
     val rand = MersenneTwister()
     var ds1_di0 = 0.0
     var di1_di0 = 0.0
@@ -274,8 +280,8 @@ fun testConcreteDiff() {
     val Nsamples = 1000000
 
     for (i in 1..Nsamples) {
-        val model1 = SIRModel(S, I, R, rand)
-        val model2 = SIRModel(S, I + 1, R, rand)
+        val model1 = SIRModel(Sconcrete, Iconcrete, Rconcrete, rand)
+        val model2 = SIRModel(Sconcrete, Iconcrete + 1, Rconcrete, rand)
         model1.step()
         model2.step()
         ds1_di0 += (model2.S - model1.S) / (1.0 * Nsamples)
@@ -287,9 +293,6 @@ fun testConcreteDiff() {
 }
 
 fun testAbstractFiniteDiff() {
-    val S = 960.0
-    val I = 40.0
-    val R = 0.01
     val di = 0.5
 
     val model1 = AbstractModel(S, I, R)
