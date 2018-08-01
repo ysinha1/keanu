@@ -7,15 +7,13 @@ import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.lessThan;
 import static org.junit.Assert.assertEquals;
 
+import static io.improbable.keanu.tensor.TensorMatchers.isScalarWithValue;
+
 import java.util.Map;
 
-import org.hamcrest.Description;
-import org.hamcrest.Matcher;
-import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
@@ -95,21 +93,6 @@ public class DualNumbersTest {
             uniformVertex.getDualNumber().getValue(),
             isScalarWithValue(equalTo(0.42))
         );
-    }
-
-    private <T> Matcher<Tensor<T>> isScalarWithValue(Matcher<T> value) {
-        return new TypeSafeDiagnosingMatcher<Tensor<T>>() {
-            @Override
-            protected boolean matchesSafely(Tensor<T> item, Description mismatchDescription) {
-                mismatchDescription.appendValue(item);
-                return item.isScalar() && value.matches(item.getValue(0));
-            }
-
-            @Override
-            public void describeTo(Description description) {
-                description.appendText("Scalar with value ").appendValue(value);
-            }
-        };
     }
 
     @Test
