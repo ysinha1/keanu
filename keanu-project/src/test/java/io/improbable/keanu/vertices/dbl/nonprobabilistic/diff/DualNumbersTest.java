@@ -14,6 +14,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
@@ -44,7 +45,8 @@ public class DualNumbersTest {
     public void theDerivativeOf2xIs2() {
         ConstantDoubleVertex y = ConstantVertex.of(2.);
         DoubleVertex result = variable.times(y);
-        assertThat(result.getDualNumber().getPartialDerivatives().withRespectTo(variable), isScalarWithValue(equalTo(2.)));
+        Tensor<Double> actual = result.getDualNumber().getPartialDerivatives().withRespectTo(variable);
+        assertThat(actual, isScalarWithValue(new Double(2.)));
     }
 
     @Test
@@ -52,20 +54,20 @@ public class DualNumbersTest {
         DoubleVertex x = new UniformVertex(0., 1.);
         DoubleVertex result = x.pow(2);
         DualNumber dualNumber = result.getDualNumber();
-        assertThat(dualNumber.getPartialDerivatives().withRespectTo(x), isScalarWithValue(equalTo(2. * x.getValue().scalar())));
+        assertThat(dualNumber.getPartialDerivatives().withRespectTo(x), isScalarWithValue(2. * x.getValue().scalar()));
     }
 
     @Test
     public void theDerivativeOfLogXIs1OverX() {
         DoubleVertex result = variable.log();
         DualNumber dualNumber = result.getDualNumber();
-        assertThat(dualNumber.getPartialDerivatives().withRespectTo(variable), isScalarWithValue(equalTo(1./variable.getValue().scalar())));
+        assertThat(dualNumber.getPartialDerivatives().withRespectTo(variable), isScalarWithValue(1./variable.getValue().scalar()));
     }
 
     @Test
     public void theDualOfASumIsItsValue() {
         DoubleVertex result = ConstantVertex.of(6.).plus(ConstantVertex.of(7.));
-        assertThat(result.getDualNumber().getValue(), isScalarWithValue(equalTo(13.)));
+        assertThat(result.getDualNumber().getValue(), isScalarWithValue(13.));
     }
 
     @Test
@@ -73,7 +75,7 @@ public class DualNumbersTest {
         ConstantDoubleVertex x = ConstantVertex.of(2.);
         ConstantDoubleVertex y = ConstantVertex.of(3.);
         DoubleVertex result = x.times(y).log();
-        assertThat(result.getDualNumber().getPartialDerivatives().withRespectTo(x), isScalarWithValue(equalTo(0.)));
+        assertThat(result.getDualNumber().getPartialDerivatives().withRespectTo(x), isScalarWithValue(0.));
     }
 
     @Test

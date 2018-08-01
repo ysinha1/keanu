@@ -7,18 +7,18 @@ import io.improbable.keanu.vertices.bool.BoolVertex;
 import io.improbable.keanu.vertices.intgr.IntegerVertex;
 
 public class Loop<T> {
-    private final Vertex<T> start;
+    private final Vertex<? extends Tensor<T>> start;
 
-    public Loop(Vertex<T> start) {
+    public Loop(Vertex<? extends Tensor<T>> start) {
         this.start = start;
     }
 
-    public static <T> Loop startingFrom(Vertex<T> start) {
-        return new Loop(start);
+    public static <T> Loop<T> startingFrom(Vertex<? extends Tensor<T>> start) {
+        return new Loop<T>(start);
     }
 
-    public LoopBodyBuilder apply(BayesianNetwork lambda) {
-        return new LoopBodyBuilder(start, lambda);
+    public LoopBodyBuilder<T> apply(BayesianNetwork lambda) {
+        return new LoopBodyBuilder<>(start, lambda);
     }
 
     public static class LoopBodyBuilder<T> {

@@ -1,8 +1,6 @@
 package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.junit.Assert.assertEquals;
 
 import static io.improbable.keanu.tensor.TensorMatchers.isScalarWithValue;
 
@@ -46,9 +44,9 @@ public class ConstantTimesLoopVertexTest {
     @Test
     public void youCanLoopNTimes() {
         log.info("***** getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(4.)));
+        assertThat(loop.getValue(), isScalarWithValue(4.));
         log.info("***** Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(4.)));
+        assertThat(loop.getValue(), isScalarWithValue(4.));
     }
 
     @Test
@@ -56,18 +54,18 @@ public class ConstantTimesLoopVertexTest {
         log.info("***** setAndCascade");
         numTimes.setAndCascade(6);
         log.info("***** getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(6.)));
+        assertThat(loop.getValue(), isScalarWithValue(6.));
         log.info("***** Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(6.)));
+        assertThat(loop.getValue(), isScalarWithValue(6.));
     }
     @Test
     public void youCanObserveTheNumberOfTimesToLoop() {
         log.info("***** setAndCascade");
         numTimes.observe(6);
         log.info("***** getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(6.)));
+        assertThat(loop.getValue(), isScalarWithValue(6.));
         log.info("***** Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(6.)));
+        assertThat(loop.getValue(), isScalarWithValue(6.));
     }
 
     @Test
@@ -80,13 +78,13 @@ public class ConstantTimesLoopVertexTest {
             .times(ConstantVertex.of(4));
         loop.addParent(start);
         log.info("getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(5.055319473180422)));
+        assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(5.055319473180422)));
+        assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
         log.info("getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(5.055319473180422)));
+        assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(5.055319473180422)));
+        assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
     }
 
 
@@ -98,13 +96,13 @@ public class ConstantTimesLoopVertexTest {
             .apply(buildPlusVariableIncrement())
             .times(ConstantVertex.of(4));
         log.info("getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(4.221277892721689)));
+        assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(4.221277892721689)));
+        assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
         log.info("getValue");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(4.221277892721689)));
+        assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(equalTo(4.221277892721689)));
+        assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
     }
 
     @Test
@@ -116,11 +114,11 @@ public class ConstantTimesLoopVertexTest {
             .apply(buildPolynomial())
             .times(ConstantVertex.of(2));
         log.info("***** getValue");
-        assertEquals(26., loop.getValue().scalar().doubleValue(), 1e-8); // x -> (x^2 + 1)^2 + 1 = x^4 + 2x^2 + 2
+        assertThat(loop.getValue(), isScalarWithValue(26.)); // x -> (x^2 + 1)^2 + 1 = x^4 + 2x^2 + 2
         DualNumber dualNumber = loop.getDualNumber();
-        assertEquals(26., dualNumber.getValue().scalar(), 1e-8);
+        assertThat(loop.getValue(), isScalarWithValue(26.));
         Vertex input = Iterables.getOnlyElement(buildPolynomial().getInputVertices());
-        assertEquals(40., dualNumber.getPartialDerivatives().withRespectTo(x).scalar().doubleValue(), 1e-8); // x -> 4x^3 + 4x
+        assertThat(dualNumber.getPartialDerivatives().withRespectTo(x), isScalarWithValue(40.)); // x -> 4x^3 + 4x
     }
 
     private BayesianNetwork buildPlusPlusIncrement() {

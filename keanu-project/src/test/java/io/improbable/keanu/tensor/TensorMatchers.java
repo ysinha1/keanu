@@ -1,5 +1,7 @@
 package io.improbable.keanu.tensor;
 
+import static org.hamcrest.Matchers.equalTo;
+
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
@@ -7,6 +9,10 @@ import org.hamcrest.TypeSafeDiagnosingMatcher;
 
 public class TensorMatchers {
     private TensorMatchers() {}
+
+    public static <T> Matcher<Tensor<T>> isScalarWithValue(T value) {
+        return isScalarWithValue(equalTo(value));
+    }
 
     public static <T> Matcher<Tensor<T>> isScalarWithValue(Matcher<T> value) {
         return new TypeSafeDiagnosingMatcher<Tensor<T>>() {
