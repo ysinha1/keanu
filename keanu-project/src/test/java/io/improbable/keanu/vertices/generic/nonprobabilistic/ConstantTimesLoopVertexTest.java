@@ -1,6 +1,7 @@
 package io.improbable.keanu.vertices.generic.nonprobabilistic;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.equalTo;
 
 import static io.improbable.keanu.tensor.TensorMatchers.isScalarWithValue;
 
@@ -12,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.google.common.collect.Iterables;
 
 import io.improbable.keanu.network.BayesianNetwork;
+import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
@@ -46,7 +48,7 @@ public class ConstantTimesLoopVertexTest {
         log.info("***** getValue");
         assertThat(loop.getValue(), isScalarWithValue(4.));
         log.info("***** Sample");
-        assertThat(loop.getValue(), isScalarWithValue(4.));
+        assertThat(loop.sample(), isScalarWithValue(4.));
     }
 
     @Test
@@ -56,7 +58,7 @@ public class ConstantTimesLoopVertexTest {
         log.info("***** getValue");
         assertThat(loop.getValue(), isScalarWithValue(6.));
         log.info("***** Sample");
-        assertThat(loop.getValue(), isScalarWithValue(6.));
+        assertThat(loop.sample(), isScalarWithValue(6.));
     }
     @Test
     public void youCanObserveTheNumberOfTimesToLoop() {
@@ -65,7 +67,7 @@ public class ConstantTimesLoopVertexTest {
         log.info("***** getValue");
         assertThat(loop.getValue(), isScalarWithValue(6.));
         log.info("***** Sample");
-        assertThat(loop.getValue(), isScalarWithValue(6.));
+        assertThat(loop.sample(), isScalarWithValue(6.));
     }
 
     @Test
@@ -80,11 +82,11 @@ public class ConstantTimesLoopVertexTest {
         log.info("getValue");
         assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
+        assertThat(loop.sample(), isScalarWithValue(5.055319473180422));
         log.info("getValue");
         assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(5.055319473180422));
+        assertThat(loop.sample(), isScalarWithValue(5.055319473180422));
     }
 
 
@@ -98,10 +100,12 @@ public class ConstantTimesLoopVertexTest {
         log.info("getValue");
         assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
         log.info("Sample");
-        assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
+        assertThat(loop.sample(), isScalarWithValue(4.368162263343516));
         log.info("getValue");
         assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
         log.info("Sample");
+        assertThat(loop.sample(), isScalarWithValue(1.7481474278574387));
+        log.info("getValue");
         assertThat(loop.getValue(), isScalarWithValue(4.221277892721689));
     }
 
