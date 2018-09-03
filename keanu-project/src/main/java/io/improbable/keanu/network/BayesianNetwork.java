@@ -164,4 +164,11 @@ public class BayesianNetwork {
             vertex.write(outputStream);
         }
     }
+
+    public void write(OutputStream outputStream, String separator) throws IOException {
+        for (Vertex vertex : vertices) {
+            vertex.write(outputStream);
+            outputStream.write(separator.getBytes());
+        }
+    }
 }
