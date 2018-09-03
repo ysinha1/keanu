@@ -3,13 +3,10 @@ package io.improbable.keanu.network;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.io.UnsupportedEncodingException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +38,7 @@ public class WriteNetworkEndToEndTest {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
         network.write(outStream);
-        String expected = Resources.toString(Resources.getResource("network-example.txt"), Charsets.UTF_8);
-        assertThat(outStream.toString(), equalTo(expected));
+        String expected = Resources.toString(Resources.getResource("graphs/network-example.txt"), Charsets.UTF_8);
+        assertThat(byteArrayOutputStream.toString().toString(), equalTo(expected));
     }
 }
