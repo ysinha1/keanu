@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -166,9 +167,13 @@ public class BayesianNetwork {
     }
 
     public void write(OutputStream outputStream, String separator) throws IOException {
-        for (Vertex vertex : vertices) {
+        Iterator<? extends Vertex> iterator = vertices.iterator();
+        while (iterator.hasNext()) {
+            Vertex vertex = iterator.next();
             vertex.write(outputStream);
-            outputStream.write(separator.getBytes());
+            if (iterator.hasNext()) {
+                outputStream.write(separator.getBytes());
+            }
         }
     }
 }
