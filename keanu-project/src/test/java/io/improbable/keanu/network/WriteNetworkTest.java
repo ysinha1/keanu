@@ -3,6 +3,7 @@ package io.improbable.keanu.network;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,12 +13,15 @@ import java.util.Set;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableSet;
 
 import io.improbable.keanu.vertices.Vertex;
 
+@RunWith(MockitoJUnitRunner.class)
 public class WriteNetworkTest {
     BayesianNetwork network;
 
@@ -55,5 +59,12 @@ public class WriteNetworkTest {
         for (Vertex v : vertices) {
             verify(v).write(outputStream);
         }
+    }
+
+    @Test
+    public void youCanAddASeparatorWhenYouWriteTheNetwork() throws IOException {
+        String separator = "\n";
+        network.write(outputStream, separator);
+        verify(outputStream, times(vertices.size() - 1)).write(separator.getBytes());
     }
 }
