@@ -1,5 +1,7 @@
 package io.improbable.keanu.vertices;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -222,4 +224,7 @@ public abstract class Vertex<T> implements Observable<T> {
         return DiscoverGraph.getEntireGraph(this);
     }
 
+    public void write(OutputStream outputStream) throws IOException {
+        outputStream.write(this.getClass().getSimpleName().getBytes());
+    };
 }

@@ -4,6 +4,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Set;
 
@@ -11,7 +12,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import io.improbable.keanu.vertices.Vertex;
@@ -41,7 +41,7 @@ public class WriteNetworkTest {
     }
 
     @Test
-    public void itWritesEveryVertex() {
+    public void itWritesEveryVertex() throws IOException {
         network.write(outputStream);
         for (Vertex v : vertices) {
             verify(v).write(outputStream);
