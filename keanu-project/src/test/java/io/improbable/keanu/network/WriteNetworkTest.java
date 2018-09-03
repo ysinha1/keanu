@@ -1,5 +1,7 @@
 package io.improbable.keanu.network;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -28,15 +30,22 @@ public class WriteNetworkTest {
         Vertex parent1 = mock(Vertex.class);
         Vertex parent2 = mock(Vertex.class);
         Vertex child1 = mock(Vertex.class);
-        when(child1.getParents()).thenReturn(ImmutableSet.of(parent1, parent2));
         Vertex child2 = mock(Vertex.class);
-        when(child2.getParents()).thenReturn(ImmutableSet.of(parent1, parent2));
         Vertex grandchild1 = mock(Vertex.class);
-        when(grandchild1.getParents()).thenReturn(ImmutableSet.of(child1, child2));
         Vertex grandchild2 = mock(Vertex.class);
+        when(parent1.getChildren()).thenReturn(ImmutableSet.of(child1, child2));
+        when(parent2.getChildren()).thenReturn(ImmutableSet.of(child1, child2));
+        when(child1.getChildren()).thenReturn(ImmutableSet.of(grandchild1, grandchild2));
+        when(child2.getChildren()).thenReturn(ImmutableSet.of(grandchild1, grandchild2));
+        when(child1.getParents()).thenReturn(ImmutableSet.of(parent1, parent2));
+        when(child2.getParents()).thenReturn(ImmutableSet.of(parent1, parent2));
+        when(grandchild1.getParents()).thenReturn(ImmutableSet.of(child1, child2));
         when(grandchild2.getParents()).thenReturn(ImmutableSet.of(child1, child2));
 
+        when(parent1.getConnectedGraph()).thenCallRealMethod();
+
         vertices = parent1.getConnectedGraph();
+        assertThat(vertices, hasSize(6));
         network = new BayesianNetwork(vertices);
     }
 
