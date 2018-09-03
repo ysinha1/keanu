@@ -1,5 +1,6 @@
 package io.improbable.keanu.network;
 
+import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -157,4 +158,7 @@ public class BayesianNetwork {
             .collect(Collectors.toList());
     }
 
+    public void write(OutputStream outputStream) {
+
+    }
 }
