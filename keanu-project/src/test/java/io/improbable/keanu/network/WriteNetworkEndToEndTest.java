@@ -37,7 +37,7 @@ public class WriteNetworkEndToEndTest {
     public void youCanWriteANetwork() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
-        network.write(outStream);
+        network.write(outStream, "\n");
         String expected = Resources.toString(Resources.getResource("graphs/network-example.txt"), Charsets.UTF_8);
         assertThat(byteArrayOutputStream.toString().toString(), equalTo(expected));
     }
