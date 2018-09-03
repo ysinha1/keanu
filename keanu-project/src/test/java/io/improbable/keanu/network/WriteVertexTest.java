@@ -12,7 +12,6 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexId;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.CastDoubleVertex;
@@ -24,21 +23,13 @@ public class WriteVertexTest {
     private OutputStream outputStream;
 
     @Test
-    public void youCanWriteAVertexType() throws IOException {
-        Vertex vertex = ConstantVertex.of(0.0);
-        vertex.write(System.out);
-        vertex.write(outputStream);
-        verify(outputStream).write("ConstantDoubleVertex".getBytes());
-    }
-
-    @Test
     public void youCanWriteAVertexWithItsParents() throws IOException {
         Vertex parent = mock(Vertex.class);
         when(parent.getId()).thenReturn(new VertexId());
         Vertex vertex = new CastDoubleVertex(parent);
         vertex.write(System.out);
         vertex.write(outputStream);
-        verify(outputStream).write("2|CastDoubleVertex|[1]".getBytes());
+        verify(outputStream).write("1|CastDoubleVertex|[0]".getBytes());
 
     }
 }
