@@ -1,5 +1,5 @@
-ConstantDoubleVertex
-ConstantDoubleVertex
-GaussianVertex
-GaussianVertex
-AdditionVertex
+1,ConstantDoubleVertex,[]
+2,ConstantDoubleVertex,[]
+3,GaussianVertex,[1,2]
+4,GaussianVertex,[1,2]
+5,AdditionVertex,[3,4]
