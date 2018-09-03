@@ -15,6 +15,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
 import io.improbable.keanu.vertices.ConstantVertex;
+import io.improbable.keanu.vertices.VertexId;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
@@ -25,6 +26,8 @@ public class WriteNetworkEndToEndTest {
 
     @Before
     public void createNetwork() {
+        VertexId.ID_GENERATOR.set(0);
+
         ConstantDoubleVertex mu = ConstantVertex.of(1.);
         ConstantDoubleVertex sigma = ConstantVertex.of(2.);
         GaussianVertex gaussianVertex = new GaussianVertex(mu, sigma);
@@ -34,11 +37,20 @@ public class WriteNetworkEndToEndTest {
     }
 
     @Test
-    public void youCanWriteANetwork() throws IOException {
+    public void youCanWriteANetworkAsCsv() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
         network.write(outStream, "\n");
-        String expected = Resources.toString(Resources.getResource("graphs/network-example.txt"), Charsets.UTF_8);
+        String expected = Resources.toString(Resources.getResource("graphs/network-example.csv"), Charsets.UTF_8);
+        assertThat(byteArrayOutputStream.toString().toString(), equalTo(expected));
+    }
+
+    @Test
+    public void youCanWriteANetworkAsJson() throws IOException {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
+        network.writeAsJson(outStream, "\n");
+        String expected = Resources.toString(Resources.getResource("graphs/network-example.json"), Charsets.UTF_8);
         assertThat(byteArrayOutputStream.toString().toString(), equalTo(expected));
     }
 }
