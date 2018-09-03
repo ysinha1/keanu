@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -225,6 +226,10 @@ public abstract class Vertex<T> implements Observable<T> {
     }
 
     public void write(OutputStream outputStream) throws IOException {
-        outputStream.write(this.getClass().getSimpleName().getBytes());
-    };
+        String line = String.format("%s|%s|%s",
+            this.getId(),
+            this.getClass().getSimpleName(),
+            this.getParents().stream().map(Vertex::getId).collect(Collectors.toList()));
+        outputStream.write(line.getBytes());
+    }
 }
