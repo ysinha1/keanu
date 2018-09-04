@@ -1,21 +1,16 @@
 package io.improbable.keanu.vertices;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 
 import io.improbable.keanu.algorithms.graphtraversal.DiscoverGraph;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
 import io.improbable.keanu.tensor.Tensor;
-import io.improbable.keanu.util.json.KeanuJsonWriter;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
 public abstract class Vertex<T> implements Observable<T> {
@@ -227,21 +222,4 @@ public abstract class Vertex<T> implements Observable<T> {
         return DiscoverGraph.getEntireGraph(this);
     }
 
-    public void write(OutputStream outputStream) throws IOException {
-        String line = String.format("%s|%s|%s",
-            formatIdOf(this),
-            this.getClass().getSimpleName(),
-            this.getParents().stream().map(v -> formatIdOf(v)).collect(Collectors.toList()));
-        outputStream.write(line.getBytes());
-    }
-
-    private static String formatIdOf(Vertex v) {
-        Object[] values = Arrays.stream(v.getId().idValues).boxed().toArray();
-        return Joiner.on(",").join(values);
-    }
-
-    public void writeAsJson(OutputStream out) throws IOException {
-        KeanuJsonWriter jsonWriter = new KeanuJsonWriter();
-        jsonWriter.writeValue(out, this);
-    }
 }

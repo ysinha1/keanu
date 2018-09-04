@@ -19,6 +19,10 @@ public class VertexId implements Comparable<VertexId> {
 
     public static final AtomicLong ID_GENERATOR = new AtomicLong(0L);
 
+    public long[] getIdValues() {
+        return idValues;
+    }
+
     long[] idValues = new long[1];
 
     public VertexId() {

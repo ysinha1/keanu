@@ -60,7 +60,9 @@ public class WriteNetworkTest {
         KeanuNetworkWriter networkWriter = new KeanuCsvNetworkWriter("?");
         network.write(outputStream, networkWriter);
         for (Vertex v : vertices) {
-            verify(v).write(outputStream);
+            verify(v).getId();
+            verify(v).getClass();
+            verify(v).getParents();
         }
     }
 

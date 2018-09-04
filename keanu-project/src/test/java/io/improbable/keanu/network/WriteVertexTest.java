@@ -17,6 +17,10 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.google.common.collect.ImmutableList;
+
+import io.improbable.keanu.network.write.KeanuCsvNetworkWriter;
+import io.improbable.keanu.util.json.KeanuJsonWriter;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexId;
@@ -38,8 +42,8 @@ public class WriteVertexTest {
         Vertex parent = mock(Vertex.class);
         when(parent.getId()).thenReturn(new VertexId());
         Vertex vertex = new CastDoubleVertex(parent);
-        vertex.write(System.out);
-        vertex.write(outputStream);
+        KeanuCsvNetworkWriter networkWriter = new KeanuCsvNetworkWriter("|");
+        networkWriter.write(outputStream, ImmutableList.of(vertex));
         verify(outputStream).write("1|CastDoubleVertex|[0]".getBytes());
 
     }
@@ -50,7 +54,8 @@ public class WriteVertexTest {
         Vertex vertex = new CastDoubleVertex(parent);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
-        vertex.writeAsJson(outStream);
+        KeanuJsonWriter jsonWriter = new KeanuJsonWriter();
+        jsonWriter.writeValue(outStream, vertex);
         assertThat(byteArrayOutputStream.toString(), equalTo("{\"id\":\"[1]\",\"type\":\"CastDoubleVertex\",\"parents\":[\"[0]\"]}"));
     }
 
