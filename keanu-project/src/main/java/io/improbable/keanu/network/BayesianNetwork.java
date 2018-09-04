@@ -14,8 +14,6 @@ import com.google.common.collect.ImmutableList;
 
 import io.improbable.keanu.algorithms.graphtraversal.TopologicalSort;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
-import io.improbable.keanu.network.write.KeanuCsvNetworkWriter;
-import io.improbable.keanu.network.write.KeanuJsonNetworkWriter;
 import io.improbable.keanu.network.write.KeanuNetworkWriter;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
@@ -162,17 +160,7 @@ public class BayesianNetwork {
             .collect(Collectors.toList());
     }
 
-    public void writeAsJson(OutputStream outputStream) throws IOException {
-        KeanuNetworkWriter networkWriter = new KeanuJsonNetworkWriter();
-        networkWriter.write(outputStream, vertices);
-    }
-
-    public void write(OutputStream outputStream) throws IOException {
-        write(outputStream, "");
-    }
-
-    public void write(OutputStream outputStream, String separator) throws IOException {
-        KeanuNetworkWriter networkWriter = new KeanuCsvNetworkWriter(separator);
+    public void write(OutputStream outputStream, KeanuNetworkWriter networkWriter) throws IOException {
         networkWriter.write(outputStream, vertices);
     }
 }

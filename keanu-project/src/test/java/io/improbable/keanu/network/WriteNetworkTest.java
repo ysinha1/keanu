@@ -19,6 +19,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import com.google.common.collect.ImmutableSet;
 
+import io.improbable.keanu.network.write.KeanuCsvNetworkWriter;
+import io.improbable.keanu.network.write.KeanuNetworkWriter;
 import io.improbable.keanu.vertices.Vertex;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -54,17 +56,19 @@ public class WriteNetworkTest {
     }
 
     @Test
-    public void itWritesEveryVertex() throws IOException {
-        network.write(outputStream);
+    public void theCsvWriterWritesEveryVertex() throws IOException {
+        KeanuNetworkWriter networkWriter = new KeanuCsvNetworkWriter("?");
+        network.write(outputStream, networkWriter);
         for (Vertex v : vertices) {
             verify(v).write(outputStream);
         }
     }
 
     @Test
-    public void youCanAddASeparatorWhenYouWriteTheNetwork() throws IOException {
+    public void youCanAddASeparatorWhenYouWriteTheNetworkAsCsv() throws IOException {
         String separator = "\n";
-        network.write(outputStream, separator);
+        KeanuNetworkWriter networkWriter = new KeanuCsvNetworkWriter(separator);
+        network.write(outputStream, networkWriter);
         verify(outputStream, times(vertices.size() - 1)).write(separator.getBytes());
     }
 }

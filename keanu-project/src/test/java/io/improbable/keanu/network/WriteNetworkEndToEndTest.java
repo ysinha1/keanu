@@ -14,6 +14,8 @@ import org.junit.Test;
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 
+import io.improbable.keanu.network.write.KeanuCsvNetworkWriter;
+import io.improbable.keanu.network.write.KeanuJsonNetworkWriter;
 import io.improbable.keanu.vertices.ConstantVertex;
 import io.improbable.keanu.vertices.VertexId;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
@@ -40,7 +42,7 @@ public class WriteNetworkEndToEndTest {
     public void youCanWriteANetworkAsCsv() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
-        network.write(outStream, "\n");
+        network.write(outStream, new KeanuCsvNetworkWriter("\n"));
         String expected = Resources.toString(Resources.getResource("graphs/network-example.csv"), Charsets.UTF_8);
         assertThat(byteArrayOutputStream.toString(), equalTo(expected));
     }
@@ -49,7 +51,7 @@ public class WriteNetworkEndToEndTest {
     public void youCanWriteANetworkAsJson() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
-        network.writeAsJson(outStream);
+        network.write(outStream, new KeanuJsonNetworkWriter());
         String expected = Resources.toString(Resources.getResource("graphs/network-example.json"), Charsets.UTF_8);
         assertThat(byteArrayOutputStream.toString(), equalTo(expected));
     }
