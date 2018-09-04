@@ -9,15 +9,13 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.nd4j.shade.jackson.databind.ObjectMapper;
-import org.nd4j.shade.jackson.databind.module.SimpleModule;
-
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 
 import io.improbable.keanu.algorithms.graphtraversal.DiscoverGraph;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
 import io.improbable.keanu.tensor.Tensor;
+import io.improbable.keanu.util.json.KeanuJsonWriter;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
 public abstract class Vertex<T> implements Observable<T> {
@@ -243,12 +241,7 @@ public abstract class Vertex<T> implements Observable<T> {
     }
 
     public void writeAsJson(OutputStream out) throws IOException {
-        ObjectMapper objectMapper = new ObjectMapper();
-
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(Vertex.class, new VertexSerializer());
-        objectMapper.registerModule(module);
-
-        objectMapper.writeValue(out, this);
+        KeanuJsonWriter jsonWriter = new KeanuJsonWriter();
+        jsonWriter.writeValue(out, this);
     }
 }
