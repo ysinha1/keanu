@@ -1,0 +1,1 @@
+[{"id":"[0]","type":"ConstantDoubleVertex","parents":[]},{"id":"[1]","type":"ConstantDoubleVertex","parents":[]},{"id":"[2]","type":"GaussianVertex","parents":["[0]","[1]"]},{"id":"[3]","type":"GaussianVertex","parents":["[0]","[1]"]},{"id":"[4]","type":"AdditionVertex","parents":["[2]","[3]"]}]

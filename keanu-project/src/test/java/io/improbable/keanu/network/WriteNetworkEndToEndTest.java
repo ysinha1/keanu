@@ -42,15 +42,15 @@ public class WriteNetworkEndToEndTest {
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
         network.write(outStream, "\n");
         String expected = Resources.toString(Resources.getResource("graphs/network-example.csv"), Charsets.UTF_8);
-        assertThat(byteArrayOutputStream.toString().toString(), equalTo(expected));
+        assertThat(byteArrayOutputStream.toString(), equalTo(expected));
     }
 
     @Test
     public void youCanWriteANetworkAsJson() throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         OutputStream outStream = new PrintStream(byteArrayOutputStream, true, "UTF-8");
-        network.writeAsJson(outStream, "\n");
+        network.writeAsJson(outStream);
         String expected = Resources.toString(Resources.getResource("graphs/network-example.json"), Charsets.UTF_8);
-        assertThat(byteArrayOutputStream.toString().toString(), equalTo(expected));
+        assertThat(byteArrayOutputStream.toString(), equalTo(expected));
     }
 }

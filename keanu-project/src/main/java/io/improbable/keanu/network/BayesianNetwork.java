@@ -11,6 +11,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.nd4j.shade.jackson.databind.ObjectMapper;
+import org.nd4j.shade.jackson.databind.module.SimpleModule;
+
 import com.google.common.collect.ImmutableList;
 
 import io.improbable.keanu.algorithms.graphtraversal.TopologicalSort;
@@ -19,6 +22,7 @@ import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexLabel;
+import io.improbable.keanu.vertices.VertexSerializer;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
 public class BayesianNetwork {
@@ -158,6 +162,15 @@ public class BayesianNetwork {
         return getLatentVertices().stream()
             .filter(v -> !(v.getValue() instanceof DoubleTensor))
             .collect(Collectors.toList());
+    }
+
+    public void writeAsJson(OutputStream outputStream) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Vertex.class, new VertexSerializer());
+        objectMapper.registerModule(module);
+        objectMapper.writeValue(outputStream, vertices);
     }
 
     public void write(OutputStream outputStream) throws IOException {
