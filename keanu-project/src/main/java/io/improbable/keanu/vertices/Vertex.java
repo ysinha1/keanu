@@ -9,6 +9,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.nd4j.shade.jackson.databind.ObjectMapper;
+
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
 
@@ -237,5 +239,10 @@ public abstract class Vertex<T> implements Observable<T> {
     private static String formatIdOf(Vertex v) {
         Object[] values = Arrays.stream(v.getId().idValues).boxed().toArray();
         return Joiner.on(",").join(values);
+    }
+
+    public void writeAsJson(OutputStream out) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.writeValue(out, this);
     }
 }
