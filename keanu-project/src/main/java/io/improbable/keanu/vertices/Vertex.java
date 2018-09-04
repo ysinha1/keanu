@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.nd4j.shade.jackson.databind.ObjectMapper;
+import org.nd4j.shade.jackson.databind.module.SimpleModule;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableSet;
@@ -243,6 +244,11 @@ public abstract class Vertex<T> implements Observable<T> {
 
     public void writeAsJson(OutputStream out) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
+
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Vertex.class, new VertexSerializer());
+        objectMapper.registerModule(module);
+
         objectMapper.writeValue(out, this);
     }
 }
