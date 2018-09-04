@@ -5,7 +5,6 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,8 +14,10 @@ import com.google.common.collect.ImmutableList;
 
 import io.improbable.keanu.algorithms.graphtraversal.TopologicalSort;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
+import io.improbable.keanu.network.write.KeanuCsvNetworkWriter;
+import io.improbable.keanu.network.write.KeanuJsonNetworkWriter;
+import io.improbable.keanu.network.write.KeanuNetworkWriter;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
-import io.improbable.keanu.util.json.KeanuJsonWriter;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexLabel;
@@ -162,8 +163,8 @@ public class BayesianNetwork {
     }
 
     public void writeAsJson(OutputStream outputStream) throws IOException {
-        KeanuJsonWriter jsonWriter = new KeanuJsonWriter();
-        jsonWriter.writeValue(outputStream, vertices);
+        KeanuNetworkWriter networkWriter = new KeanuJsonNetworkWriter();
+        networkWriter.write(outputStream, vertices);
     }
 
     public void write(OutputStream outputStream) throws IOException {
@@ -171,13 +172,7 @@ public class BayesianNetwork {
     }
 
     public void write(OutputStream outputStream, String separator) throws IOException {
-        Iterator<? extends Vertex> iterator = vertices.iterator();
-        while (iterator.hasNext()) {
-            Vertex vertex = iterator.next();
-            vertex.write(outputStream);
-            if (iterator.hasNext()) {
-                outputStream.write(separator.getBytes());
-            }
-        }
+        KeanuNetworkWriter networkWriter = new KeanuCsvNetworkWriter(separator);
+        networkWriter.write(outputStream, vertices);
     }
 }
