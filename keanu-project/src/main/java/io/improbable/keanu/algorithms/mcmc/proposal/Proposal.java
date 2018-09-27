@@ -1,19 +1,24 @@
 package io.improbable.keanu.algorithms.mcmc.proposal;
 
-import io.improbable.keanu.vertices.Vertex;
-
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import io.improbable.keanu.algorithms.mcmc.adaptive.AdaptiveMcMcStrategy;
+import io.improbable.keanu.vertices.Vertex;
+
 public class Proposal {
 
-    private final Map<Vertex, Object> perVertexProposalTo;
-    private final Map<Vertex, Object> perVertexProposalFrom;
+    private final Map<Vertex, Object> perVertexProposalTo = new HashMap<>();
+    private final Map<Vertex, Object> perVertexProposalFrom = new HashMap<>();
+    private final AdaptiveMcMcStrategy adaptiveStrategy;
 
     public Proposal() {
-        this.perVertexProposalTo = new HashMap<>();
-        this.perVertexProposalFrom = new HashMap<>();
+        this(AdaptiveMcMcStrategy.NONE);
+    }
+
+    public Proposal(AdaptiveMcMcStrategy adaptiveStrategy) {
+        this.adaptiveStrategy = adaptiveStrategy;
     }
 
     public <T> void setProposal(Vertex<T> vertex, T to) {
@@ -38,6 +43,7 @@ public class Proposal {
         for (Vertex v : vertices) {
             v.setValue(getProposalTo(v));
         }
+        adaptiveStrategy.onProposalAccepted(this);
     }
 
     public void reject() {

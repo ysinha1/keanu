@@ -2,17 +2,28 @@ package io.improbable.keanu.algorithms.mcmc.proposal;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.apache.commons.math3.stat.correlation.Covariance;
+import static io.improbable.keanu.tensor.Tensor.SCALAR_SHAPE;
+
+import java.util.Set;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
+import com.google.common.collect.ImmutableSet;
+
+import io.improbable.keanu.algorithms.mcmc.adaptive.GaussianAdaptiveMcMcStrategy;
 import io.improbable.keanu.distributions.continuous.Gaussian;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
+import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
 
@@ -43,12 +54,18 @@ public class GaussianProposalDistributionTest {
 
     @Before
     public void setUpMocks() throws Exception {
-        when(vertex1.getValue()).thenReturn(DoubleTensor.scalar(currentState.getValue(0)));
-        when(vertex2.getValue()).thenReturn(DoubleTensor.scalar(currentState.getValue(1)));
+        when(vertex1.getValue()).thenReturn(scalarValue(currentState, 0));
+        when(vertex1.getShape()).thenReturn(SCALAR_SHAPE);
+        when(vertex2.getValue()).thenReturn(scalarValue(currentState, 1));
+        when(vertex2.getShape()).thenReturn(SCALAR_SHAPE);
 
         proposal = new Proposal();
-        proposal.setProposal(vertex1, DoubleTensor.scalar(proposedState.getValue(0)));
-        proposal.setProposal(vertex2, DoubleTensor.scalar(proposedState.getValue(1)));
+        proposal.setProposal(vertex1, scalarValue(proposedState, 0));
+        proposal.setProposal(vertex2, scalarValue(proposedState, 1));
+    }
+
+    private DoubleTensor scalarValue(DoubleTensor tensor, int index) {
+        return DoubleTensor.scalar(tensor.getValue(index));
     }
 
     @Test
@@ -63,5 +80,29 @@ public class GaussianProposalDistributionTest {
         double logProb = proposalDistribution.logProbAtFromGivenTo(proposal);
         DoubleTensor expectedLogProb = Gaussian.withParameters(proposedState, sigma).logProb(currentState);
         assertThat(logProb, equalTo(expectedLogProb.sum()));
+    }
+
+    @Test
+    public void youCanUseAnAdaptiveStrategyForSigma() {
+        GaussianAdaptiveMcMcStrategy strategy = mock(GaussianAdaptiveMcMcStrategy.class);
+        when(strategy.getSigmaValue()).thenReturn(DoubleTensor.ZERO_SCALAR);
+
+        GaussianProposalDistribution proposalDistribution = new GaussianProposalDistribution(strategy);
+        Set<Vertex> vertices = ImmutableSet.of(vertex1, vertex2);
+
+        Proposal proposal = proposalDistribution.getProposal(vertices, KeanuRandom.getDefaultRandom());
+        verify(strategy, times(vertices.size())).getSigmaValue();
+
+        proposal.apply();
+        verify(strategy).onProposalAccepted(proposal);
+
+        proposalDistribution.logProb(
+            vertex1,
+            scalarValue(currentState, 0),
+            scalarValue(proposedState, 0)
+        );
+        verify(strategy, times(vertices.size() + 1)).getSigmaValue();
+
+        verifyNoMoreInteractions(strategy);
     }
 }
