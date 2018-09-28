@@ -24,10 +24,10 @@ public class AcceptanceRateTrackingAdaptiveMcMcStrategyTest {
         Proposal proposal = new Proposal(adaptiveStrategy);
         proposal.setProposal(vertex1, DoubleTensor.scalar(1.1));
         proposal.setProposal(vertex2, DoubleTensor.scalar(2.2));
-        adaptiveStrategy.onProposalAccepted(proposal);
-        adaptiveStrategy.onProposalRejected(proposal);
-        adaptiveStrategy.onProposalRejected(proposal);
-        adaptiveStrategy.onProposalRejected(proposal);
+        proposal.apply();
+        proposal.reject();
+        proposal.reject();
+        proposal.reject();
 
         assertThat(adaptiveStrategy.getSigmaValue(vertex1.getId()), hasValue(0.25));
         assertThat(adaptiveStrategy.getSigmaValue(vertex2.getId()), hasValue(0.25));

@@ -51,6 +51,7 @@ public class Proposal {
         for (Vertex v : vertices) {
             v.setValue(getProposalFrom(v));
         }
+        adaptiveStrategy.onProposalRejected(this);
     }
 
 }

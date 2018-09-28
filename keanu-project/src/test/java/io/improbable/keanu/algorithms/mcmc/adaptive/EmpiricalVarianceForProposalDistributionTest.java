@@ -26,11 +26,11 @@ public class EmpiricalVarianceForProposalDistributionTest {
         Proposal proposal = new Proposal(adaptiveStrategy);
         proposal.setProposal(vertex1, DoubleTensor.scalar(1.1));
         proposal.setProposal(vertex2, DoubleTensor.scalar(2.2));
-        adaptiveStrategy.onProposalAccepted(proposal);
+        proposal.apply();
 
         proposal.setProposal(vertex1, DoubleTensor.scalar(1.3));
         proposal.setProposal(vertex2, DoubleTensor.scalar(2.6));
-        adaptiveStrategy.onProposalAccepted(proposal);
+        proposal.apply();
 
         assertThat(adaptiveStrategy.getSigmaValue(vertex1.getId()), hasValue(closeTo(Math.sqrt(0.02), 1e-6)));
         assertThat(adaptiveStrategy.getSigmaValue(vertex2.getId()), hasValue(closeTo(Math.sqrt(0.08), 1e-6)));
