@@ -32,4 +32,9 @@ public class EmpiricalVarianceForProposalDistribution implements GaussianAdaptiv
             }
         }
     }
+
+    @Override
+    public void onProposalRejected(Proposal proposal) {
+        // do nothing
+    }
 }

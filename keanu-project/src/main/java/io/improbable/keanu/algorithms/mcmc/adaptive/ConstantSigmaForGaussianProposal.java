@@ -20,4 +20,9 @@ public class ConstantSigmaForGaussianProposal implements GaussianAdaptiveMcMcStr
     public void onProposalAccepted(Proposal proposal) {
         // do nothing, because we return the same value of sigma no matter what the state history
     }
+
+    @Override
+    public void onProposalRejected(Proposal proposal) {
+        // do nothing, because we return the same value of sigma no matter what the state history
+    }
 }
