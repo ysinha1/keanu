@@ -55,7 +55,7 @@ public class GaussianProposalDistributionTest {
     }
 
     @Before
-    public void setUpMocks() throws Exception {
+    public void setUpProposal() throws Exception {
         when(vertex1.getValue()).thenReturn(scalarValue(currentState, 0));
         when(vertex1.getShape()).thenReturn(SCALAR_SHAPE);
         when(vertex1.getId()).thenReturn(new VertexId());

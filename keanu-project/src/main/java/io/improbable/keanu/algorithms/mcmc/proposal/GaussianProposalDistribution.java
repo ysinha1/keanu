@@ -9,7 +9,6 @@ import io.improbable.keanu.distributions.continuous.Gaussian;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.Probabilistic;
 import io.improbable.keanu.vertices.Vertex;
-import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
 public class GaussianProposalDistribution implements ProposalDistribution {
@@ -30,7 +29,7 @@ public class GaussianProposalDistribution implements ProposalDistribution {
         for (Vertex vertex : vertices) {
             DoubleTensor sigma = adaptiveStrategy.getSigmaValue(vertex.getId());
             ContinuousDistribution proposalDistribution = Gaussian.withParameters((DoubleTensor) vertex.getValue(), sigma);
-            proposal.setProposal((DoubleVertex) vertex, proposalDistribution.sample(vertex.getShape(), random));
+            proposal.setProposal(vertex, proposalDistribution.sample(vertex.getShape(), random));
         }
         return proposal;
     }
