@@ -11,9 +11,12 @@ import org.hamcrest.Description;
 import org.hamcrest.Matcher;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 
+import com.google.common.collect.ImmutableList;
+
 
 public class TensorMatchers {
-    private TensorMatchers() {}
+    private TensorMatchers() {
+    }
 
 
     public static <T> Matcher<Tensor<T>> hasShape(int... shape) {
@@ -56,6 +59,10 @@ public class TensorMatchers {
 
     public static <T> Matcher<Tensor<T>> hasValue(T... values) {
         return hasValue(Arrays.stream(values).map(v -> equalTo(v)).collect(Collectors.toList()));
+    }
+
+    public static <T> Matcher<Tensor<T>> hasValue(Matcher<T> valueMatcher) {
+        return hasValue(ImmutableList.of(valueMatcher));
     }
 
     public static <T> Matcher<Tensor<T>> hasValue(List<Matcher<T>> valueMatchers) {

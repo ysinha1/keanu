@@ -2,6 +2,7 @@ package io.improbable.keanu.algorithms.mcmc.proposal;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -24,6 +25,7 @@ import io.improbable.keanu.algorithms.mcmc.adaptive.GaussianAdaptiveMcMcStrategy
 import io.improbable.keanu.distributions.continuous.Gaussian;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.Vertex;
+import io.improbable.keanu.vertices.VertexId;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
 
@@ -56,8 +58,10 @@ public class GaussianProposalDistributionTest {
     public void setUpMocks() throws Exception {
         when(vertex1.getValue()).thenReturn(scalarValue(currentState, 0));
         when(vertex1.getShape()).thenReturn(SCALAR_SHAPE);
+        when(vertex1.getId()).thenReturn(new VertexId());
         when(vertex2.getValue()).thenReturn(scalarValue(currentState, 1));
         when(vertex2.getShape()).thenReturn(SCALAR_SHAPE);
+        when(vertex2.getId()).thenReturn(new VertexId());
 
         proposal = new Proposal();
         proposal.setProposal(vertex1, scalarValue(proposedState, 0));
@@ -85,13 +89,13 @@ public class GaussianProposalDistributionTest {
     @Test
     public void youCanUseAnAdaptiveStrategyForSigma() {
         GaussianAdaptiveMcMcStrategy strategy = mock(GaussianAdaptiveMcMcStrategy.class);
-        when(strategy.getSigmaValue()).thenReturn(DoubleTensor.ZERO_SCALAR);
+        when(strategy.getSigmaValue(any(VertexId.class))).thenReturn(DoubleTensor.ZERO_SCALAR);
 
         GaussianProposalDistribution proposalDistribution = new GaussianProposalDistribution(strategy);
         Set<Vertex> vertices = ImmutableSet.of(vertex1, vertex2);
 
         Proposal proposal = proposalDistribution.getProposal(vertices, KeanuRandom.getDefaultRandom());
-        verify(strategy, times(vertices.size())).getSigmaValue();
+        verify(strategy, times(vertices.size())).getSigmaValue(any(VertexId.class));
 
         proposal.apply();
         verify(strategy).onProposalAccepted(proposal);
@@ -101,7 +105,7 @@ public class GaussianProposalDistributionTest {
             scalarValue(currentState, 0),
             scalarValue(proposedState, 0)
         );
-        verify(strategy, times(vertices.size() + 1)).getSigmaValue();
+        verify(strategy, times(vertices.size() + 1)).getSigmaValue(any(VertexId.class));
 
         verifyNoMoreInteractions(strategy);
     }
