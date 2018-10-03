@@ -8,7 +8,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.util.ArrayUtil;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 import io.improbable.keanu.distributions.DiscreteDistribution;
@@ -86,23 +85,28 @@ public class Multinomial implements DiscreteDistribution {
     }
 
     private BooleanTensor calculateCategoryToSampleFrom(DoubleTensor randomNumbers) {
+        int[] sampleShape = sampleShapeFor(randomNumbers.getShape());
+
         List<DoubleTensor> extrudedCumulativeProbabilities = cumulativeProbabilities;
         if (n.isScalar()) {
             extrudedCumulativeProbabilities = cumulativeProbabilities.stream()
                 .map(t -> DoubleTensor.create(t.scalar(), randomNumbers.getShape()))
                 .collect(Collectors.toList());
         }
-        ImmutableList.Builder<BooleanTensor> sampleFromCategories = ImmutableList.builder();
+        boolean[] sampleFromCategories = new boolean[ArrayUtil.prod(sampleShape)];
         BooleanTensor foundCategory = BooleanTensor.create(false, randomNumbers.getShape());
         BooleanTensor sampleFromCategory;
+        int destPos = 0;
         for (DoubleTensor cumulativeProbability : extrudedCumulativeProbabilities) {
             sampleFromCategory = randomNumbers.lessThanOrEqual(cumulativeProbability)
                 .andInPlace(foundCategory.not())
                 .andInPlace(extrude(cumulativeProbability.greaterThan(0.), randomNumbers.getShape()));
             foundCategory.orInPlace(sampleFromCategory);
-            sampleFromCategories.add(sampleFromCategory);
+            boolean[] sampleAsFlatArray = ArrayUtils.toPrimitive(sampleFromCategory.asFlatArray());
+            System.arraycopy(sampleAsFlatArray, 0, sampleFromCategories, destPos, sampleAsFlatArray.length);
+            destPos += sampleAsFlatArray.length;
         }
-        return BooleanTensor.concat(0, sampleFromCategories.build().toArray(new BooleanTensor[0])).reshape(sampleShapeFor(randomNumbers.getShape()));
+        return new SimpleBooleanTensor(sampleFromCategories, sampleShape);
     }
 
     private int[] sampleShapeFor(int[] shape) {
