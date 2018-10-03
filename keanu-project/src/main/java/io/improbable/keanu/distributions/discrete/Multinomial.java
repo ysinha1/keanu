@@ -8,10 +8,13 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.nd4j.linalg.util.ArrayUtil;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 import io.improbable.keanu.distributions.DiscreteDistribution;
-import io.improbable.keanu.tensor.Tensor;
 import io.improbable.keanu.tensor.TensorShapeValidation;
+import io.improbable.keanu.tensor.bool.BooleanTensor;
+import io.improbable.keanu.tensor.bool.SimpleBooleanTensor;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.tensor.intgr.IntegerTensor;
 import io.improbable.keanu.tensor.validate.DebugTensorValidator;
@@ -25,6 +28,7 @@ public class Multinomial implements DiscreteDistribution {
     private final IntegerTensor n;
     private final DoubleTensor p;
     private final int numCategories;
+    private final List<DoubleTensor> cumulativeProbabilities;
 
     public static Multinomial withParameters(IntegerTensor n, DoubleTensor p) {
         return new Multinomial(n, p);
@@ -48,77 +52,79 @@ public class Multinomial implements DiscreteDistribution {
         TensorShapeValidation.checkAllShapesMatch(n.getShape(), p.slice(0, 0).getShape());
         this.n = n;
         this.p = p;
+        cumulativeProbabilities = calculateCumulativeProbabilities();
     }
 
     @Override
     public IntegerTensor sample(int[] shape, KeanuRandom random) {
         TensorShapeValidation.checkTensorsMatchNonScalarShapeOrAreScalar(shape, n.getShape());
 
-        Tensor.FlattenedView<Integer> nFlattened = n.getFlattenedView();
-        List<DoubleTensor> sliced = p.sliceAlongDimension(0, 0, numCategories);
-
-        int length = ArrayUtil.prod(shape);
-        int[] samples = new int[0];
-
-        for (int i = 0; i < length; i++) {
-            final int j = i;
-            List<Double> categoryProbabilities = sliced.stream().map(p -> p.getFlattenedView().getOrScalar(j)).collect(Collectors.toList());
-            int[] sample = drawNTimes(nFlattened.getOrScalar(i), random, categoryProbabilities.toArray(new Double[0]));
-            samples = ArrayUtils.addAll(samples, sample);
+        IntegerTensor counts = IntegerTensor.zeros(sampleShapeFor(shape));
+        for (int i = 0; i < n.max(); i++) {
+            BooleanTensor stillSampling = extrude(n.greaterThanOrEqual(i), sampleShapeFor(shape));
+            DoubleTensor randomNumbers = random.nextDouble(shape);
+            BooleanTensor sampleCategory = calculateCategoryToSampleFrom(randomNumbers);
+            counts = sampleCategory.and(stillSampling).setIntegerIf(counts.plus(1), counts);
         }
-        return constructSampleTensor(shape, samples);
+        return counts;
     }
 
-    /**
-     * This method is necessary because I've constructed a flat array by concatenation samples of size k
-     * So for example, if the shape of n is [a, b]
-     * then I've now got a tensor of shape [a, b, k]
-     * which I need to convert to a tensor of shape [k, a, b]
-     * by doing a slice in the highest dimension and then concatenating again
-     *
-     * @param shape   the desired shape, not including the probabilities dimension
-     * @param samples the flat array of samples
-     * @return
-     */
-    private IntegerTensor constructSampleTensor(int[] shape, int[] samples) {
-        int[] outputShape = shape;
+    private BooleanTensor extrude(BooleanTensor slice, int[] shape) {
+        int times = ArrayUtil.prod(shape);
+        int[] newShape = ArrayUtil.combine(slice.getShape(), shape);
+        if (newShape[0] == 1) {
+            newShape = ArrayUtils.remove(newShape, 0);
+        }
+        boolean[] sliceAsArray = ArrayUtils.toPrimitive(slice.asFlatArray());
+        int sliceLength = sliceAsArray.length;
+        boolean[] sliceRepeated = new boolean[sliceLength * times];
+        for (int i = 0; i < times; i++) {
+            int destPos = sliceLength * i;
+            System.arraycopy(sliceAsArray, 0, sliceRepeated, destPos, sliceLength);
+        }
+        return new SimpleBooleanTensor(sliceRepeated, newShape);
+    }
+
+    private BooleanTensor calculateCategoryToSampleFrom(DoubleTensor randomNumbers) {
+        List<DoubleTensor> extrudedCumulativeProbabilities = cumulativeProbabilities;
+        if (n.isScalar()) {
+            extrudedCumulativeProbabilities = cumulativeProbabilities.stream()
+                .map(t -> DoubleTensor.create(t.scalar(), randomNumbers.getShape()))
+                .collect(Collectors.toList());
+        }
+        ImmutableList.Builder<BooleanTensor> sampleFromCategories = ImmutableList.builder();
+        BooleanTensor foundCategory = BooleanTensor.create(false, randomNumbers.getShape());
+        BooleanTensor sampleFromCategory;
+        for (DoubleTensor cumulativeProbability : extrudedCumulativeProbabilities) {
+            sampleFromCategory = randomNumbers.lessThanOrEqual(cumulativeProbability)
+                .andInPlace(foundCategory.not())
+                .andInPlace(extrude(cumulativeProbability.greaterThan(0.), randomNumbers.getShape()));
+            foundCategory.orInPlace(sampleFromCategory);
+            sampleFromCategories.add(sampleFromCategory);
+        }
+        return BooleanTensor.concat(0, sampleFromCategories.build().toArray(new BooleanTensor[0])).reshape(sampleShapeFor(randomNumbers.getShape()));
+    }
+
+    private int[] sampleShapeFor(int[] shape) {
+        int[] firstDimension = Arrays.copyOfRange(p.getShape(), 0, 1);
+        int[] remainingDimensions = shape;
         if (shape[0] == 1) {
-            outputShape = ArrayUtils.remove(outputShape, 0);
+            remainingDimensions = Arrays.copyOfRange(shape, 1, shape.length);
+        } else if (shape[shape.length - 1] == 1) {
+            remainingDimensions = Arrays.copyOfRange(shape, 0, shape.length - 1);
         }
-        IntegerTensor abkTensor = IntegerTensor.create(samples, ArrayUtils.add(outputShape, numCategories));
-        int[] kabArray = new int[]{};
+        return ArrayUtil.combine(firstDimension, remainingDimensions);
+    }
+
+    private List<DoubleTensor> calculateCumulativeProbabilities() {
+
+        List<DoubleTensor> cumulativeProbabilities = Lists.newArrayList();
+        DoubleTensor cumulativeProbability = DoubleTensor.zeros(n.getShape());
         for (int category = 0; category < numCategories; category++) {
-            IntegerTensor abTensor = abkTensor.slice(outputShape.length, category);
-            kabArray = ArrayUtils.addAll(kabArray, abTensor.asFlatIntegerArray());
+            cumulativeProbability = cumulativeProbability.plus(p.slice(0, category));
+            cumulativeProbabilities.add(cumulativeProbability);
         }
-
-        return IntegerTensor.create(kabArray, ArrayUtils.insert(0, outputShape, numCategories));
-    }
-
-    private static int[] drawNTimes(int n, KeanuRandom random, Double... categoryProbabilities) {
-        int[] categoryDrawCounts = new int[categoryProbabilities.length];
-        for (int i = 0; i < n; i++) {
-            int index = draw(random, categoryProbabilities);
-            categoryDrawCounts[index] += 1;
-        }
-        return categoryDrawCounts;
-    }
-
-    private static int draw(KeanuRandom random, Double... categoryProbabilities) {
-        double value = random.nextDouble();
-        int index = 0;
-        Double pCumulative = 0.;
-        while (index < categoryProbabilities.length) {
-            Double currentP = categoryProbabilities[index++];
-            if (currentP == 0.) {
-                continue;
-            }
-            pCumulative += currentP;
-            if (pCumulative >= value) {
-                break;
-            }
-        }
-        return index - 1;
+        return cumulativeProbabilities;
     }
 
     @Override
