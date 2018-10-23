@@ -15,12 +15,14 @@ public class TestOptimiser {
 
             Double abs = Double.MIN_VALUE;
 
-            System.out.println(String.format("Abs is zero: %s", (abs == 0.0d)));
-            System.out.println(String.format("MIN_VALUE is zero: %s", (Double.MIN_VALUE == 0.0d)));
-            System.out.println(String.format("abs IS MIN_VALUE: %s", (abs == Double.MIN_VALUE)));
-            System.out.println(String.format("abs: %f", abs));
-            System.out.println(String.format("MIN_VALUE: %f", Double.MIN_VALUE));
-            System.out.println(Double.doubleToRawLongBits(abs));
+            System.out.println("Abs is zero: " + (abs == 0.0d));
+            System.out.println("MIN_VALUE is zero: " +  (Double.MIN_VALUE == 0.0d));
+            System.out.println("abs IS MIN_VALUE: " + (abs == Double.MIN_VALUE));
+            System.out.println("abs: " + abs);
+            System.out.println("MIN_VALUE: " + Double.MIN_VALUE);
+            System.out.println("abs bits: " + Double.doubleToRawLongBits(abs));
+            System.out.println("MIN_VALUE bits: " + Double.doubleToRawLongBits(Double.MIN_VALUE));
+            System.out.println("zero bits: " + Double.doubleToRawLongBits(0.0d));
 
             // Fails
             if (abs <= 0) {
