@@ -17,13 +17,14 @@
 
 package io.improbable.keanu.algorithms.variational.optimizer.gradient;
 
-import org.apache.commons.math3.optim.univariate.UnivariateOptimizer;
-import org.apache.commons.math3.util.Precision;
-import org.apache.commons.math3.util.FastMath;
-import org.apache.commons.math3.exception.NumberIsTooSmallException;
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
+import org.apache.commons.math3.exception.NumberIsTooSmallException;
 import org.apache.commons.math3.optim.ConvergenceChecker;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.UnivariateOptimizer;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
+import org.apache.commons.math3.util.FastMath;
+import org.apache.commons.math3.util.Precision;
 
 /**
  * For a function defined on some interval {@code (lo, hi)}, this class
@@ -76,9 +77,9 @@ public class DavidBrentOptimizer extends UnivariateOptimizer {
      * @throws NotStrictlyPositiveException if {@code abs <= 0}.
      * @throws NumberIsTooSmallException if {@code rel < 2 * Math.ulp(1d)}.
      */
-    public BrentOptimizer(double rel,
-                          double abs,
-                          ConvergenceChecker<UnivariatePointValuePair> checker) {
+    public DavidBrentOptimizer(double rel,
+                               double abs,
+                               ConvergenceChecker<UnivariatePointValuePair> checker) {
         super(checker);
 
         if (rel < MIN_RELATIVE_TOLERANCE) {
@@ -106,8 +107,8 @@ public class DavidBrentOptimizer extends UnivariateOptimizer {
      * @throws NotStrictlyPositiveException if {@code abs <= 0}.
      * @throws NumberIsTooSmallException if {@code rel < 2 * Math.ulp(1d)}.
      */
-    public BrentOptimizer(double rel,
-                          double abs) {
+    public DavidBrentOptimizer(double rel,
+                               double abs) {
         this(rel, abs, null);
     }
 
