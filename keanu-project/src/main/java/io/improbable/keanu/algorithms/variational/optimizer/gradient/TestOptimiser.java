@@ -4,6 +4,8 @@ import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.optim.nonlinear.scalar.LineSearch;
 
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.net.URLClassLoader;
 
 public class TestOptimiser {
 
@@ -24,6 +26,8 @@ public class TestOptimiser {
             System.out.println("MIN_VALUE bits: " + Double.doubleToRawLongBits(Double.MIN_VALUE));
             System.out.println("zero bits: " + Double.doubleToRawLongBits(0.0d));
 
+            printClassLoaderInfo();
+            
             // Fails
             if (abs <= 0) {
                 throw new NotStrictlyPositiveException(abs);
@@ -53,6 +57,16 @@ public class TestOptimiser {
 //            Double.MIN_VALUE,
 //            new SimpleUnivariateValueChecker(1e-8,
 //                1e-8));
+    }
+
+    private void printClassLoaderInfo() {
+        ClassLoader cl = ClassLoader.getSystemClassLoader();
+
+        URL[] urls = ((URLClassLoader)cl).getURLs();
+
+        for(URL url: urls){
+            System.out.println(url.getFile());
+        }
     }
 
 
