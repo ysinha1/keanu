@@ -2,6 +2,7 @@ import sys
 import io
 import os.path
 from py4j.java_gateway import JavaGateway, JavaObject, CallbackServerParameters
+import logging
 
 PATH = os.path.abspath(os.path.dirname(__file__))
 CLASSPATH = os.path.join(PATH, "keanu-python-all.jar")
@@ -30,6 +31,14 @@ class KeanuContext(metaclass=Singleton):
         self.__get_random_port_for_callback_server()
 
         self.__jvm_view = self._gateway.new_jvm_view()
+
+        self.enable_logging()
+
+    def enable_logging(self):
+        self._gateway.jvm.py4j.GatewayServer.turnLoggingOn()
+        logger = logging.getLogger("py4j")
+        logger.setLevel(logging.DEBUG)
+        logger.addHandler(logging.StreamHandler())
 
     def __stderr_with_redirect_disabled_for_jupyter(self):
         try:
