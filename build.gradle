@@ -3,6 +3,9 @@ plugins {
     id 'com.github.johnrengelman.shadow' version '2.0.2'
 }
 
+def currentJvm = org.gradle.internal.jvm.Jvm.current()
+println "JVM: " + currentJvm
+
 allprojects {
     version gitVersion()
 
