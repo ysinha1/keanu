@@ -8,6 +8,7 @@ k = KeanuContext().jvm_view()
 
 java_import(k, "io.improbable.keanu.algorithms.variational.optimizer.gradient.GradientOptimizer")
 java_import(k, "io.improbable.keanu.algorithms.variational.optimizer.nongradient.NonGradientOptimizer")
+java_import(k, "io.improbable.keanu.algorithms.variational.optimizer.gradient.TestOptimiser")
 
 
 class Optimizer:
@@ -60,3 +61,9 @@ class NonGradientOptimizer(Optimizer):
             builder.stoppingTrustRegionRadius(stopping_trust_region_radius)
 
         super(NonGradientOptimizer, self).__init__(builder.build(), net)
+
+
+# For reproducing the Windows gradle build issue.
+class TestThing(JavaObjectWrapper):
+    def __init__(self, x):
+        super(TestThing, self).__init__(k.TestOptimiser, x)
