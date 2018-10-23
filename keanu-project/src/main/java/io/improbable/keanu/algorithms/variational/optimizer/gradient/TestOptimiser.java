@@ -1,11 +1,7 @@
 package io.improbable.keanu.algorithms.variational.optimizer.gradient;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.math3.exception.NotStrictlyPositiveException;
 import org.apache.commons.math3.optim.nonlinear.scalar.LineSearch;
-import org.apache.commons.math3.optim.univariate.BrentOptimizer;
-import org.apache.commons.math3.optim.univariate.SimpleUnivariateValueChecker;
-import org.apache.commons.math3.optim.univariate.UnivariateOptimizer;
 
 import java.lang.reflect.Field;
 
@@ -19,7 +15,12 @@ public class TestOptimiser {
 
             Double abs = Double.MIN_VALUE;
 
-            System.out.println("Abs is zero: " + (abs == 0.0d) + " abs: " + abs + " min double is zero: " + (Double.MIN_VALUE == 0.0d) + " min vale: " + Double.MIN_VALUE + " abs IS min double: " + (abs == Double.MIN_VALUE));
+            System.out.println(String.format("Abs is zero: %s", (abs == 0.0d)));
+            System.out.println(String.format("MIN_VALUE is zero: %s", (Double.MIN_VALUE == 0.0d)));
+            System.out.println(String.format("abs IS MIN_VALUE: %s", (abs == Double.MIN_VALUE)));
+            System.out.println(String.format("abs: %f", abs));
+            System.out.println(String.format("MIN_VALUE: %f", Double.MIN_VALUE));
+            System.out.println(Double.doubleToRawLongBits(abs));
 
             // Fails
             if (abs <= 0) {
