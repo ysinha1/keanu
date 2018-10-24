@@ -1,4 +1,3 @@
-import keanu as kn
 from examples import CoalMining
 
 

@@ -1,7 +1,7 @@
 import pytest
-import keanu as kn
 from examples import thermometers
 from keanu.context import KeanuContext
+from keanu import x_TestThing
 from py4j.java_gateway import get_field
 from py4j.protocol import Py4JJavaError
 
@@ -52,8 +52,8 @@ def model():
 
 # Minimum repro case for the issue.
 def test_optimiser():
-    optimiser = kn.TestThing(1)
-    assert False
+    optimiser = x_TestThing(1)
+    # assert False
 
 
 # def test_thermometers_max_likelihood_gradient(model):

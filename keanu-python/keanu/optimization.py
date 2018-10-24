@@ -62,6 +62,6 @@ class NonGradientOptimizer(Optimizer):
 
 
 # For reproducing the Windows gradle build issue.
-class TestThing(JavaObjectWrapper):
+class x_TestThing(JavaObjectWrapper):
     def __init__(self, x):
-        super(TestThing, self).__init__(k.TestOptimiser, x)
+        super(x_TestThing, self).__init__(k.TestOptimiser, x)
