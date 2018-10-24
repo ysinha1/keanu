@@ -5,9 +5,7 @@ import pytest
 
 @pytest.fixture
 def jvm_view():
-    from py4j.java_gateway import java_import
     jvm_view = KeanuContext().jvm_view()
-    java_import(jvm_view, "io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex")
     return jvm_view
 
 
