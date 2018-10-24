@@ -1,4 +1,3 @@
-import pytest
 from keanu import Const
 import numpy as np
 
