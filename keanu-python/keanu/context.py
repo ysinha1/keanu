@@ -25,14 +25,15 @@ class KeanuContext(metaclass=Singleton):
             classpath=CLASSPATH,
             die_on_exit=True,
             redirect_stdout=sys.stdout,
-            redirect_stderr=stderr
+            redirect_stderr=stderr,
+            javaopts=["-Djava.compiler=NONE", "-Xshare:off", "-Xint", "-Xdiag", "-Xprof", "-Xbatch"]
         )
 
         self.__get_random_port_for_callback_server()
 
         self.__jvm_view = self._gateway.new_jvm_view()
 
-        self.enable_logging()
+        # self.enable_logging()
 
     def enable_logging(self):
         self._gateway.jvm.py4j.GatewayServer.turnLoggingOn()
