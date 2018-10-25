@@ -26,7 +26,16 @@ class KeanuContext(metaclass=Singleton):
             die_on_exit=True,
             redirect_stdout=sys.stdout,
             redirect_stderr=stderr,
-            javaopts=["-Djava.compiler=NONE", "-Xshare:off", "-Xint", "-Xdiag", "-Xprof", "-Xbatch"]
+            javaopts=[
+                # "-Djava.compiler=NONE", 
+                # "-Xshare:off", 
+                # "-Xint", 
+                # "-Xdiag", 
+                # "-Xprof", 
+                # "-Xbatch",
+                "-XX:CompileThreshold=100",
+                # "-XX:+PrintCompilation"
+                ]
         )
 
         self.__get_random_port_for_callback_server()

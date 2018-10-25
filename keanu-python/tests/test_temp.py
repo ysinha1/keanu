@@ -1,4 +1,4 @@
-from keanu import Const
+from keanu.const import Const
 import numpy as np
 
 
