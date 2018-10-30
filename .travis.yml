@@ -2,7 +2,7 @@ matrix:
   include:
     - language: java
       os:
-        - osx
+        - linux
         - windows
       jdk: oraclejdk8
       addons:
@@ -14,7 +14,7 @@ matrix:
         -in deployment/secret-keys-keanu.gpg.enc -out deployment/secret-keys-keanu.gpg -d
     - language: python
       os:
-        - osx
+        - linux
         - windows
       python: 3.6
       env:
