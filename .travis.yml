@@ -16,3 +16,16 @@ matrix:
         - PIPENV_YES=1
       script:
         - ./gradlew keanu-python:clean keanu-python:build -i
+    - language: shell
+      os: windows
+      python: 3.6
+      env:
+        - PIPENV_IGNORE_VIRTUALENVS=1
+        - PIPENV_YES=1
+      before_install: 
+        - git config --global core.autocrlf true
+      script:
+        - export JAVA_FOLDER=$(ls "C:/Program Files/Java")
+        - export JAVA_HOME="C:/Program Files/Java/$JAVA_FOLDER"
+        - echo $JAVA_HOME
+        - ./gradlew.bat clean build -i --stacktrace
