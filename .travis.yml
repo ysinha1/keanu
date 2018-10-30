@@ -10,7 +10,7 @@ matrix:
       before_install:
       - openssl aes-256-cbc -K $encrypted_eec04b57ffc0_key -iv $encrypted_eec04b57ffc0_iv
         -in deployment/secret-keys-keanu.gpg.enc -out deployment/secret-keys-keanu.gpg -d
-    - language: java
+    - language: shell
       os: windows
       jdk: oraclejdk8
       addons:
@@ -20,7 +20,7 @@ matrix:
       before_install:
       - openssl aes-256-cbc -K $encrypted_eec04b57ffc0_key -iv $encrypted_eec04b57ffc0_iv
         -in deployment/secret-keys-keanu.gpg.enc -out deployment/secret-keys-keanu.gpg -d
-    - language: python
+    - language: shell
       os: windows
       python: 3.6
       env:
