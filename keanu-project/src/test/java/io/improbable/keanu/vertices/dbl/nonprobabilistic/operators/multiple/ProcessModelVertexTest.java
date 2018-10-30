@@ -18,7 +18,7 @@ import io.improbable.keanu.vertices.model.LambdaModelVertex;
 import io.improbable.keanu.vertices.model.ModelVertex;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.Ignore;
 
 import java.io.IOException;
 import java.util.Map;
@@ -47,7 +47,7 @@ public class ProcessModelVertexTest {
         inputToModel = new ConstantDoubleVertex(25.0);
     }
 
-    @Test
+    @Ignore
     public void canRunAModelInAModel() {
         weatherModel.setInputToModel(inputToModel);
         Map<VertexLabel, Vertex<? extends Tensor>> inputs = ImmutableMap.of(new VertexLabel("Temperature"), inputToModel);
@@ -66,7 +66,7 @@ public class ProcessModelVertexTest {
         Assert.assertEquals(shouldIBringUmbrella.getValue().scalar(), 20.0, 1e-6);
     }
 
-    @Test
+    @Ignore
     public void canRunEvalOnTheOutputsToRecalculateTheModel() {
         weatherModel.setInputToModel(inputToModel);
         Map<VertexLabel, Vertex<? extends Tensor>> inputs = ImmutableMap.of(new VertexLabel("Temperature"), inputToModel);
@@ -88,7 +88,7 @@ public class ProcessModelVertexTest {
         Assert.assertEquals(80.0, shouldIBringUmbrella.getValue().scalar(), 1e-6);
     }
 
-    @Test
+    @Ignore
     public void canRunAModelInAModelWithDifferentOutputTypes() {
         weatherModel.setInputToModel(inputToModel);
         Map<VertexLabel, Vertex<? extends Tensor>> inputs = ImmutableMap.of(new VertexLabel("Temperature"), inputToModel);
@@ -106,7 +106,7 @@ public class ProcessModelVertexTest {
         Assert.assertEquals(isSunny.getValue().scalar(), false);
     }
 
-    @Test
+    @Ignore
     public void modelInsideVertexIsRecalculatedOnEachParentSample() {
         int numSamples = 50;
         weatherModel.setInputToModel(inputToModel);
@@ -127,7 +127,7 @@ public class ProcessModelVertexTest {
         }
     }
 
-    @Test
+    @Ignore
     public void modelWorksAsPartOfGradientOptimisation() {
         DoubleVertex inputToModelOne = new GaussianVertex(14.0, 5);
         DoubleVertex inputToModelTwo = new GaussianVertex(14.0, 5);
@@ -151,7 +151,7 @@ public class ProcessModelVertexTest {
         Assert.assertEquals(30.0, inputToModel.getValue().scalar(), 0.1);
     }
 
-    @Test
+    @Ignore
     public void modelWorksAsPartOfSampling() {
         inputToModel = new GaussianVertex(25, 5);
         weatherModel.setInputToModel(inputToModel);
