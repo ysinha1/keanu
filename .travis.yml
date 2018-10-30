@@ -1,8 +1,8 @@
 matrix:
   include:
-    - language: shell
+    - language: sh
       os: windows
-      python: 3.6
+      python: "3.6"
       env:
         - PIPENV_IGNORE_VIRTUALENVS=1
         - PIPENV_YES=1
