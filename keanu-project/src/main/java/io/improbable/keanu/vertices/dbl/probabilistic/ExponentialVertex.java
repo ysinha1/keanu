@@ -45,11 +45,11 @@ public class ExponentialVertex extends DoubleVertex implements ProbabilisticDoub
     /**
      * One to one constructor for mapping some shape of lambda to matching shaped exponential.
      *
-     * @param lambda the lambda of the Exponential with either the same shape as specified for this vertex or scalar
+     * @param lambdaVertex the lambda of the Exponential with either the same shape as specified for this vertex or scalar
      */
     @ExportVertexToPythonBindings
-    public ExponentialVertex(DoubleVertex lambda) {
-        this(checkHasSingleNonScalarShapeOrAllScalar(lambda.getShape()), lambda);
+    public ExponentialVertex(DoubleVertex lambdaVertex) {
+        this(checkHasSingleNonScalarShapeOrAllScalar(lambdaVertex.getShape()), lambdaVertex);
     }
 
     public ExponentialVertex(double lambda) {

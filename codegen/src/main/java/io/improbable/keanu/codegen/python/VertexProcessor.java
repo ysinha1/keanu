@@ -5,6 +5,8 @@ import io.improbable.keanu.annotation.ExportVertexToPythonBindings;
 import lombok.Getter;
 import org.reflections.Reflections;
 import org.reflections.scanners.MethodAnnotationsScanner;
+import org.reflections.scanners.MethodParameterNamesScanner;
+import org.reflections.scanners.MethodParameterScanner;
 import org.reflections.scanners.TypeAnnotationsScanner;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
@@ -31,7 +33,12 @@ class VertexProcessor {
     }
 
     private static Map<String, Object> buildDataModel() {
-        List<Constructor> constructors = getSortedListOfAnnotatedVertexConstructors();
+        Reflections reflections = new Reflections(new ConfigurationBuilder()
+            .setUrls(ClasspathHelper.forPackage("io.improbable.keanu.vertices"))
+            .setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner(), new MethodParameterScanner(), new MethodParameterNamesScanner()));
+
+        List<Constructor> constructors = getSortedListOfAnnotatedVertexConstructors(reflections);
+        List<List<String>> constructorParamNames = getSortedListOfConstructorParams(reflections, constructors);
 
         Map<String, Object> root = new HashMap<>();
         List<Import> imports = new ArrayList<>();
@@ -39,24 +46,31 @@ class VertexProcessor {
         root.put("imports", imports);
         root.put("constructors", pythonConstructors);
 
-        for (Constructor constructor : constructors) {
+        for (int i = 0; i < constructors.size(); i++) {
+            Constructor constructor = constructors.get(i);
+            List<String> paramNames = constructorParamNames.get(i);
             String javaClass = constructor.getDeclaringClass().getSimpleName();
 
             imports.add(new Import(constructor.getDeclaringClass().getCanonicalName()));
-            pythonConstructors.add(new PythonConstructor(javaClass, toPythonClass(javaClass)));
+            pythonConstructors.add(new PythonConstructor(javaClass, toPythonClass(javaClass), paramNames));
         }
 
         return root;
     }
 
-    private static List<Constructor> getSortedListOfAnnotatedVertexConstructors() {
-         Reflections reflections = new Reflections(new ConfigurationBuilder()
-            .setUrls(ClasspathHelper.forPackage("io.improbable.keanu.vertices"))
-            .setScanners(new MethodAnnotationsScanner(), new TypeAnnotationsScanner()));
+    private static List<List<String>> getSortedListOfConstructorParams(Reflections reflections, List<Constructor> constructors) {
+        List<List<String>> allConstructorsParamsList = new ArrayList<>();
+        for (Constructor constructor : constructors) {
+            List<String> paramNames = reflections.getConstructorParamNames(constructor);
+            List<String> singleConstructorParamsList = new ArrayList<>(paramNames);
+            allConstructorsParamsList.add(singleConstructorParamsList);
+        }
+        return allConstructorsParamsList;
+    }
 
+    private static List<Constructor> getSortedListOfAnnotatedVertexConstructors(Reflections reflections) {
         List<Constructor> constructors = new ArrayList<>(reflections.getConstructorsAnnotatedWith(ExportVertexToPythonBindings.class));
         constructors.sort(Comparator.comparing(Constructor::getName));
-
         return constructors;
     }
 
@@ -78,10 +92,20 @@ class VertexProcessor {
         private String javaClass;
         @Getter
         private String pythonClass;
+        @Getter
+        private String argsString;
 
-        PythonConstructor(String javaClass, String pythonClass) {
+        PythonConstructor(String javaClass, String pythonClass, List<String> paramNames) {
             this.javaClass = javaClass;
             this.pythonClass = pythonClass;
+            StringBuilder stringBuilder = new StringBuilder();
+            for (int i = 0; i < paramNames.size(); i++) {
+                stringBuilder.append(paramNames.get(i));
+                if (i != paramNames.size() -1 ) {
+                    stringBuilder.append(", ");
+                }
+            }
+            this.argsString = stringBuilder.toString();
         }
     }
 }

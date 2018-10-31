@@ -37,113 +37,113 @@ java_import(k.jvm_view(), "io.improbable.keanu.vertices.intgr.probabilistic.Pois
 java_import(k.jvm_view(), "io.improbable.keanu.vertices.intgr.probabilistic.UniformIntVertex")
 
 
-def ConstantBool(*args) -> k.jvm_view().ConstantBoolVertex:
-    return Vertex(k.jvm_view().ConstantBoolVertex, args)
+def ConstantBool(constant) -> k.jvm_view().ConstantBoolVertex:
+    return Vertex(k.jvm_view().ConstantBoolVertex, constant)
 
 
-def Equals(*args) -> k.jvm_view().EqualsVertex:
-    return Vertex(k.jvm_view().EqualsVertex, args)
+def Equals(a, b) -> k.jvm_view().EqualsVertex:
+    return Vertex(k.jvm_view().EqualsVertex, a, b)
 
 
-def GreaterThanOrEqual(*args) -> k.jvm_view().GreaterThanOrEqualVertex:
-    return Vertex(k.jvm_view().GreaterThanOrEqualVertex, args)
+def GreaterThanOrEqual(a, b) -> k.jvm_view().GreaterThanOrEqualVertex:
+    return Vertex(k.jvm_view().GreaterThanOrEqualVertex, a, b)
 
 
-def GreaterThan(*args) -> k.jvm_view().GreaterThanVertex:
-    return Vertex(k.jvm_view().GreaterThanVertex, args)
+def GreaterThan(a, b) -> k.jvm_view().GreaterThanVertex:
+    return Vertex(k.jvm_view().GreaterThanVertex, a, b)
 
 
-def LessThanOrEqual(*args) -> k.jvm_view().LessThanOrEqualVertex:
-    return Vertex(k.jvm_view().LessThanOrEqualVertex, args)
+def LessThanOrEqual(a, b) -> k.jvm_view().LessThanOrEqualVertex:
+    return Vertex(k.jvm_view().LessThanOrEqualVertex, a, b)
 
 
-def LessThan(*args) -> k.jvm_view().LessThanVertex:
-    return Vertex(k.jvm_view().LessThanVertex, args)
+def LessThan(a, b) -> k.jvm_view().LessThanVertex:
+    return Vertex(k.jvm_view().LessThanVertex, a, b)
 
 
-def NotEquals(*args) -> k.jvm_view().NotEqualsVertex:
-    return Vertex(k.jvm_view().NotEqualsVertex, args)
+def NotEquals(a, b) -> k.jvm_view().NotEqualsVertex:
+    return Vertex(k.jvm_view().NotEqualsVertex, a, b)
 
 
-def CastDouble(*args) -> k.jvm_view().CastDoubleVertex:
-    return Vertex(k.jvm_view().CastDoubleVertex, args)
+def CastDouble(inputVertex) -> k.jvm_view().CastDoubleVertex:
+    return Vertex(k.jvm_view().CastDoubleVertex, inputVertex)
 
 
-def ConstantDouble(*args) -> k.jvm_view().ConstantDoubleVertex:
-    return Vertex(k.jvm_view().ConstantDoubleVertex, args)
+def ConstantDouble(constant) -> k.jvm_view().ConstantDoubleVertex:
+    return Vertex(k.jvm_view().ConstantDoubleVertex, constant)
 
 
-def DoubleIf(*args) -> k.jvm_view().DoubleIfVertex:
-    return Vertex(k.jvm_view().DoubleIfVertex, args)
+def DoubleIf(shape, predicate, thn, els) -> k.jvm_view().DoubleIfVertex:
+    return Vertex(k.jvm_view().DoubleIfVertex, shape, predicate, thn, els)
 
 
-def Addition(*args) -> k.jvm_view().AdditionVertex:
-    return Vertex(k.jvm_view().AdditionVertex, args)
+def Addition(left, right) -> k.jvm_view().AdditionVertex:
+    return Vertex(k.jvm_view().AdditionVertex, left, right)
 
 
-def Difference(*args) -> k.jvm_view().DifferenceVertex:
-    return Vertex(k.jvm_view().DifferenceVertex, args)
+def Difference(left, right) -> k.jvm_view().DifferenceVertex:
+    return Vertex(k.jvm_view().DifferenceVertex, left, right)
 
 
-def Division(*args) -> k.jvm_view().DivisionVertex:
-    return Vertex(k.jvm_view().DivisionVertex, args)
+def Division(left, right) -> k.jvm_view().DivisionVertex:
+    return Vertex(k.jvm_view().DivisionVertex, left, right)
 
 
-def Multiplication(*args) -> k.jvm_view().MultiplicationVertex:
-    return Vertex(k.jvm_view().MultiplicationVertex, args)
+def Multiplication(left, right) -> k.jvm_view().MultiplicationVertex:
+    return Vertex(k.jvm_view().MultiplicationVertex, left, right)
 
 
-def Power(*args) -> k.jvm_view().PowerVertex:
-    return Vertex(k.jvm_view().PowerVertex, args)
+def Power(base, exponent) -> k.jvm_view().PowerVertex:
+    return Vertex(k.jvm_view().PowerVertex, base, exponent)
 
 
-def Abs(*args) -> k.jvm_view().AbsVertex:
-    return Vertex(k.jvm_view().AbsVertex, args)
+def Abs(inputVertex) -> k.jvm_view().AbsVertex:
+    return Vertex(k.jvm_view().AbsVertex, inputVertex)
 
 
-def Ceil(*args) -> k.jvm_view().CeilVertex:
-    return Vertex(k.jvm_view().CeilVertex, args)
+def Ceil(inputVertex) -> k.jvm_view().CeilVertex:
+    return Vertex(k.jvm_view().CeilVertex, inputVertex)
 
 
-def Floor(*args) -> k.jvm_view().FloorVertex:
-    return Vertex(k.jvm_view().FloorVertex, args)
+def Floor(inputVertex) -> k.jvm_view().FloorVertex:
+    return Vertex(k.jvm_view().FloorVertex, inputVertex)
 
 
-def Round(*args) -> k.jvm_view().RoundVertex:
-    return Vertex(k.jvm_view().RoundVertex, args)
+def Round(inputVertex) -> k.jvm_view().RoundVertex:
+    return Vertex(k.jvm_view().RoundVertex, inputVertex)
 
 
-def Cauchy(*args) -> k.jvm_view().CauchyVertex:
-    return Vertex(k.jvm_view().CauchyVertex, args)
+def Cauchy(location, scale) -> k.jvm_view().CauchyVertex:
+    return Vertex(k.jvm_view().CauchyVertex, location, scale)
 
 
-def Exponential(*args) -> k.jvm_view().ExponentialVertex:
-    return Vertex(k.jvm_view().ExponentialVertex, args)
+def Exponential(lambdaVertex) -> k.jvm_view().ExponentialVertex:
+    return Vertex(k.jvm_view().ExponentialVertex, lambdaVertex)
 
 
-def Gamma(*args) -> k.jvm_view().GammaVertex:
-    return Vertex(k.jvm_view().GammaVertex, args)
+def Gamma(theta, k) -> k.jvm_view().GammaVertex:
+    return Vertex(k.jvm_view().GammaVertex, theta, k)
 
 
-def Gaussian(*args) -> k.jvm_view().GaussianVertex:
-    return Vertex(k.jvm_view().GaussianVertex, args)
+def Gaussian(mu, sigma) -> k.jvm_view().GaussianVertex:
+    return Vertex(k.jvm_view().GaussianVertex, mu, sigma)
 
 
-def Uniform(*args) -> k.jvm_view().UniformVertex:
-    return Vertex(k.jvm_view().UniformVertex, args)
+def Uniform(xMin, xMax) -> k.jvm_view().UniformVertex:
+    return Vertex(k.jvm_view().UniformVertex, xMin, xMax)
 
 
-def ConstantInteger(*args) -> k.jvm_view().ConstantIntegerVertex:
-    return Vertex(k.jvm_view().ConstantIntegerVertex, args)
+def ConstantInteger(constant) -> k.jvm_view().ConstantIntegerVertex:
+    return Vertex(k.jvm_view().ConstantIntegerVertex, constant)
 
 
-def IntegerDivision(*args) -> k.jvm_view().IntegerDivisionVertex:
-    return Vertex(k.jvm_view().IntegerDivisionVertex, args)
+def IntegerDivision(a, b) -> k.jvm_view().IntegerDivisionVertex:
+    return Vertex(k.jvm_view().IntegerDivisionVertex, a, b)
 
 
-def Poisson(*args) -> k.jvm_view().PoissonVertex:
-    return Vertex(k.jvm_view().PoissonVertex, args)
+def Poisson(mu) -> k.jvm_view().PoissonVertex:
+    return Vertex(k.jvm_view().PoissonVertex, mu)
 
 
-def UniformInt(*args) -> k.jvm_view().UniformIntVertex:
-    return Vertex(k.jvm_view().UniformIntVertex, args)
+def UniformInt(min, max) -> k.jvm_view().UniformIntVertex:
+    return Vertex(k.jvm_view().UniformIntVertex, min, max)

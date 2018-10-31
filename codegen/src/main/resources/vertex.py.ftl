@@ -13,6 +13,6 @@ java_import(k.jvm_view(), "${import.packageName}")
 <#list constructors as constructor>
 
 
-def ${constructor.pythonClass}(*args) -> k.jvm_view().${constructor.javaClass}:
-    return Vertex(k.jvm_view().${constructor.javaClass}, args)
+def ${constructor.pythonClass}(${constructor.argsString}) -> k.jvm_view().${constructor.javaClass}:
+    return Vertex(k.jvm_view().${constructor.javaClass}, ${constructor.argsString})
 </#list>
