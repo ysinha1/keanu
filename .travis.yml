@@ -9,7 +9,13 @@ matrix:
       before_install: 
         - git config --global core.autocrlf true
       script:
-        - choco install python --version 3.6
+        - wget --no-check-certificate http://www.python.org/ftp/python/3.6.6/Python-3.6.6.tgz
+        - tar -xzf Python-3.6.6.tgz
+        - cd Python-3.6.6
+        - ./configure
+        - make
+        - make install
+        - cd ../
         - export JAVA_FOLDER=$(ls "C:/Program Files/Java")
         - export JAVA_HOME="C:/Program Files/Java/$JAVA_FOLDER"
         - echo $JAVA_HOME
