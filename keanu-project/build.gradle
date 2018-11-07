@@ -14,6 +14,9 @@ plugins {
     id 'io.franzbecker.gradle-lombok' version '1.14'
     id 'maven'
     id 'jacoco'
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
 }
 
 apply plugin: 'com.google.protobuf'
@@ -56,59 +59,6 @@ test {
     systemProperty "dtype", 'double'
 }
 
-// Add default user/pass so it's not needed if only building and not publishing to Nexus
-if (!hasProperty('nexusUser')) {
-    ext.nexusUser = ''
-}
-
-if (!hasProperty('nexusPassword')) {
-    ext.nexusPassword = ''
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: nexusUser, password: nexusPassword)
-            }
-
-            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: nexusUser, password: nexusPassword)
-            }
-
-            pom.project {
-                name 'Keanu'
-                packaging 'jar'
-                description 'A probabilistic approach from an Improbabilistic company'
-                url 'https://github.com/improbable-research/keanu'
-
-                scm {
-                    connection 'scm:git@github.com:improbable-research/keanu.git'
-                    developerConnection 'scm:git@github.com:improbable-research/keanu.git'
-                    url 'https://github.com/improbable-research/keanu.git'
-                }
-
-                licenses {
-                    license {
-                        name 'MIT'
-                        url 'http://www.opensource.org/licenses/mit-license.php'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'keanu-engineering'
-                        name 'Keanu Improbable'
-                        email 'keanu-engineering@improbable.io'
-                    }
-                }
-            }
-        }
-    }
-}
-
 apply plugin: 'kotlin'
 
 compileKotlin {
@@ -120,23 +70,6 @@ compileTestKotlin {
     kotlinOptions {
         jvmTarget = "1.8"
     }
-}
-
-if (project.hasProperty("signing.keyId")) {
-    apply plugin: 'signing'
-    signing {
-        sign configurations.archives
-    }
-}
-
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from javadoc
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
 }
 
 task copyJarsIntoPythonClasspath(type: Copy) {
@@ -167,11 +100,75 @@ tasks.withType(Javadoc) {
     options.addStringOption('Xwerror', '-quiet')
 }
 
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
 lombok { // optional: values below are the defaults
     version = "1.16.20"
     sha256 = ""
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allJava
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    classifier = 'javadoc'
+}
+
+// Add default user/pass so it's not needed if only building and not publishing to Nexus
+if (!hasProperty('nexusUser')) {
+    ext.nexusUser = ''
+}
+
+if (!hasProperty('nexusPassword')) {
+    ext.nexusPassword = ''
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            artifactId = 'keanu'
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                name = 'Keanu'
+                description = 'A probabilistic approach from an Improbabilistic company'
+                url = 'https://github.com/improbable-research/keanu'
+                licenses {
+                    license {
+                        name = 'MIT'
+                        url = 'http://www.opensource.org/licenses/mit-license.php'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'keanu-engineering'
+                        name = 'Keanu Improbable'
+                        email = 'keanu-engineering@improbable.io'
+                    }
+                }
+                scm {
+                    connection = 'scm:git@github.com:improbable-research/keanu.git'
+                    developerConnection = 'scm:git@github.com:improbable-research/keanu.git'
+                    url = 'https://github.com/improbable-research/keanu.git'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username = nexusUser
+                password = nexusPassword
+            }
+            def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+            def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
+            url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
 }
