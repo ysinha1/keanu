@@ -1,6 +1,7 @@
 package io.improbable.keanu.vertices;
 
 import com.google.common.base.Preconditions;
+import io.improbable.keanu.annotation.ExportVertexToPythonBindings;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.dbl.Differentiable;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
@@ -77,6 +78,7 @@ public class TestGraphGenerator {
             this.onOp = onOp;
         }
 
+        @ExportVertexToPythonBindings
         public SumVertex(@LoadParentVertex("left")DoubleVertex left, @LoadParentVertex("right")DoubleVertex right) {
             super(left, right);
             this.opCount = new AtomicInteger();
