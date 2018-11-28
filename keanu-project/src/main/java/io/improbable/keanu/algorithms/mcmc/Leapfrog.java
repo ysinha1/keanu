@@ -12,9 +12,9 @@ import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCal
 
 public class Leapfrog {
 
-    final Map<VertexId, DoubleTensor> position;
-    final Map<VertexId, DoubleTensor> momentum;
-    final Map<VertexId, DoubleTensor> gradient;
+    Map<VertexId, DoubleTensor> position;
+    Map<VertexId, DoubleTensor> momentum;
+    Map<VertexId, DoubleTensor> gradient;
 
     Leapfrog(Map<VertexId, DoubleTensor> position,
                 Map<VertexId, DoubleTensor> momentum,

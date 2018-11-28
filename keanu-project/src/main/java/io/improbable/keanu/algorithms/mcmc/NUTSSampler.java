@@ -95,10 +95,10 @@ public class NUTSSampler implements SamplingAlgorithm {
     @Override
     public void step() {
 
-        initializeMomentumForEachVertex(latentVertices, tree.momentumForward, random);
-        cache(tree.momentumForward, tree.momentumBackward);
+        initializeMomentumForEachVertex(latentVertices, tree.leapForward.momentum, random);
+        cache(tree.leapForward.momentum, tree.leapBackward.momentum);
 
-        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - 0.5 * dotProduct(tree.momentumForward);
+        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - 0.5 * dotProduct(tree.leapForward.momentum);
 
         double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
 
@@ -141,10 +141,10 @@ public class NUTSSampler implements SamplingAlgorithm {
             tree.treeSize = otherHalfTree.treeSize;
 
             tree.shouldContinueFlag = otherHalfTree.shouldContinueFlag && isNotUTurning(
-                tree.positionForward,
-                tree.positionBackward,
-                tree.momentumForward,
-                tree.momentumBackward
+                tree.leapForward.position,
+                tree.leapBackward.position,
+                tree.leapForward.momentum,
+                tree.leapBackward.momentum
             );
 
             treeHeight++;
@@ -154,10 +154,10 @@ public class NUTSSampler implements SamplingAlgorithm {
             stepSize = adaptStepSize(autoTune, tree, sampleNum);
         }
 
-        tree.positionForward = tree.acceptedPosition;
-        tree.gradientForward = tree.gradientAtAcceptedPosition;
-        tree.positionBackward = tree.acceptedPosition;
-        tree.gradientBackward = tree.gradientAtAcceptedPosition;
+        tree.leapForward.position = tree.acceptedPosition;
+        tree.leapForward.gradient = tree.gradientAtAcceptedPosition;
+        tree.leapBackward.position = tree.acceptedPosition;
+        tree.leapBackward.gradient = tree.gradientAtAcceptedPosition;
 
         sampleNum++;
     }
@@ -178,14 +178,12 @@ public class NUTSSampler implements SamplingAlgorithm {
 
         if (buildDirection == -1) {
 
-            Leapfrog leapBackward = new Leapfrog(currentTree.positionBackward, currentTree.momentumBackward, currentTree.gradientBackward);
-
             otherHalfTree = buildTree(
                 latentVertices,
                 probabilisticVertices,
                 logProbGradientCalculator,
                 sampleFromVertices,
-                leapBackward,
+                currentTree.leapBackward,
                 u,
                 buildDirection,
                 treeHeight,
@@ -194,20 +192,16 @@ public class NUTSSampler implements SamplingAlgorithm {
                 random
             );
 
-            currentTree.positionBackward = otherHalfTree.positionBackward;
-            currentTree.momentumBackward = otherHalfTree.momentumBackward;
-            currentTree.gradientBackward = otherHalfTree.gradientBackward;
+            currentTree.leapBackward = otherHalfTree.leapBackward;
 
         } else {
 
-            Leapfrog leapForward = new Leapfrog(currentTree.positionForward, currentTree.momentumForward, currentTree.gradientForward);
-
             otherHalfTree = buildTree(
                 latentVertices,
                 probabilisticVertices,
                 logProbGradientCalculator,
                 sampleFromVertices,
-                leapForward,
+                currentTree.leapForward,
                 u,
                 buildDirection,
                 treeHeight,
@@ -216,9 +210,7 @@ public class NUTSSampler implements SamplingAlgorithm {
                 random
             );
 
-            currentTree.positionForward = otherHalfTree.positionForward;
-            currentTree.momentumForward = otherHalfTree.momentumForward;
-            currentTree.gradientForward = otherHalfTree.gradientForward;
+            currentTree.leapForward = otherHalfTree.leapForward;
         }
 
         return otherHalfTree;
@@ -293,10 +285,10 @@ public class NUTSSampler implements SamplingAlgorithm {
                 );
 
                 tree.shouldContinueFlag = otherHalfTree.shouldContinueFlag && isNotUTurning(
-                    tree.positionForward,
-                    tree.positionBackward,
-                    tree.momentumForward,
-                    tree.momentumBackward
+                    tree.leapForward.position,
+                    tree.leapBackward.position,
+                    tree.leapForward.momentum,
+                    tree.leapBackward.momentum
                 );
 
                 tree.acceptedLeapfrogCount += otherHalfTree.acceptedLeapfrogCount;
@@ -335,12 +327,8 @@ public class NUTSSampler implements SamplingAlgorithm {
         );
 
         return new BuiltTree(
-            leapfrog.position,
-            leapfrog.gradient,
-            leapfrog.momentum,
-            leapfrog.position,
-            leapfrog.gradient,
-            leapfrog.momentum,
+            leapfrog,
+            leapfrog,
             leapfrog.position,
             leapfrog.gradient,
             logOfMasterPAfterLeapfrog,
@@ -535,12 +523,8 @@ public class NUTSSampler implements SamplingAlgorithm {
 
     static class BuiltTree {
 
-        Map<VertexId, DoubleTensor> positionBackward;
-        Map<VertexId, DoubleTensor> gradientBackward;
-        Map<VertexId, DoubleTensor> momentumBackward;
-        Map<VertexId, DoubleTensor> positionForward;
-        Map<VertexId, DoubleTensor> gradientForward;
-        Map<VertexId, DoubleTensor> momentumForward;
+        Leapfrog leapForward;
+        Leapfrog leapBackward;
         Map<VertexId, DoubleTensor> acceptedPosition;
         Map<VertexId, DoubleTensor> gradientAtAcceptedPosition;
         double logOfMasterPAtAcceptedPosition;
@@ -550,12 +534,8 @@ public class NUTSSampler implements SamplingAlgorithm {
         double deltaLikelihoodOfLeapfrog;
         double treeSize;
 
-        BuiltTree(Map<VertexId, DoubleTensor> positionBackward,
-                  Map<VertexId, DoubleTensor> gradientBackward,
-                  Map<VertexId, DoubleTensor> momentumBackward,
-                  Map<VertexId, DoubleTensor> positionForward,
-                  Map<VertexId, DoubleTensor> gradientForward,
-                  Map<VertexId, DoubleTensor> momentumForward,
+        BuiltTree(Leapfrog leapForward,
+                  Leapfrog leapBackward,
                   Map<VertexId, DoubleTensor> acceptedPosition,
                   Map<VertexId, DoubleTensor> gradientAtAcceptedPosition,
                   double logProbAtAcceptedPosition,
@@ -565,12 +545,8 @@ public class NUTSSampler implements SamplingAlgorithm {
                   double deltaLikelihoodOfLeapfrog,
                   double treeSize) {
 
-            this.positionBackward = positionBackward;
-            this.gradientBackward = gradientBackward;
-            this.momentumBackward = momentumBackward;
-            this.positionForward = positionForward;
-            this.gradientForward = gradientForward;
-            this.momentumForward = momentumForward;
+            this.leapForward = leapForward;
+            this.leapBackward = leapBackward;
             this.acceptedPosition = acceptedPosition;
             this.gradientAtAcceptedPosition = gradientAtAcceptedPosition;
             this.logOfMasterPAtAcceptedPosition = logProbAtAcceptedPosition;

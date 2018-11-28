@@ -141,12 +141,8 @@ public class NUTS implements PosteriorSamplingAlgorithm {
         );
 
         NUTSSampler.BuiltTree tree = new NUTSSampler.BuiltTree(
-            position,
-            gradient,
-            momentum,
-            position,
-            gradient,
-            momentum,
+            new Leapfrog(position, momentum, gradient),
+            new Leapfrog(position, momentum, gradient),
             position,
             gradient,
             initialLogOfMasterP,
