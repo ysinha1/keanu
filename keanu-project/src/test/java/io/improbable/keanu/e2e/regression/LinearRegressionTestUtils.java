@@ -124,6 +124,9 @@ class LinearRegressionTestUtils {
         log.info(String.format("Intercept from sampling:     %.4f ~ %.4f", intercept.getAverages().scalar(), intercept.getVariances().sqrt().scalar()));
         log.info(String.format("Intercept from initial data: %.4f ~ %.4f", estimatedInterceptInSampleData, standardErrorForInterceptInSampleData));
 
+        System.out.println("Gradient: " + gradient.getAverages().scalar());
+        System.out.println("Intercept: " + intercept.getAverages().scalar());
+
         assertThat(gradient.getAverages().scalar(), closeTo(estimatedGradientInSampleData, standardErrorForGradientInSampleData));
         assertThat(gradient.getVariances().sqrt().scalar(), closeTo(standardErrorForGradientInSampleData, 0.01));
         assertThat(intercept.getAverages().scalar(), closeTo(estimatedInterceptInSampleData, standardErrorForInterceptInSampleData));
