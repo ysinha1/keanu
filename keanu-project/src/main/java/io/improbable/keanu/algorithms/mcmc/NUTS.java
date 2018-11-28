@@ -140,7 +140,7 @@ public class NUTS implements PosteriorSamplingAlgorithm {
             adaptCount
         );
 
-        NUTSSampler.BuiltTree tree = new NUTSSampler.BuiltTree(
+        TreeBuilder tree = new TreeBuilder(
             new Leapfrog(position, momentum, gradient),
             new Leapfrog(position, momentum, gradient),
             position,

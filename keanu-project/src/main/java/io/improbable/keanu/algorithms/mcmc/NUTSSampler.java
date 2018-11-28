@@ -22,7 +22,6 @@ import java.util.Map;
  */
 public class NUTSSampler implements SamplingAlgorithm {
 
-    private static final double DELTA_MAX = 1000.0;
     private static final double STABILISER = 10;
     private static final double SHRINKAGE_FACTOR = 0.05;
     private static final double TEND_TO_ZERO_EXPONENT = 0.75;
@@ -34,7 +33,7 @@ public class NUTSSampler implements SamplingAlgorithm {
     private final int maxTreeHeight;
     private final boolean adaptEnabled;
     private final AutoTune autoTune;
-    private final BuiltTree tree;
+    private final TreeBuilder tree;
     private final LogProbGradientCalculator logProbGradientCalculator;
 
     private Double stepSize;
@@ -59,7 +58,7 @@ public class NUTSSampler implements SamplingAlgorithm {
                        LogProbGradientCalculator logProbGradientCalculator,
                        boolean adaptEnabled,
                        AutoTune autoTune,
-                       BuiltTree tree,
+                       TreeBuilder tree,
                        Double stepSize,
                        int maxTreeHeight,
                        KeanuRandom random) {
@@ -111,7 +110,7 @@ public class NUTSSampler implements SamplingAlgorithm {
             //build tree direction -1 = backwards OR 1 = forwards
             int buildDirection = random.nextBoolean() ? 1 : -1;
 
-            BuiltTree otherHalfTree = buildOtherHalfOfTree(
+            TreeBuilder otherHalfTree = tree.buildOtherHalfOfTree(
                 tree,
                 latentVertices,
                 probabilisticVertices,
@@ -128,9 +127,9 @@ public class NUTSSampler implements SamplingAlgorithm {
             if (otherHalfTree.shouldContinueFlag) {
                 final double acceptanceProb = (double) otherHalfTree.acceptedLeapfrogCount / tree.acceptedLeapfrogCount;
 
-                acceptOtherPositionWithProbability(
+               tree.acceptOtherPositionWithProbability(
                     acceptanceProb,
-                    tree, otherHalfTree,
+                    otherHalfTree,
                     random
                 );
             }
@@ -140,12 +139,7 @@ public class NUTSSampler implements SamplingAlgorithm {
             tree.deltaLikelihoodOfLeapfrog = otherHalfTree.deltaLikelihoodOfLeapfrog;
             tree.treeSize = otherHalfTree.treeSize;
 
-            tree.shouldContinueFlag = otherHalfTree.shouldContinueFlag && isNotUTurning(
-                tree.leapForward.position,
-                tree.leapBackward.position,
-                tree.leapForward.momentum,
-                tree.leapBackward.momentum
-            );
+            tree.shouldContinueFlag = otherHalfTree.shouldContinueFlag && tree.isNotUTurning();
 
             treeHeight++;
         }
@@ -162,221 +156,6 @@ public class NUTSSampler implements SamplingAlgorithm {
         sampleNum++;
     }
 
-    private static BuiltTree buildOtherHalfOfTree(BuiltTree currentTree,
-                                                  List<Vertex<DoubleTensor>> latentVertices,
-                                                  List<Vertex> probabilisticVertices,
-                                                  LogProbGradientCalculator logProbGradientCalculator,
-                                                  final List<? extends Vertex> sampleFromVertices,
-                                                  double u,
-                                                  int buildDirection,
-                                                  int treeHeight,
-                                                  double epsilon,
-                                                  double logOfMasterPMinusMomentumBeforeLeapfrog,
-                                                  KeanuRandom random) {
-
-        BuiltTree otherHalfTree;
-
-        if (buildDirection == -1) {
-
-            otherHalfTree = buildTree(
-                latentVertices,
-                probabilisticVertices,
-                logProbGradientCalculator,
-                sampleFromVertices,
-                currentTree.leapBackward,
-                u,
-                buildDirection,
-                treeHeight,
-                epsilon,
-                logOfMasterPMinusMomentumBeforeLeapfrog,
-                random
-            );
-
-            currentTree.leapBackward = otherHalfTree.leapBackward;
-
-        } else {
-
-            otherHalfTree = buildTree(
-                latentVertices,
-                probabilisticVertices,
-                logProbGradientCalculator,
-                sampleFromVertices,
-                currentTree.leapForward,
-                u,
-                buildDirection,
-                treeHeight,
-                epsilon,
-                logOfMasterPMinusMomentumBeforeLeapfrog,
-                random
-            );
-
-            currentTree.leapForward = otherHalfTree.leapForward;
-        }
-
-        return otherHalfTree;
-    }
-
-    private static BuiltTree buildTree(List<Vertex<DoubleTensor>> latentVertices,
-                                       List<Vertex> probabilisticVertices,
-                                       LogProbGradientCalculator logProbGradientCalculator,
-                                       final List<? extends Vertex> sampleFromVertices,
-                                       Leapfrog leapfrog,
-                                       double u,
-                                       int buildDirection,
-                                       int treeHeight,
-                                       double epsilon,
-                                       double logOfMasterPMinusMomentumBeforeLeapfrog,
-                                       KeanuRandom random) {
-        if (treeHeight == 0) {
-
-            //Base case-take one leapfrog step in the build direction
-
-            return builtTreeBaseCase(latentVertices,
-                probabilisticVertices,
-                logProbGradientCalculator,
-                sampleFromVertices,
-                leapfrog,
-                u,
-                buildDirection,
-                epsilon,
-                logOfMasterPMinusMomentumBeforeLeapfrog
-            );
-
-        } else {
-            //Recursion-implicitly build the left and right subtrees.
-
-            BuiltTree tree = buildTree(
-                latentVertices,
-                probabilisticVertices,
-                logProbGradientCalculator,
-                sampleFromVertices,
-                leapfrog,
-                u,
-                buildDirection,
-                treeHeight - 1,
-                epsilon,
-                logOfMasterPMinusMomentumBeforeLeapfrog,
-                random
-            );
-
-            //Should continue building other half if first half's shouldContinueFlag is true
-            if (tree.shouldContinueFlag) {
-
-                BuiltTree otherHalfTree = buildOtherHalfOfTree(
-                    tree,
-                    latentVertices,
-                    probabilisticVertices,
-                    logProbGradientCalculator,
-                    sampleFromVertices,
-                    u,
-                    buildDirection,
-                    treeHeight - 1,
-                    epsilon,
-                    logOfMasterPMinusMomentumBeforeLeapfrog,
-                    random
-                );
-
-                double acceptOtherTreePositionProbability = (double) otherHalfTree.acceptedLeapfrogCount / (tree.acceptedLeapfrogCount + otherHalfTree.acceptedLeapfrogCount);
-
-                acceptOtherPositionWithProbability(
-                    acceptOtherTreePositionProbability,
-                    tree, otherHalfTree,
-                    random
-                );
-
-                tree.shouldContinueFlag = otherHalfTree.shouldContinueFlag && isNotUTurning(
-                    tree.leapForward.position,
-                    tree.leapBackward.position,
-                    tree.leapForward.momentum,
-                    tree.leapBackward.momentum
-                );
-
-                tree.acceptedLeapfrogCount += otherHalfTree.acceptedLeapfrogCount;
-                tree.deltaLikelihoodOfLeapfrog += otherHalfTree.deltaLikelihoodOfLeapfrog;
-                tree.treeSize += otherHalfTree.treeSize;
-            }
-
-            return tree;
-        }
-
-    }
-
-    private static BuiltTree builtTreeBaseCase(List<Vertex<DoubleTensor>> latentVertices,
-                                               List<Vertex> probabilisticVertices,
-                                               LogProbGradientCalculator logProbGradientCalculator,
-                                               final List<? extends Vertex> sampleFromVertices,
-                                               Leapfrog leapfrog,
-                                               double u,
-                                               int buildDirection,
-                                               double epsilon,
-                                               double logOfMasterPMinusMomentumBeforeLeapfrog) {
-
-        leapfrog = leapfrog.step(latentVertices, logProbGradientCalculator,epsilon * buildDirection);
-
-        final double logOfMasterPAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
-
-        final double logOfMasterPMinusMomentum = logOfMasterPAfterLeapfrog - leapfrog.halfDotProductMomentum();
-        final int acceptedLeapfrogCount = u <= Math.exp(logOfMasterPMinusMomentum) ? 1 : 0;
-        final boolean shouldContinueFlag = u < Math.exp(DELTA_MAX + logOfMasterPMinusMomentum);
-
-        final Map<VertexId, ?> sampleAtAcceptedPosition = takeSample(sampleFromVertices);
-
-        final double deltaLikelihoodOfLeapfrog = Math.min(
-            1.0,
-            Math.exp(logOfMasterPMinusMomentum - logOfMasterPMinusMomentumBeforeLeapfrog)
-        );
-
-        return new BuiltTree(
-            leapfrog,
-            leapfrog,
-            leapfrog.position,
-            leapfrog.gradient,
-            logOfMasterPAfterLeapfrog,
-            sampleAtAcceptedPosition,
-            acceptedLeapfrogCount,
-            shouldContinueFlag,
-            deltaLikelihoodOfLeapfrog,
-            1
-        );
-    }
-
-    private static void acceptOtherPositionWithProbability(double probability,
-                                                           BuiltTree tree,
-                                                           BuiltTree otherTree,
-                                                           KeanuRandom random) {
-        if (withProbability(probability, random)) {
-            tree.acceptedPosition = otherTree.acceptedPosition;
-            tree.gradientAtAcceptedPosition = otherTree.gradientAtAcceptedPosition;
-            tree.logOfMasterPAtAcceptedPosition = otherTree.logOfMasterPAtAcceptedPosition;
-            tree.sampleAtAcceptedPosition = otherTree.sampleAtAcceptedPosition;
-        }
-    }
-
-    private static boolean withProbability(double probability, KeanuRandom random) {
-        return random.nextDouble() < probability;
-    }
-
-    private static boolean isNotUTurning(Map<VertexId, DoubleTensor> positionForward,
-                                         Map<VertexId, DoubleTensor> positionBackward,
-                                         Map<VertexId, DoubleTensor> momentumForward,
-                                         Map<VertexId, DoubleTensor> momentumBackward) {
-        double forward = 0.0;
-        double backward = 0.0;
-
-        for (Map.Entry<VertexId, DoubleTensor> forwardPositionForLatent : positionForward.entrySet()) {
-
-            final VertexId latentId = forwardPositionForLatent.getKey();
-            final DoubleTensor forwardMinusBackward = forwardPositionForLatent.getValue().minus(
-                positionBackward.get(latentId)
-            );
-
-            forward += forwardMinusBackward.times(momentumForward.get(latentId)).sum();
-            backward += forwardMinusBackward.timesInPlace(momentumBackward.get(latentId)).sum();
-        }
-
-        return (forward >= 0.0) && (backward >= 0.0);
-    }
-
     private static void initializeMomentumForEachVertex(List<Vertex<DoubleTensor>> vertices,
                                                         Map<VertexId, DoubleTensor> momentums,
                                                         KeanuRandom random) {
@@ -389,23 +168,6 @@ public class NUTSSampler implements SamplingAlgorithm {
         for (Map.Entry<VertexId, DoubleTensor> entry : from.entrySet()) {
             to.put(entry.getKey(), entry.getValue());
         }
-    }
-
-    /**
-     * This is meant to be used for tracking a sample while building tree.
-     *
-     * @param sampleFromVertices take samples from these vertices
-     */
-    private static Map<VertexId, ?> takeSample(List<? extends Vertex> sampleFromVertices) {
-        Map<VertexId, ?> sample = new HashMap<>();
-        for (Vertex vertex : sampleFromVertices) {
-            putValue(vertex, sample);
-        }
-        return sample;
-    }
-
-    private static <T> void putValue(Vertex<T> vertex, Map<VertexId, ?> target) {
-        ((Map<VertexId, T>) target).put(vertex.getId(), vertex.getValue());
     }
 
     /**
@@ -439,8 +201,10 @@ public class NUTSSampler implements SamplingAlgorithm {
         Map<VertexId, DoubleTensor> momentums = new HashMap<>();
         initializeMomentumForEachVertex(vertices, momentums, random);
 
+
         Leapfrog leapfrog = new Leapfrog(position, momentums, gradient);
         double pThetaR = initialLogOfMasterP - leapfrog.halfDotProductMomentum();
+
         leapfrog = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
 
         double probAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
@@ -465,7 +229,7 @@ public class NUTSSampler implements SamplingAlgorithm {
     /**
      * Taken from algorithm 5 in https://arxiv.org/pdf/1111.4246.pdf.
      */
-    private static double adaptStepSize(AutoTune autoTune, BuiltTree tree, int sampleNum) {
+    private static double adaptStepSize(AutoTune autoTune, TreeBuilder tree, int sampleNum) {
 
         if (sampleNum <= autoTune.adaptCount) {
 
@@ -509,43 +273,6 @@ public class NUTSSampler implements SamplingAlgorithm {
         } else {
 
             return Math.exp(autoTune.logStepSizeFrozen);
-        }
-    }
-
-    static class BuiltTree {
-
-        Leapfrog leapForward;
-        Leapfrog leapBackward;
-        Map<VertexId, DoubleTensor> acceptedPosition;
-        Map<VertexId, DoubleTensor> gradientAtAcceptedPosition;
-        double logOfMasterPAtAcceptedPosition;
-        Map<VertexId, ?> sampleAtAcceptedPosition;
-        int acceptedLeapfrogCount;
-        boolean shouldContinueFlag;
-        double deltaLikelihoodOfLeapfrog;
-        double treeSize;
-
-        BuiltTree(Leapfrog leapForward,
-                  Leapfrog leapBackward,
-                  Map<VertexId, DoubleTensor> acceptedPosition,
-                  Map<VertexId, DoubleTensor> gradientAtAcceptedPosition,
-                  double logProbAtAcceptedPosition,
-                  Map<VertexId, ?> sampleAtAcceptedPosition,
-                  int acceptedLeapfrogCount,
-                  boolean shouldContinueFlag,
-                  double deltaLikelihoodOfLeapfrog,
-                  double treeSize) {
-
-            this.leapForward = leapForward;
-            this.leapBackward = leapBackward;
-            this.acceptedPosition = acceptedPosition;
-            this.gradientAtAcceptedPosition = gradientAtAcceptedPosition;
-            this.logOfMasterPAtAcceptedPosition = logProbAtAcceptedPosition;
-            this.sampleAtAcceptedPosition = sampleAtAcceptedPosition;
-            this.acceptedLeapfrogCount = acceptedLeapfrogCount;
-            this.shouldContinueFlag = shouldContinueFlag;
-            this.deltaLikelihoodOfLeapfrog = deltaLikelihoodOfLeapfrog;
-            this.treeSize = treeSize;
         }
     }
 

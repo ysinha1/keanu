@@ -25,8 +25,8 @@ public class Leapfrog {
     }
 
     public Leapfrog step(final List<Vertex<DoubleTensor>> latentVertices,
-                                     final LogProbGradientCalculator logProbGradientCalculator,
-                                     final double epsilon) {
+                         final LogProbGradientCalculator logProbGradientCalculator,
+                         final double epsilon) {
 
         final double halfTimeStep = epsilon / 2.0;
 
@@ -59,6 +59,7 @@ public class Leapfrog {
                 );
             nextMomentum.put(nextMomentumForLatent.getKey(), nextNextMomentumForLatent);
         }
+
 
         return new Leapfrog(nextPosition, nextMomentum, nextPositionGradient);
     }
