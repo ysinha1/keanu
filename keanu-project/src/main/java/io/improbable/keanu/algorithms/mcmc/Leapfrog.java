@@ -63,4 +63,16 @@ public class Leapfrog {
         return new Leapfrog(nextPosition, nextMomentum, nextPositionGradient);
     }
 
+    public double halfDotProductMomentum() {
+        return 0.5 * dotProduct(momentum);
+    }
+
+    private static double dotProduct(Map<VertexId, DoubleTensor> momentums) {
+        double dotProduct = 0.0;
+        for (DoubleTensor momentum : momentums.values()) {
+            dotProduct += momentum.pow(2).sum();
+        }
+        return dotProduct;
+    }
+
 }

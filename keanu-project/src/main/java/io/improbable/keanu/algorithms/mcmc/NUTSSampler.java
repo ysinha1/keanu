@@ -98,7 +98,7 @@ public class NUTSSampler implements SamplingAlgorithm {
         initializeMomentumForEachVertex(latentVertices, tree.leapForward.momentum, random);
         cache(tree.leapForward.momentum, tree.leapBackward.momentum);
 
-        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - 0.5 * dotProduct(tree.leapForward.momentum);
+        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
 
         double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
 
@@ -315,7 +315,7 @@ public class NUTSSampler implements SamplingAlgorithm {
 
         final double logOfMasterPAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
 
-        final double logOfMasterPMinusMomentum = logOfMasterPAfterLeapfrog - 0.5 * dotProduct(leapfrog.momentum);
+        final double logOfMasterPMinusMomentum = logOfMasterPAfterLeapfrog - leapfrog.halfDotProductMomentum();
         final int acceptedLeapfrogCount = u <= Math.exp(logOfMasterPMinusMomentum) ? 1 : 0;
         final boolean shouldContinueFlag = u < Math.exp(DELTA_MAX + logOfMasterPMinusMomentum);
 
@@ -391,14 +391,6 @@ public class NUTSSampler implements SamplingAlgorithm {
         }
     }
 
-    private static double dotProduct(Map<VertexId, DoubleTensor> momentums) {
-        double dotProduct = 0.0;
-        for (DoubleTensor momentum : momentums.values()) {
-            dotProduct += momentum.pow(2).sum();
-        }
-        return dotProduct;
-    }
-
     /**
      * This is meant to be used for tracking a sample while building tree.
      *
@@ -447,13 +439,12 @@ public class NUTSSampler implements SamplingAlgorithm {
         Map<VertexId, DoubleTensor> momentums = new HashMap<>();
         initializeMomentumForEachVertex(vertices, momentums, random);
 
-        double pThetaR = initialLogOfMasterP - 0.5 * dotProduct(momentums);
-
         Leapfrog leapfrog = new Leapfrog(position, momentums, gradient);
+        double pThetaR = initialLogOfMasterP - leapfrog.halfDotProductMomentum();
         leapfrog = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
 
         double probAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
-        double pThetaRAfterLeapFrog = probAfterLeapfrog - 0.5 * dotProduct(leapfrog.momentum);
+        double pThetaRAfterLeapFrog = probAfterLeapfrog - leapfrog.halfDotProductMomentum();
 
         double logLikelihoodRatio = pThetaRAfterLeapFrog - pThetaR;
         double scalingFactor = logLikelihoodRatio > Math.log(0.5) ? 1 : -1;
@@ -463,7 +454,7 @@ public class NUTSSampler implements SamplingAlgorithm {
 
             leapfrog = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
             probAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
-            pThetaRAfterLeapFrog = probAfterLeapfrog - 0.5 * dotProduct(leapfrog.momentum);
+            pThetaRAfterLeapFrog = probAfterLeapfrog - leapfrog.halfDotProductMomentum();
 
             logLikelihoodRatio = pThetaRAfterLeapFrog - pThetaR;
         }
