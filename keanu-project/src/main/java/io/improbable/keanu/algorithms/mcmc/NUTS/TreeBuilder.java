@@ -1,4 +1,4 @@
-package io.improbable.keanu.algorithms.mcmc;
+package io.improbable.keanu.algorithms.mcmc.NUTS;
 
 import java.util.HashMap;
 import java.util.List;

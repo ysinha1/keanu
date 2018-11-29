@@ -2,11 +2,7 @@ package io.improbable.keanu.e2e.regression;
 
 import io.improbable.keanu.DeterministicRule;
 import io.improbable.keanu.algorithms.NetworkSamples;
-import io.improbable.keanu.algorithms.mcmc.MetropolisHastings;
-import io.improbable.keanu.algorithms.mcmc.NUTS;
-import io.improbable.keanu.algorithms.mcmc.proposal.GaussianProposalDistribution;
-import io.improbable.keanu.algorithms.mcmc.proposal.MHStepVariableSelector;
-import io.improbable.keanu.algorithms.mcmc.proposal.ProposalDistribution;
+import io.improbable.keanu.algorithms.mcmc.NUTS.NUTS;
 import io.improbable.keanu.algorithms.variational.optimizer.Optimizer;
 import io.improbable.keanu.algorithms.variational.optimizer.gradient.GradientOptimizer;
 import io.improbable.keanu.model.SamplingModelFitting;
