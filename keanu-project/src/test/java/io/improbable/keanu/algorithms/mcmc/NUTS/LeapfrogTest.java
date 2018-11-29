@@ -37,6 +37,7 @@ public class LeapfrogTest {
     private double epsilon;
 
     private LogProbGradientCalculator mockedGradientCalculator;
+    private LogProbGradientCalculator mockedReverseGradientCalculator;
 
     @Before
     public void setup() {
@@ -68,6 +69,15 @@ public class LeapfrogTest {
         when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
             invocation -> mockedGradient
         );
+
+        Map<VertexId, DoubleTensor> mockedReverseGradient = new HashMap<>();
+        mockedReverseGradient.put(aID, DoubleTensor.scalar(-1.0));
+        mockedReverseGradient.put(bID, DoubleTensor.scalar(1.0));
+
+        mockedReverseGradientCalculator = mock(LogProbGradientCalculator.class);
+        when(mockedReverseGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
+            invocation -> mockedReverseGradient
+        );
     }
 
     @Test
@@ -86,29 +96,38 @@ public class LeapfrogTest {
     }
 
     @Test
-    public void canLeapForwardAndBack() {
+    public void canLeapForwardAndBackToOriginalPosition() {
         Leapfrog start = new Leapfrog(position, momentum, gradient);
         Leapfrog leapForward = start.step(vertices, mockedGradientCalculator, epsilon);
+
+        Map<VertexId, DoubleTensor> momentum = new HashMap<>(leapForward.momentum);
 
         fillMap(leapForward.momentum, DoubleTensor.scalar(-1.0));
         fillMap(leapForward.gradient, DoubleTensor.scalar(-2.0));
 
-        Leapfrog leapBackToStart = leapForward.step(vertices, mockedGradientCalculator, epsilon);
+        Leapfrog leapBackToStart = leapForward.step(vertices, mockedReverseGradientCalculator, epsilon);
 
         assertMapsAreEqual(start.position, leapBackToStart.position);
+        assertMapsAreEqual(momentum, revertDirectionOfMap(leapBackToStart.momentum));
     }
 
-    private Map<VertexId, DoubleTensor> fillMap(Map<VertexId, DoubleTensor> map, DoubleTensor value) {
+    private void fillMap(Map<VertexId, DoubleTensor> map, DoubleTensor value) {
         for (VertexId id : ids) {
             map.put(id, value);
         }
-        return map;
     }
 
     private void assertMapsAreEqual(Map<VertexId, DoubleTensor> one, Map<VertexId, DoubleTensor> two) {
         for (VertexId id : one.keySet()) {
             Assert.assertEquals(one.get(id).scalar(), two.get(id).scalar(), 1e-6);
         }
+    }
+
+    private Map<VertexId, DoubleTensor> revertDirectionOfMap(Map<VertexId, DoubleTensor> map) {
+        for (VertexId id : map.keySet()) {
+            map.put(id, map.get(id).times(-1.));
+        }
+        return map;
     }
 
 }
