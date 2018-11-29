@@ -7,8 +7,13 @@ import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexId;
+import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
+import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCalculator;
+import io.improbable.keanu.vertices.intgr.IntegerVertex;
+import io.improbable.keanu.vertices.intgr.nonprobabilistic.CastIntegerVertex;
+import io.improbable.keanu.vertices.intgr.nonprobabilistic.ConstantIntegerVertex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -162,6 +167,7 @@ public class NUTSSampler implements SamplingAlgorithm {
         for (Vertex<DoubleTensor> vertex : vertices) {
             momentums.put(vertex.getId(), random.nextGaussian(vertex.getShape()));
         }
+
     }
 
     private static void cache(Map<VertexId, DoubleTensor> from, Map<VertexId, DoubleTensor> to) {

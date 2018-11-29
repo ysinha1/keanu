@@ -77,22 +77,6 @@ public abstract class IntegerVertex extends Vertex<IntegerTensor> implements Int
         return new IntegerDivisionVertex(this, that);
     }
 
-    public IntegerVertex minus(Vertex<IntegerTensor> that) {
-        return new IntegerDifferenceVertex(this, new CastIntegerVertex(that));
-    }
-
-    public IntegerVertex plus(Vertex<IntegerTensor> that) {
-        return new IntegerAdditionVertex(this, new CastIntegerVertex(that));
-    }
-
-    public IntegerVertex multiply(Vertex<IntegerTensor> that) {
-        return new IntegerMultiplicationVertex(this, new CastIntegerVertex(that));
-    }
-
-    public IntegerVertex divideBy(Vertex<IntegerTensor> that) {
-        return new IntegerDivisionVertex(this, new CastIntegerVertex(that));
-    }
-
     @Override
     public IntegerVertex pow(IntegerVertex exponent) {
         return new IntegerPowerVertex(this, exponent);

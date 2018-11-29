@@ -40,7 +40,7 @@ public class LeapfrogTest {
     private LogProbGradientCalculator mockedReverseGradientCalculator;
 
     @Before
-    public void setup() {
+    public void setupLeapfrog() {
         A = new GaussianVertex(0, 1);
         B = new GaussianVertex(0, 1);
 
