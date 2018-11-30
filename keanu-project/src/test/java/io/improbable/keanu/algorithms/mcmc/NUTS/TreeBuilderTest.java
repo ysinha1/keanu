@@ -99,9 +99,12 @@ public class TreeBuilderTest {
 
     @Test
     public void logProbDecreasesWhenMovingAwayFromCentreOfGaussian() {
-        TreeBuilder tree = createStartingTree(5., 0.5);
+        double startingPosition = 5.;
+        double startingMomentum = 0.5;
+        TreeBuilder tree = createStartingTree(startingPosition, startingMomentum);
         int treeHeight = 0;
         double epsilon = 1.;
+        int direction = 1;
         double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
         double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
         LogProbGradientCalculator gradientCalculator = new LogProbGradientCalculator(vertices, vertices);
@@ -113,7 +116,7 @@ public class TreeBuilderTest {
             gradientCalculator,
             vertices,
             u,
-            1,
+            direction,
             treeHeight,
             epsilon,
             logOfMasterPMinusMomentumBeforeLeapfrog,
@@ -121,14 +124,18 @@ public class TreeBuilderTest {
         );
 
         Assert.assertTrue(otherHalfOfTree.logOfMasterPAtAcceptedPosition < tree.logOfMasterPAtAcceptedPosition);
-        Assert.assertTrue(otherHalfOfTree.acceptedPosition.get(vertexId).scalar() > tree.acceptedPosition.get(vertexId).scalar());
+        Assert.assertTrue(otherHalfOfTree.leapForward.position.get(vertexId).scalar() > startingPosition);
+        Assert.assertTrue(otherHalfOfTree.leapForward.momentum.get(vertexId).scalar() < startingMomentum);
     }
 
     @Test
     public void logProbIncreasesWhenMovingTowardsCentreOfGaussian() {
-        TreeBuilder tree = createStartingTree(5., 0.5);
+        double startingPosition = 5.;
+        double startingMomentum = 0.5;
+        TreeBuilder tree = createStartingTree(startingPosition, startingMomentum);
         int treeHeight = 0;
         double epsilon = 1.;
+        int direction = -1;
         double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
         double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
         LogProbGradientCalculator gradientCalculator = new LogProbGradientCalculator(vertices, vertices);
@@ -140,7 +147,7 @@ public class TreeBuilderTest {
             gradientCalculator,
             vertices,
             u,
-            -1,
+            direction,
             treeHeight,
             epsilon,
             logOfMasterPMinusMomentumBeforeLeapfrog,
@@ -148,9 +155,39 @@ public class TreeBuilderTest {
         );
 
         Assert.assertTrue(otherHalfOfTree.logOfMasterPAtAcceptedPosition > tree.logOfMasterPAtAcceptedPosition);
-        Assert.assertTrue(otherHalfOfTree.acceptedPosition.get(vertexId).scalar() < tree.acceptedPosition.get(vertexId).scalar());
+        Assert.assertTrue(otherHalfOfTree.leapForward.position.get(vertexId).scalar() < startingPosition);
+        Assert.assertTrue(otherHalfOfTree.leapForward.momentum.get(vertexId).scalar() > startingMomentum);
     }
 
+
+    @Test
+    public void nutsTakesTwoToThePowerOfTreeHeightLeapfrogs() {
+        double startingPosition = 5.;
+        double startingMomentum = 0.5;
+        TreeBuilder tree = createStartingTree(startingPosition, startingMomentum);
+        int treeHeight = 4;
+        double epsilon = 1.;
+        int direction = 1;
+        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
+        double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
+        LogProbGradientCalculator gradientCalculator = new LogProbGradientCalculator(vertices, vertices);
+
+        TreeBuilder otherHalfOfTree = tree.buildOtherHalfOfTree(
+            tree,
+            vertices,
+            bayesianNetwork.getLatentVertices(),
+            gradientCalculator,
+            vertices,
+            u,
+            direction,
+            treeHeight,
+            epsilon,
+            logOfMasterPMinusMomentumBeforeLeapfrog,
+            random
+        );
+
+        Assert.assertTrue(otherHalfOfTree.acceptedLeapfrogCount == Math.pow(2, treeHeight));
+    }
 
     @Test
     public void treeSizeTwo() {
