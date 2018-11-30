@@ -24,34 +24,29 @@ import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
 
 public class TreeBuilderTest {
 
-    private DoubleVertex A;
-    private VertexId aID;
+    private DoubleVertex vertex;
+    private VertexId vertexId;
 
     private List<Vertex<DoubleTensor>> vertices;
     private List<VertexId> ids;
 
-    private Map<VertexId, DoubleTensor> position;
-    private Map<VertexId, DoubleTensor> momentum;
-    private Map<VertexId, DoubleTensor> gradient;
-
     private BayesianNetwork bayesianNetwork;
 
-    private KeanuRandom random;
+    private KeanuRandom random = new KeanuRandom(1);
     private LogProbGradientCalculator mockedGradientCalculator;
-    private TreeBuilder tree;
 
     @Before
     public void setupTree() {
         random = new KeanuRandom(1);
-        A = new GaussianVertex(0, 5.);
-        vertices = Arrays.asList(A);
-        bayesianNetwork = new BayesianNetwork(A.getConnectedGraph());
+        vertex = new GaussianVertex(0, 5.);
+        vertices = Arrays.asList(vertex);
+        bayesianNetwork = new BayesianNetwork(vertex.getConnectedGraph());
 
-        aID = A.getId();
-        ids = Arrays.asList(aID);
+        vertexId = vertex.getId();
+        ids = Arrays.asList(vertexId);
 
         Map<VertexId, DoubleTensor> mockedGradient = new HashMap<>();
-        mockedGradient.put(aID, DoubleTensor.scalar(1.0));
+        mockedGradient.put(vertexId, DoubleTensor.scalar(1.0));
 
         mockedGradientCalculator = mock(LogProbGradientCalculator.class);
         when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
@@ -59,7 +54,7 @@ public class TreeBuilderTest {
         );
 
         Map<VertexId, DoubleTensor> mockedReverseGradient = new HashMap<>();
-        mockedReverseGradient.put(aID, DoubleTensor.scalar(-1.0));
+        mockedReverseGradient.put(vertexId, DoubleTensor.scalar(-1.0));
 
         mockedGradientCalculator = mock(LogProbGradientCalculator.class);
         when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
@@ -67,36 +62,9 @@ public class TreeBuilderTest {
         );
     }
 
-    private TreeBuilder createTree(double startingPosition) {
-        position = new HashMap<>();
-        momentum = new HashMap<>();
-        gradient = new HashMap<>();
-
-        fillMap(position, DoubleTensor.scalar(startingPosition));
-        fillMap(momentum, DoubleTensor.scalar(0.5));
-        fillMap(gradient, DoubleTensor.scalar(0.0));
-
-        Leapfrog leapForward = new Leapfrog(position, momentum, gradient);
-        Leapfrog leapBackward = new Leapfrog(position, momentum, gradient);
-
-        double initialLogOfMasterP = ProbabilityCalculator.calculateLogProbFor(vertices);
-
-        tree = new TreeBuilder(
-            leapForward,
-            leapBackward,
-            position,
-            gradient,
-            initialLogOfMasterP,
-            takeSample(vertices),
-            1,
-            true,
-            0,
-            1
-        );
-    }
-
     @Test
-    public void takesOneLeapfrogOnBasecase() {
+    public void takesCorrectLeapfrogDistanceWithMockedGradient() {
+        TreeBuilder tree = createStartingTree(5., 0.5);
         int treeHeight = 0;
         double epsilon = 1.;
         double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
@@ -116,9 +84,9 @@ public class TreeBuilderTest {
             random
         );
 
-        Assert.assertEquals(5.25, otherHalfOfTree.leapForward.position.get(aID).scalar(), 1e-6);
-        Assert.assertEquals(1.0, otherHalfOfTree.leapForward.momentum.get(aID).scalar(), 1e-6);
-        Assert.assertEquals(1.0, otherHalfOfTree.leapForward.gradient.get(aID).scalar(), 1e-6);
+        Assert.assertEquals(5.25, otherHalfOfTree.leapForward.position.get(vertexId).scalar(), 1e-6);
+        Assert.assertEquals(1.0, otherHalfOfTree.leapForward.momentum.get(vertexId).scalar(), 1e-6);
+        Assert.assertEquals(1.0, otherHalfOfTree.leapForward.gradient.get(vertexId).scalar(), 1e-6);
 
         assertMapsAreEqual(otherHalfOfTree.leapForward.position, otherHalfOfTree.leapBackward.position);
         assertMapsAreEqual(otherHalfOfTree.leapForward.gradient, otherHalfOfTree.leapBackward.gradient);
@@ -130,8 +98,64 @@ public class TreeBuilderTest {
     }
 
     @Test
+    public void logProbDecreasesWhenMovingAwayFromCentreOfGaussian() {
+        TreeBuilder tree = createStartingTree(5., 0.5);
+        int treeHeight = 0;
+        double epsilon = 1.;
+        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
+        double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
+        LogProbGradientCalculator gradientCalculator = new LogProbGradientCalculator(vertices, vertices);
+
+        TreeBuilder otherHalfOfTree = tree.buildOtherHalfOfTree(
+            tree,
+            vertices,
+            bayesianNetwork.getLatentVertices(),
+            gradientCalculator,
+            vertices,
+            u,
+            1,
+            treeHeight,
+            epsilon,
+            logOfMasterPMinusMomentumBeforeLeapfrog,
+            random
+        );
+
+        Assert.assertTrue(otherHalfOfTree.logOfMasterPAtAcceptedPosition < tree.logOfMasterPAtAcceptedPosition);
+        Assert.assertTrue(otherHalfOfTree.acceptedPosition.get(vertexId).scalar() > tree.acceptedPosition.get(vertexId).scalar());
+    }
+
+    @Test
+    public void logProbIncreasesWhenMovingTowardsCentreOfGaussian() {
+        TreeBuilder tree = createStartingTree(5., 0.5);
+        int treeHeight = 0;
+        double epsilon = 1.;
+        double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
+        double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
+        LogProbGradientCalculator gradientCalculator = new LogProbGradientCalculator(vertices, vertices);
+
+        TreeBuilder otherHalfOfTree = tree.buildOtherHalfOfTree(
+            tree,
+            vertices,
+            bayesianNetwork.getLatentVertices(),
+            gradientCalculator,
+            vertices,
+            u,
+            -1,
+            treeHeight,
+            epsilon,
+            logOfMasterPMinusMomentumBeforeLeapfrog,
+            random
+        );
+
+        Assert.assertTrue(otherHalfOfTree.logOfMasterPAtAcceptedPosition > tree.logOfMasterPAtAcceptedPosition);
+        Assert.assertTrue(otherHalfOfTree.acceptedPosition.get(vertexId).scalar() < tree.acceptedPosition.get(vertexId).scalar());
+    }
+
+
+    @Test
     public void treeSizeTwo() {
-        int treeHeight = 2;
+        TreeBuilder tree = createStartingTree(5., 0.5);
+        int treeHeight = 1;
         double epsilon = 1.;
         double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
         double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
@@ -152,11 +176,38 @@ public class TreeBuilderTest {
 
     }
 
+    private TreeBuilder createStartingTree(double startingPosition, double startingMomentum) {
+        Map<VertexId, DoubleTensor> position = fillMap(DoubleTensor.scalar(startingPosition));
+        Map<VertexId, DoubleTensor> momentum = fillMap(DoubleTensor.scalar(startingMomentum));
+        Map<VertexId, DoubleTensor> gradient = fillMap(DoubleTensor.scalar(0.0));
 
-        private void fillMap(Map<VertexId, DoubleTensor> map, DoubleTensor value) {
+        Leapfrog leapForward = new Leapfrog(position, momentum, gradient);
+        Leapfrog leapBackward = new Leapfrog(position, momentum, gradient);
+
+        vertex.setValue(startingPosition);
+        double initialLogOfMasterP = ProbabilityCalculator.calculateLogProbFor(vertices);
+
+        return new TreeBuilder(
+            leapForward,
+            leapBackward,
+            position,
+            gradient,
+            initialLogOfMasterP,
+            takeSample(vertices),
+            1,
+            true,
+            0,
+            1
+        );
+    }
+
+
+    private Map<VertexId, DoubleTensor> fillMap(DoubleTensor value) {
+        Map<VertexId, DoubleTensor> map = new HashMap<>();
         for (VertexId id : ids) {
             map.put(id, value);
         }
+        return map;
     }
 
     private static Map<VertexId, ?> takeSample(List<? extends Vertex> sampleFromVertices) {
