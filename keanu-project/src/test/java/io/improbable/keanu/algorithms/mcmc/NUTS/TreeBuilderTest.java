@@ -25,10 +25,7 @@ import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
 public class TreeBuilderTest {
 
     private DoubleVertex A;
-    private DoubleVertex B;
-
     private VertexId aID;
-    private VertexId bID;
 
     private List<Vertex<DoubleTensor>> vertices;
     private List<VertexId> ids;
@@ -46,21 +43,36 @@ public class TreeBuilderTest {
     @Before
     public void setupTree() {
         random = new KeanuRandom(1);
-
         A = new GaussianVertex(0, 5.);
-        B = new GaussianVertex(0, 5.);
-        vertices = Arrays.asList(A, B);
+        vertices = Arrays.asList(A);
         bayesianNetwork = new BayesianNetwork(A.getConnectedGraph());
 
         aID = A.getId();
-        bID = B.getId();
-        ids = Arrays.asList(aID, bID);
+        ids = Arrays.asList(aID);
 
+        Map<VertexId, DoubleTensor> mockedGradient = new HashMap<>();
+        mockedGradient.put(aID, DoubleTensor.scalar(1.0));
+
+        mockedGradientCalculator = mock(LogProbGradientCalculator.class);
+        when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
+            invocation -> mockedGradient
+        );
+
+        Map<VertexId, DoubleTensor> mockedReverseGradient = new HashMap<>();
+        mockedReverseGradient.put(aID, DoubleTensor.scalar(-1.0));
+
+        mockedGradientCalculator = mock(LogProbGradientCalculator.class);
+        when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
+            invocation -> mockedGradient
+        );
+    }
+
+    private TreeBuilder createTree(double startingPosition) {
         position = new HashMap<>();
         momentum = new HashMap<>();
         gradient = new HashMap<>();
 
-        fillMap(position, DoubleTensor.scalar(5.0));
+        fillMap(position, DoubleTensor.scalar(startingPosition));
         fillMap(momentum, DoubleTensor.scalar(0.5));
         fillMap(gradient, DoubleTensor.scalar(0.0));
 
@@ -68,15 +80,6 @@ public class TreeBuilderTest {
         Leapfrog leapBackward = new Leapfrog(position, momentum, gradient);
 
         double initialLogOfMasterP = ProbabilityCalculator.calculateLogProbFor(vertices);
-
-        Map<VertexId, DoubleTensor> mockedGradient = new HashMap<>();
-        mockedGradient.put(aID, DoubleTensor.scalar(1.0));
-        mockedGradient.put(bID, DoubleTensor.scalar(1.0));
-
-        mockedGradientCalculator = mock(LogProbGradientCalculator.class);
-        when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
-            invocation -> mockedGradient
-        );
 
         tree = new TreeBuilder(
             leapForward,
@@ -90,7 +93,6 @@ public class TreeBuilderTest {
             0,
             1
         );
-
     }
 
     @Test
@@ -115,13 +117,8 @@ public class TreeBuilderTest {
         );
 
         Assert.assertEquals(5.25, otherHalfOfTree.leapForward.position.get(aID).scalar(), 1e-6);
-        Assert.assertEquals(5.25, otherHalfOfTree.leapForward.position.get(bID).scalar(), 1e-6);
-
         Assert.assertEquals(1.0, otherHalfOfTree.leapForward.momentum.get(aID).scalar(), 1e-6);
-        Assert.assertEquals(1.0, otherHalfOfTree.leapForward.momentum.get(bID).scalar(), 1e-6);
-
         Assert.assertEquals(1.0, otherHalfOfTree.leapForward.gradient.get(aID).scalar(), 1e-6);
-        Assert.assertEquals(1.0, otherHalfOfTree.leapForward.gradient.get(bID).scalar(), 1e-6);
 
         assertMapsAreEqual(otherHalfOfTree.leapForward.position, otherHalfOfTree.leapBackward.position);
         assertMapsAreEqual(otherHalfOfTree.leapForward.gradient, otherHalfOfTree.leapBackward.gradient);
