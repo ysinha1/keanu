@@ -1,23 +1,22 @@
 package io.improbable.keanu.algorithms.mcmc.NUTS;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexId;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCalculator;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class LeapfrogTest {
 
@@ -40,7 +39,7 @@ public class LeapfrogTest {
     private LogProbGradientCalculator mockedReverseGradientCalculator;
 
     @Before
-    public void setupLeapfrog() {
+    public void setupGraphForLeapfrog() {
         A = new GaussianVertex(0, 1);
         B = new GaussianVertex(0, 1);
 

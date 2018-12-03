@@ -1,17 +1,5 @@
 package io.improbable.keanu.algorithms.mcmc.NUTS;
 
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-
 import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
@@ -21,6 +9,17 @@ import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCalculator;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TreeBuilderTest {
 
@@ -34,6 +33,7 @@ public class TreeBuilderTest {
 
     private KeanuRandom random = new KeanuRandom(1);
     private LogProbGradientCalculator mockedGradientCalculator;
+    private LogProbGradientCalculator mockedReverseGradientCalculator;
 
     @Before
     public void setupTree() {
@@ -56,8 +56,8 @@ public class TreeBuilderTest {
         Map<VertexId, DoubleTensor> mockedReverseGradient = new HashMap<>();
         mockedReverseGradient.put(vertexId, DoubleTensor.scalar(-1.0));
 
-        mockedGradientCalculator = mock(LogProbGradientCalculator.class);
-        when(mockedGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
+        mockedReverseGradientCalculator = mock(LogProbGradientCalculator.class);
+        when(mockedReverseGradientCalculator.getJointLogProbGradientWrtLatents()).thenAnswer(
             invocation -> mockedGradient
         );
     }

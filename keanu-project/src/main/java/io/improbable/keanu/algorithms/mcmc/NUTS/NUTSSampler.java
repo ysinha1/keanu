@@ -7,13 +7,8 @@ import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexId;
-import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
-import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCalculator;
-import io.improbable.keanu.vertices.intgr.IntegerVertex;
-import io.improbable.keanu.vertices.intgr.nonprobabilistic.CastIntegerVertex;
-import io.improbable.keanu.vertices.intgr.nonprobabilistic.ConstantIntegerVertex;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,6 +21,8 @@ import java.util.Map;
  * https://arxiv.org/pdf/1111.4246.pdf
  */
 public class NUTSSampler implements SamplingAlgorithm {
+
+    public Double stepSize;
 
     private static final double STABILISER = 10;
     private static final double SHRINKAGE_FACTOR = 0.05;
@@ -41,7 +38,6 @@ public class NUTSSampler implements SamplingAlgorithm {
     private final TreeBuilder tree;
     private final LogProbGradientCalculator logProbGradientCalculator;
 
-    private Double stepSize;
     private int sampleNum;
 
     /**
@@ -207,14 +203,15 @@ public class NUTSSampler implements SamplingAlgorithm {
         Map<VertexId, DoubleTensor> momentums = new HashMap<>();
         initializeMomentumForEachVertex(vertices, momentums, random);
 
-
         Leapfrog leapfrog = new Leapfrog(position, momentums, gradient);
-        double pThetaR = initialLogOfMasterP - leapfrog.halfDotProductMomentum();
+        double initLogP = initialLogOfMasterP;
+        double halfM = leapfrog.halfDotProductMomentum();
+        double pThetaR = initLogP - halfM;
 
-        leapfrog = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
+        Leapfrog delta = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
 
         double probAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
-        double pThetaRAfterLeapFrog = probAfterLeapfrog - leapfrog.halfDotProductMomentum();
+        double pThetaRAfterLeapFrog = probAfterLeapfrog - delta.halfDotProductMomentum();
 
         double logLikelihoodRatio = pThetaRAfterLeapFrog - pThetaR;
         double scalingFactor = logLikelihoodRatio > Math.log(0.5) ? 1 : -1;
@@ -222,9 +219,9 @@ public class NUTSSampler implements SamplingAlgorithm {
         while (scalingFactor * logLikelihoodRatio > -scalingFactor * Math.log(2)) {
             stepsize = stepsize * Math.pow(2, scalingFactor);
 
-            leapfrog = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
+            delta = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
             probAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
-            pThetaRAfterLeapFrog = probAfterLeapfrog - leapfrog.halfDotProductMomentum();
+            pThetaRAfterLeapFrog = probAfterLeapfrog - delta.halfDotProductMomentum();
 
             logLikelihoodRatio = pThetaRAfterLeapFrog - pThetaR;
         }
@@ -235,7 +232,7 @@ public class NUTSSampler implements SamplingAlgorithm {
     /**
      * Taken from algorithm 5 in https://arxiv.org/pdf/1111.4246.pdf.
      */
-    private static double adaptStepSize(AutoTune autoTune, TreeBuilder tree, int sampleNum) {
+    static double adaptStepSize(AutoTune autoTune, TreeBuilder tree, int sampleNum) {
 
         if (sampleNum <= autoTune.adaptCount) {
 
@@ -292,11 +289,11 @@ public class NUTSSampler implements SamplingAlgorithm {
         double adaptCount;
         double shrinkageTarget;
 
-        AutoTune(double stepSize, double targetAcceptanceProb, double logStepSize, int adaptCount) {
+        AutoTune(double stepSize, double targetAcceptanceProb, int adaptCount) {
             this.stepSize = stepSize;
             this.averageAcceptanceProb = 0;
             this.targetAcceptanceProb = targetAcceptanceProb;
-            this.logStepSize = logStepSize;
+            this.logStepSize = Math.log(logStepSize);
             this.logStepSizeFrozen = Math.log(1);
             this.adaptCount = adaptCount;
             this.shrinkageTarget = Math.log(10 * stepSize);

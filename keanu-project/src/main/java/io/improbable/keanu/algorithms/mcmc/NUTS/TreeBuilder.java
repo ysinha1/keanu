@@ -1,15 +1,15 @@
 package io.improbable.keanu.algorithms.mcmc.NUTS;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
 import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexId;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCalculator;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TreeBuilder {
 
@@ -47,6 +47,26 @@ public class TreeBuilder {
         this.shouldContinueFlag = shouldContinueFlag;
         this.deltaLikelihoodOfLeapfrog = deltaLikelihoodOfLeapfrog;
         this.treeSize = treeSize;
+    }
+
+    public static TreeBuilder createBasicTree(Map<VertexId, DoubleTensor> position,
+                                              Map<VertexId, DoubleTensor> momentum,
+                                              Map<VertexId, DoubleTensor> gradient,
+                                              double initialLogOfMasterP,
+                                              Map<VertexId, ?> sampleAtAcceptedPosition) {
+
+        return new TreeBuilder(
+            new Leapfrog(position, momentum, gradient),
+            new Leapfrog(position, momentum, gradient),
+            position,
+            gradient,
+            initialLogOfMasterP,
+            sampleAtAcceptedPosition,
+            1,
+            true,
+            0,
+            1
+        );
     }
 
     public TreeBuilder buildOtherHalfOfTree(TreeBuilder currentTree,

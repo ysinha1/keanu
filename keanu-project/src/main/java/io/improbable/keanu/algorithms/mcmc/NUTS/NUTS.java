@@ -135,24 +135,10 @@ public class NUTS implements PosteriorSamplingAlgorithm {
         NUTSSampler.AutoTune autoTune = new NUTSSampler.AutoTune(
             stepSize,
             targetAcceptanceProb,
-            Math.log(stepSize),
             adaptCount
         );
 
-        //todo: static on TreeBuilder to build a basic starting tree?
-
-        TreeBuilder tree = new TreeBuilder(
-            new Leapfrog(position, momentum, gradient),
-            new Leapfrog(position, momentum, gradient),
-            position,
-            gradient,
-            initialLogOfMasterP,
-            takeSample(sampleFromVertices),
-            1,
-            true,
-            0,
-            1
-        );
+        TreeBuilder tree = TreeBuilder.createBasicTree(position, momentum, gradient, initialLogOfMasterP, takeSample(sampleFromVertices));
 
         return new NUTSSampler(
             sampleFromVertices,
