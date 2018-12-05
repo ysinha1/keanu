@@ -59,11 +59,10 @@ public class DiabetesLinearRegression {
             .withPriorOnWeightsAndIntercept(0, 100)
             .build();
 
-        linearRegressionModel.observe();
         linearRegressionModel.fit();
 
-        assertThat(linearRegressionModel.getWeight(0), closeTo(938.2378, 0.5));
-        assertThat(linearRegressionModel.getIntercept(), closeTo(152.9189,0.5));
+        assertThat(linearRegressionModel.getWeightVertex().getValue().scalar(), closeTo(938.2378, 0.5));
+        assertThat(linearRegressionModel.getInterceptVertex().getValue().scalar(), closeTo(152.9189,0.5));
     }
 
     @Test
@@ -72,19 +71,16 @@ public class DiabetesLinearRegression {
 
         int sizeOfTestData = 100;
 
-        List<DoubleTensor> splitXData = data.bmi.split(1, (int) data.bmi.getLength() - sizeOfTestData, (int) data.bmi.getLength() - 1);
+        List<DoubleTensor> splitXData = data.bmi.split(0, (int) data.bmi.getLength() - sizeOfTestData, (int) data.bmi.getLength() - 1);
         DoubleTensor xTrainingData = splitXData.get(0);
         DoubleTensor xTestData = splitXData.get(1);
 
-        List<DoubleTensor> splitYData = data.y.split(1, (int) data.y.getLength() - sizeOfTestData, (int) data.bmi.getLength() - 1);
+        List<DoubleTensor> splitYData = data.y.split(0, (int) data.y.getLength() - sizeOfTestData, (int) data.bmi.getLength() - 1);
         DoubleTensor yTrainingData = splitYData.get(0);
         DoubleTensor yTestData = splitYData.get(1);
 
         RegressionModel<DoubleTensor> linearRegressionModel = RegressionModel.withTrainingData(xTrainingData, yTrainingData)
             .build();
-
-        linearRegressionModel.observe();
-        linearRegressionModel.fit();
 
         double accuracyOnTestData = ModelScoring.coefficientOfDetermination(linearRegressionModel.predict(xTestData), yTestData);
         assertThat(accuracyOnTestData, greaterThan(0.3));

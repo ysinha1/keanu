@@ -90,6 +90,10 @@ public class RegressionModelBuilder<OUTPUT extends Tensor> {
         return this;
     }
 
+    public RegressionModelBuilder withPriorOnIntercept(DoubleTensor mean, DoubleTensor scaleParameter) {
+        return withPriorOnIntercept(ConstantVertex.of(mean), ConstantVertex.of(scaleParameter));
+    }
+
     public RegressionModelBuilder withPriorOnIntercept(double mean, double scaleParameter) {
         return withPriorOnIntercept(ConstantVertex.of(mean), ConstantVertex.of(scaleParameter));
     }
@@ -123,6 +127,12 @@ public class RegressionModelBuilder<OUTPUT extends Tensor> {
      * @return A linear regression model from the data passed to the builder
      */
     public RegressionModel<OUTPUT> build() {
+        RegressionModel<OUTPUT> model = buildWithoutFitting();
+        model.fit();
+        return model;
+    }
+
+    public RegressionModel<OUTPUT> buildWithoutFitting() {
         checkVariablesAreCorrectlyInitialised();
 
         LinearRegressionGraph<OUTPUT> regressionGraph = new LinearRegressionGraph<>(
@@ -132,11 +142,12 @@ public class RegressionModelBuilder<OUTPUT extends Tensor> {
             getWeightsVertex()
         );
 
-        ModelFitter<DoubleTensor, OUTPUT> fitter = samplingAlgorithm == null ?
-            this.regularization.createFitterForGraph(regressionGraph) :
-            samplingAlgorithm.createFitterForGraph(regressionGraph);
+        ModelFitter fitter = samplingAlgorithm == null ?
+            this.regularization.createFitterForGraph() :
+            samplingAlgorithm.createFitterForGraph();
 
-        return new RegressionModel<>(regressionGraph, inputTrainingData, outputTrainingData, fitter);
+        regressionGraph.observeValues(inputTrainingData, outputTrainingData);
+        return new RegressionModel(regressionGraph, fitter);
     }
 
     private void checkVariablesAreCorrectlyInitialised() {
@@ -163,7 +174,7 @@ public class RegressionModelBuilder<OUTPUT extends Tensor> {
     }
 
     private long getFeatureCount() {
-        return this.inputTrainingData.getShape()[0];
+        return this.inputTrainingData.getShape()[1];
     }
 
 }

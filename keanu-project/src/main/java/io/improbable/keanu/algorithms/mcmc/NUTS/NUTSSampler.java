@@ -99,8 +99,7 @@ public class NUTSSampler implements SamplingAlgorithm {
         cache(tree.leapForward.momentum, tree.leapBackward.momentum);
 
         double logOfMasterPMinusMomentumBeforeLeapfrog = tree.logOfMasterPAtAcceptedPosition - tree.leapForward.halfDotProductMomentum();
-
-        double u = random.nextDouble() * Math.exp(logOfMasterPMinusMomentumBeforeLeapfrog);
+        double logU = Math.log(random.nextDouble()) + logOfMasterPMinusMomentumBeforeLeapfrog;
 
         int treeHeight = 0;
         tree.shouldContinueFlag = true;
@@ -117,7 +116,7 @@ public class NUTSSampler implements SamplingAlgorithm {
                 probabilisticVertices,
                 logProbGradientCalculator,
                 sampleFromVertices,
-                u,
+                logU,
                 buildDirection,
                 treeHeight,
                 stepSize,
@@ -204,9 +203,7 @@ public class NUTSSampler implements SamplingAlgorithm {
         initializeMomentumForEachVertex(vertices, momentums, random);
 
         Leapfrog leapfrog = new Leapfrog(position, momentums, gradient);
-        double initLogP = initialLogOfMasterP;
-        double halfM = leapfrog.halfDotProductMomentum();
-        double pThetaR = initLogP - halfM;
+        double pThetaR = initialLogOfMasterP - leapfrog.halfDotProductMomentum();
 
         Leapfrog delta = leapfrog.step(vertices, logProbGradientCalculator, stepsize);
 
@@ -271,7 +268,6 @@ public class NUTSSampler implements SamplingAlgorithm {
 
             autoTune.averageAcceptanceProb = updatedAverageAcceptanceProb;
             autoTune.logStepSize = updatedLogStepSize;
-
             return Math.exp(autoTune.logStepSize);
         } else {
 

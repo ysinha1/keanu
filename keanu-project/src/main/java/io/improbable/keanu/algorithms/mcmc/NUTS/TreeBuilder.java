@@ -74,7 +74,7 @@ public class TreeBuilder {
                                                     List<Vertex> probabilisticVertices,
                                                     LogProbGradientCalculator logProbGradientCalculator,
                                                     final List<? extends Vertex> sampleFromVertices,
-                                                    double u,
+                                                    double logU,
                                                     int buildDirection,
                                                     int treeHeight,
                                                     double epsilon,
@@ -91,7 +91,7 @@ public class TreeBuilder {
                 logProbGradientCalculator,
                 sampleFromVertices,
                 currentTree.leapBackward,
-                u,
+                logU,
                 buildDirection,
                 treeHeight,
                 epsilon,
@@ -109,7 +109,7 @@ public class TreeBuilder {
                 logProbGradientCalculator,
                 sampleFromVertices,
                 currentTree.leapForward,
-                u,
+                logU,
                 buildDirection,
                 treeHeight,
                 epsilon,
@@ -128,7 +128,7 @@ public class TreeBuilder {
                                          LogProbGradientCalculator logProbGradientCalculator,
                                          final List<? extends Vertex> sampleFromVertices,
                                          Leapfrog leapfrog,
-                                         double u,
+                                         double logU,
                                          int buildDirection,
                                          int treeHeight,
                                          double epsilon,
@@ -143,7 +143,7 @@ public class TreeBuilder {
                 logProbGradientCalculator,
                 sampleFromVertices,
                 leapfrog,
-                u,
+                logU,
                 buildDirection,
                 epsilon,
                 logOfMasterPMinusMomentumBeforeLeapfrog
@@ -158,7 +158,7 @@ public class TreeBuilder {
                 logProbGradientCalculator,
                 sampleFromVertices,
                 leapfrog,
-                u,
+                logU,
                 buildDirection,
                 treeHeight - 1,
                 epsilon,
@@ -175,7 +175,7 @@ public class TreeBuilder {
                     probabilisticVertices,
                     logProbGradientCalculator,
                     sampleFromVertices,
-                    u,
+                    logU,
                     buildDirection,
                     treeHeight - 1,
                     epsilon,
@@ -208,7 +208,7 @@ public class TreeBuilder {
                                                    LogProbGradientCalculator logProbGradientCalculator,
                                                    final List<? extends Vertex> sampleFromVertices,
                                                    Leapfrog leapfrog,
-                                                   double u,
+                                                   double logU,
                                                    int buildDirection,
                                                    double epsilon,
                                                    double logOfMasterPMinusMomentumBeforeLeapfrog) {
@@ -218,8 +218,8 @@ public class TreeBuilder {
         final double logOfMasterPAfterLeapfrog = ProbabilityCalculator.calculateLogProbFor(probabilisticVertices);
 
         final double logOfMasterPMinusMomentum = logOfMasterPAfterLeapfrog - leapfrog.halfDotProductMomentum();
-        final int acceptedLeapfrogCount = u <= Math.exp(logOfMasterPMinusMomentum) ? 1 : 0;
-        final boolean shouldContinueFlag = u < Math.exp(DELTA_MAX + logOfMasterPMinusMomentum);
+        final int acceptedLeapfrogCount = logU <= logOfMasterPMinusMomentum ? 1 : 0;
+        final boolean shouldContinueFlag = logU < DELTA_MAX + logOfMasterPMinusMomentum;
 
         final Map<VertexId, ?> sampleAtAcceptedPosition = takeSample(sampleFromVertices);
 

@@ -1,16 +1,12 @@
 package io.improbable.keanu.e2e.regression;
 
 import io.improbable.keanu.DeterministicRule;
-import io.improbable.keanu.algorithms.NetworkSamples;
-import io.improbable.keanu.algorithms.mcmc.NUTS.NUTS;
 import io.improbable.keanu.algorithms.variational.optimizer.gradient.GradientOptimizer;
-import io.improbable.keanu.model.SamplingModelFitting;
 import io.improbable.keanu.model.regression.RegressionModel;
 import io.improbable.keanu.model.regression.RegressionRegularization;
 import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.util.csv.ReadCsv;
-import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.VertexLabel;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
@@ -24,7 +20,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class RadonHeirarchicalRegression {
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.both;
+import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.lessThan;
+
+public class RadonHierarchicalRegression {
 
     @Rule
     public DeterministicRule rule = new DeterministicRule();
@@ -41,66 +42,47 @@ public class RadonHeirarchicalRegression {
     @Test
     public void canPerformSimpleLinearRegression() {
         RegressionModel model = linearRegression(radonData);
+        assertThat(model.getWeightVertex().getValue().scalar(), both(greaterThan(-0.7)).and(lessThan(-0.4)));
+        assertThat(model.getInterceptVertex().getValue().scalar(), both(greaterThan(1.2)).and(lessThan(1.5)));
     }
 
     @Test
-    public void canPerformRegressionWithOneHeirarchy() {
-        buildHeirarchicalNetwork(radonData, 1);
+    public void canPerformRegressionWithOneHierarchy() {
+        buildAndRunHeirarchicalNetwork(radonData, 1);
     }
 
     @Test
-    public void canPerformRegressionWithTwoHeirarchies() {
-        buildHeirarchicalNetwork(radonData, 2);
+    public void canPerformRegressionWithTwoHierarchies() {
+        buildAndRunHeirarchicalNetwork(radonData, 2);
     }
 
     @Test
-    public void canPerformRegressionWithFourHeirarchies() {
-        buildHeirarchicalNetwork(radonData, 4);
+    public void canPerformRegressionWithFourHierarchies() {
+        buildAndRunHeirarchicalNetwork(radonData, 4);
     }
 
     @Test
-    public void canPerformRegressionWithTenHeirarchies() {
-        buildHeirarchicalNetwork(radonData, 10);
+    public void canPerformRegressionWithTenHierarchies() {
+        buildAndRunHeirarchicalNetwork(radonData, 10);
     }
 
     private RegressionModel linearRegression(List<Data> data) {
         double[] radon = data.stream().mapToDouble(k -> k.log_radon).toArray();
         double[] floor = data.stream().mapToDouble(k -> k.floor).toArray();
-        DoubleTensor y = DoubleTensor.create(radon, 1, radon.length);
-        DoubleTensor x = DoubleTensor.create(floor, 1, floor.length);
-
-        SamplingModelFitting sampling = new SamplingModelFitting(
-            NUTS
-                .builder()
-                .initialStepSize(0.01)
-                .adaptCount(0)
-                .build()
-            , 5000
-        );
+        DoubleTensor y = DoubleTensor.create(radon, radon.length, 1);
+        DoubleTensor x = DoubleTensor.create(floor, floor.length, 1);
 
         RegressionModel model = RegressionModel.
             withTrainingData(x, y).
             withRegularization(RegressionRegularization.RIDGE).
-            withPriorOnWeights(0., 50.).
-            withPriorOnIntercept(0., 50.).
-            withSampling(sampling).
+            withPriorOnWeights(0., 5.).
+            withPriorOnIntercept(0., 5.).
             build();
-
-        model.observe();
-        model.fit();
-
-        NetworkSamples samples = sampling.getNetworkSamples();
-
-        double muAlphaSamples = samples.getDoubleTensorSamples(model.getWeightVertex()).getAverages().scalar();
-        double sigmaAlphaSamples = samples.getDoubleTensorSamples(model.getInterceptVertex()).getAverages().scalar();
-
-        System.out.println("Gradient: " + muAlphaSamples);
-        System.out.println("Intercept: " + sigmaAlphaSamples);
 
         return model;
     }
 
-    private void buildHeirarchicalNetwork(List<Data> radonData, int numberOfModels) {
+    private void buildAndRunHeirarchicalNetwork(List<Data> radonData, int numberOfModels) {
         GaussianVertex muAlpha = new GaussianVertex(new long[]{1, 1}, 0, 100).setLabel("MuIntercept");
         GaussianVertex muBeta = new GaussianVertex(new long[]{1, 1}, 0, 100).setLabel("MuGradient");
 
@@ -119,64 +101,16 @@ public class RadonHeirarchicalRegression {
             models.add(model);
         }
 
+        //Set the starting values of the parent random variables
+        //This is required for the optimiser to find the correct values of the sub models latents
         muAlpha.setValue(1.);
         sigmaAlpha.setValue(0.5);
 
         muBeta.setValue(-1.);
         sigmaBeta.setValue(0.5);
 
-        NUTSSample(new BayesianNetwork(muAlpha.getConnectedGraph()), models);
+        optimise(new BayesianNetwork(muAlpha.getConnectedGraph()), models);
     }
-
-    private void NUTSSample(BayesianNetwork bayesianNetwork, List<RegressionModel> models) {
-        Vertex muAlpha = bayesianNetwork.getVertexByLabel(new VertexLabel("MuAlpha"));
-        Vertex muBeta = bayesianNetwork.getVertexByLabel(new VertexLabel("MuBeta"));
-        Vertex sigmaAlpha = bayesianNetwork.getVertexByLabel(new VertexLabel("SigmaAlpha"));
-        Vertex sigmaBeta = bayesianNetwork.getVertexByLabel(new VertexLabel("SigmaBeta"));
-
-        List<Vertex> toSample = new ArrayList<>();
-        toSample.add(muAlpha);
-        toSample.add(muBeta);
-        toSample.add(sigmaAlpha);
-        toSample.add(sigmaBeta);
-
-        for (RegressionModel model : models) {
-            toSample.add(model.getInterceptVertex());
-            toSample.add(model.getWeightVertex());
-        }
-
-        NetworkSamples posteriorSamples = NUTS.builder()
-            .maxTreeHeight(100)
-            .adaptEnabled(false)
-            .initialStepSize(0.1)
-            .build()
-            .getPosteriorSamples(bayesianNetwork, toSample, 100)
-            .downSample(bayesianNetwork.getContinuousLatentVertices().size());
-
-        double muAlphaSamples = posteriorSamples.getDoubleTensorSamples(muAlpha).getAverages().scalar();
-        double muBetaSamples = posteriorSamples.getDoubleTensorSamples(muBeta).getAverages().scalar();
-        double sigmaAlphaSamples = posteriorSamples.getDoubleTensorSamples(sigmaAlpha).getAverages().scalar();
-        double sigmaBetaSamples = posteriorSamples.getDoubleTensorSamples(sigmaBeta).getAverages().scalar();
-
-        System.out.println("Mu on intercept: " + muAlphaSamples);
-        System.out.println("Mu on gradient: " + muBetaSamples);
-
-        System.out.println("Sigma on intercept: " + sigmaAlphaSamples);
-        System.out.println("Sigma on gradient: " + sigmaBetaSamples);
-
-        int count = 1;
-        for (RegressionModel model : models) {
-            System.out.println("Model number: " + count);
-            count++;
-            double averageWeight = posteriorSamples.getDoubleTensorSamples(model.getWeightVertex()).getAverages().scalar();
-            double averageIntercept = posteriorSamples.getDoubleTensorSamples(model.getInterceptVertex()).getAverages().scalar();
-            System.out.println("Model intercept");
-            System.out.println(averageIntercept);
-            System.out.println("Model weights");
-            System.out.println(averageWeight);
-        }
-    }
-
 
     private RegressionModel createSubModel(double[] allFloor,
                                            double[] allRadon,
@@ -193,17 +127,15 @@ public class RadonHeirarchicalRegression {
         double[] floorForSubModel = Arrays.copyOfRange(allFloor, startIndex, endIndex);
         double[] radonForSubModel = Arrays.copyOfRange(allRadon, startIndex, endIndex);
 
-        DoubleTensor x = DoubleTensor.create(floorForSubModel, 1, floorForSubModel.length);
-        DoubleTensor y = DoubleTensor.create(radonForSubModel, 1, floorForSubModel.length);
+        DoubleTensor x = DoubleTensor.create(floorForSubModel, floorForSubModel.length, 1);
+        DoubleTensor y = DoubleTensor.create(radonForSubModel, floorForSubModel.length, 1);
 
         RegressionModel model = RegressionModel.
             withTrainingData(x, y).
             withRegularization(RegressionRegularization.RIDGE).
             withPriorOnWeights(muGradient, sigmaGradient).
             withPriorOnIntercept(muIntercept, sigmaIntercept).
-            build();
-
-        model.observe();
+            buildWithoutFitting();
 
         return model;
     }

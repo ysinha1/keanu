@@ -37,12 +37,9 @@ public class LinearLassoRegressionTest {
             .withPriorOnIntercept(0, 20)
             .build();
 
-        linearRegressionModel.observe();
-        linearRegressionModel.fit();
-        
         assertWeightsAndInterceptMatchTestData(
-            linearRegressionModel.getWeights(),
-            linearRegressionModel.getIntercept(),
+            linearRegressionModel.getWeightVertex(),
+            linearRegressionModel.getInterceptVertex(),
             data
         );
     }
@@ -56,12 +53,11 @@ public class LinearLassoRegressionTest {
             .withPriorOnIntercept(0, 20)
             .build();
 
-        linearRegressionModel.observe();
         linearRegressionModel.fit();
 
         assertWeightsAndInterceptMatchTestData(
-            linearRegressionModel.getWeights(),
-            linearRegressionModel.getIntercept(),
+            linearRegressionModel.getWeightVertex(),
+            linearRegressionModel.getInterceptVertex(),
             data
         );
     }
@@ -75,12 +71,11 @@ public class LinearLassoRegressionTest {
             .withPriorOnIntercept(0, 20)
             .build();
 
-        linearRegressionModel.observe();
         linearRegressionModel.fit();
 
         assertWeightsAndInterceptMatchTestData(
-            linearRegressionModel.getWeights(),
-            linearRegressionModel.getIntercept(),
+            linearRegressionModel.getWeightVertex(),
+            linearRegressionModel.getInterceptVertex(),
             data
         );
     }
@@ -99,13 +94,11 @@ public class LinearLassoRegressionTest {
             .withPriorOnWeightsAndIntercept(0, 0.00001)
             .build();
 
-        linearRegressionModelWide.observe();
         linearRegressionModelWide.fit();
 
-        linearRegressionModelNarrow.observe();
         linearRegressionModelNarrow.fit();
 
-        assertThat(linearRegressionModelNarrow.getWeights().abs().sum(), lessThan(linearRegressionModelWide.getWeights().abs().sum()));
+        assertThat(linearRegressionModelNarrow.getWeightVertex().getValue().abs().sum(), lessThan(linearRegressionModelWide.getWeightVertex().getValue().abs().sum()));
 
     }
 
@@ -118,10 +111,9 @@ public class LinearLassoRegressionTest {
             .withRegularization(RegressionRegularization.LASSO)
             .build();
 
-        linearRegressionModel.observe();
         linearRegressionModel.fit();
 
-        assertThat(linearRegressionModel.getWeight(2), closeTo(0., 1e-3));
+        assertThat(linearRegressionModel.getWeightVertex().getValue(2), closeTo(0., 1e-3));
     }
 
     @Category(Slow.class)
@@ -150,14 +142,11 @@ public class LinearLassoRegressionTest {
             .withSampling(sampling)
             .build();
 
-        linearRegressionModel.observe();
-        linearRegressionModel.fit();
-
         NetworkSamples networkSamples = sampling.getNetworkSamples().drop(samplingCount - 10000).downSample(100);
 
         assertSampledWeightsAndInterceptMatchTestData(
-            networkSamples.getDoubleTensorSamples(linearRegressionModel.getWeightsVertexId()),
-            networkSamples.getDoubleTensorSamples(linearRegressionModel.getInterceptVertexId()),
+            networkSamples.getDoubleTensorSamples(linearRegressionModel.getWeightVertex().getId()),
+            networkSamples.getDoubleTensorSamples(linearRegressionModel.getInterceptVertex().getId()),
             data);
     }
 
