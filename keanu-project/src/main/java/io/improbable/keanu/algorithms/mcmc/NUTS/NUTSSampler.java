@@ -22,12 +22,11 @@ import java.util.Map;
  */
 public class NUTSSampler implements SamplingAlgorithm {
 
-    public Double stepSize;
-
     private static final double STABILISER = 10;
     private static final double SHRINKAGE_FACTOR = 0.05;
     private static final double TEND_TO_ZERO_EXPONENT = 0.75;
 
+    private Double stepSize;
     private final KeanuRandom random;
     private final List<Vertex<DoubleTensor>> latentVertices;
     private final List<? extends Vertex> sampleFromVertices;
@@ -105,6 +104,7 @@ public class NUTSSampler implements SamplingAlgorithm {
         tree.shouldContinueFlag = true;
         tree.acceptedLeapfrogCount = 1;
 
+        System.out.println("------------------");
         while (tree.shouldContinueFlag && treeHeight < maxTreeHeight) {
 
             //build tree direction -1 = backwards OR 1 = forwards
@@ -231,7 +231,7 @@ public class NUTSSampler implements SamplingAlgorithm {
      */
     static double adaptStepSize(AutoTune autoTune, TreeBuilder tree, int sampleNum) {
 
-        if (sampleNum <= autoTune.adaptCount) {
+        if (sampleNum < autoTune.adaptCount) {
 
             //1/(m+t0)
             double percentageLeftToTune = (1 / (sampleNum + STABILISER));

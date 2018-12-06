@@ -37,6 +37,7 @@ public class GaussianVertexTest {
 
         NormalDistribution distribution = new NormalDistribution(0.0, 1.0);
         GaussianVertex tensorGaussianVertex = new GaussianVertex(0, 1);
+        tensorGaussianVertex.getShape();
         double expectedDensity = distribution.logDensity(0.5);
         ProbabilisticDoubleTensorContract.matchesKnownLogDensityOfScalar(tensorGaussianVertex, 0.5, expectedDensity);
     }

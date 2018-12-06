@@ -12,6 +12,8 @@ import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.diff.LogProbGradientCalculator;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
+import io.improbable.vis.Vizer;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,22 +41,29 @@ public class NUTSTest {
     public void samplesGaussian() {
         double mu = 0.0;
         double sigma = 1.0;
-        BayesianNetwork simpleGaussian = MCMCTestDistributions.createSimpleGaussian(mu, sigma, 3, random);
+        BayesianNetwork simpleGaussian = MCMCTestDistributions.createSimpleGaussian(mu, sigma, 0.1, random);
 
         NUTS nuts = NUTS.builder()
-            .adaptCount(2000)
+            .adaptEnabled(false)
+            .initialStepSize(0.5)
             .random(random)
+            .maxTreeHeight(8)
             .build();
 
         NetworkSamples posteriorSamples = nuts.getPosteriorSamples(
             simpleGaussian,
             simpleGaussian.getLatentVertices(),
-            2000
+            10000
         );
+
 
         Vertex<DoubleTensor> vertex = simpleGaussian.getContinuousLatentVertices().get(0);
 
-        MCMCTestDistributions.samplesMatchSimpleGaussian(mu, sigma, posteriorSamples.get(vertex).asList(), 0.1);
+//        MCMCTestDistributions.samplesMatchSimpleGaussian(mu, sigma, posteriorSamples.get(vertex).asList(), 0.1);
+
+        Vizer.histogram(posteriorSamples.getDoubleTensorSamples(vertex.getId()).asList());
+        while (true) {
+        }
     }
 
     @Test
