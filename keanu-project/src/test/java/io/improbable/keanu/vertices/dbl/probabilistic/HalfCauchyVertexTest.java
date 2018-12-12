@@ -9,6 +9,7 @@ import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import org.apache.commons.math3.distribution.CauchyDistribution;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -30,6 +31,15 @@ public class HalfCauchyVertexTest {
     @Before
     public void setup() {
         random = new KeanuRandom(1);
+    }
+
+    @Test
+    public void outOfBoundsGradientCalculation() {
+        HalfCauchyVertex cauchyVertex = new HalfCauchyVertex(5);
+        double outOfBoundsValue = -1.0;
+        Map<Vertex, DoubleTensor> actualDerivatives = cauchyVertex.dLogPdf(outOfBoundsValue, cauchyVertex);
+        DoubleTensor derivative = actualDerivatives.get(cauchyVertex);
+        Assert.assertEquals(0.0, derivative.scalar(), 1e-6);
     }
 
     @Test

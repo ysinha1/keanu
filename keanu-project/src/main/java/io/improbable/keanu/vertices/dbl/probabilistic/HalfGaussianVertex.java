@@ -1,8 +1,15 @@
 package io.improbable.keanu.vertices.dbl.probabilistic;
 
+import static java.util.Collections.singletonMap;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
 import io.improbable.keanu.annotation.ExportVertexToPythonBindings;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.vertices.LoadVertexParam;
+import io.improbable.keanu.vertices.Vertex;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 import io.improbable.keanu.vertices.dbl.nonprobabilistic.ConstantDoubleVertex;
@@ -43,6 +50,19 @@ public class HalfGaussianVertex extends GaussianVertex {
             return super.logProb(value) + LOG_TWO * value.getLength();
         }
         return Double.NEGATIVE_INFINITY;
+    }
+
+    @Override
+    public Map<Vertex, DoubleTensor> dLogProb(DoubleTensor value, Set<? extends Vertex> withRespectTo) {
+        Map<Vertex, DoubleTensor> gaussiandLogProb = super.dLogProb(value, withRespectTo);
+        if (value.greaterThanOrEqual(MU_ZERO).allTrue()) {
+            return gaussiandLogProb;
+        } else {
+            for (Map.Entry<Vertex, DoubleTensor> entry : gaussiandLogProb.entrySet()) {
+                gaussiandLogProb.put(entry.getKey(), DoubleTensor.create(0.0, entry.getValue().getShape()));
+            }
+            return gaussiandLogProb;
+        }
     }
 
     @Override
