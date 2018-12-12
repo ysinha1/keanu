@@ -145,6 +145,8 @@ public class NUTS implements PosteriorSamplingAlgorithm {
             random
         ) : initialStepSize;
 
+        resetPosition(sampleFromVertices, position);
+
         Stepsize stepsize = new Stepsize(
             startingStepSize,
             targetAcceptanceProb,
@@ -189,6 +191,12 @@ public class NUTS implements PosteriorSamplingAlgorithm {
             putValue(vertex, sample);
         }
         return sample;
+    }
+
+    private static void resetPosition(List<? extends Vertex> sampleFromVertices, Map<VertexId, DoubleTensor> previousPosition) {
+        for (Vertex vertex : sampleFromVertices) {
+            vertex.setValue(previousPosition.get(vertex.getId()));
+        }
     }
 
     private static <T> void putValue(Vertex<T> vertex, Map<VertexId, ?> target) {

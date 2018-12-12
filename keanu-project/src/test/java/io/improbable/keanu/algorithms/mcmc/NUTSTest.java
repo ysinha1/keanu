@@ -99,7 +99,6 @@ public class NUTSTest {
     public void samplesHalfGaussian() {
         double sigma = 1.0;
         HalfGaussianVertex A = new HalfGaussianVertex(new long[]{1, 1}, sigma);
-//        GaussianVertex A = new GaussianVertex(new long[]{1, 1}, 0, 1);
         A.setAndCascade(0.5);
         BayesianNetwork b = new BayesianNetwork(A.getConnectedGraph());
 
@@ -117,14 +116,6 @@ public class NUTSTest {
 
         List<DoubleTensor> samples = posteriorSamples.get(A).asList();
 
-        int count = 0;
-
-        for (DoubleTensor sample : samples) {
-            if (sample.scalar() < 0.) {
-                System.out.println("uh oh negative " + count);
-            }
-            count++;
-        }
     }
 
     @Test
