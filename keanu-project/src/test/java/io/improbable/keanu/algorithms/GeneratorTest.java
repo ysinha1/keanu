@@ -1,5 +1,6 @@
 package io.improbable.keanu.algorithms;
 
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -23,7 +24,7 @@ public class GeneratorTest {
     @Test
     public void canInitialiseGenerator() {
         Generator g = new Generator();
-        Set<DoubleVertex> vertices = g.getVertices();
+        List<DoubleVertex> vertices = g.getVertices();
         Assert.assertTrue(vertices.size() == 1);
     }
 
@@ -33,5 +34,15 @@ public class GeneratorTest {
         CategoricalVertex<Generator.Vertices, GenericTensor<Generator.Vertices>> c = g.getCategoricalVertex();
         GenericTensor<Generator.Vertices> v = c.sample(random);
         Assert.assertTrue(v.scalar() instanceof Generator.Vertices);
+    }
+
+    @Test
+    public void canAddAVertex() {
+        Generator g = new Generator();
+        List<DoubleVertex> vertices = g.getVertices();
+        Assert.assertTrue(vertices.size() == 1);
+        g.transition();
+        vertices = g.getVertices();
+        Assert.assertTrue(vertices.size() > 1);
     }
 }
