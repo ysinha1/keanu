@@ -1,0 +1,9 @@
+digraph BayesianNetwork {
+<277> -> <278> [label=inputVertex]
+<278> -> <295> [label=left, right]
+<278> -> <296> [label=rate]
+277[label="3.6784256362515033"]
+278[label="ExpVertex"]
+295[label="/"]
+296[label="ExponentialVertex"]
+}

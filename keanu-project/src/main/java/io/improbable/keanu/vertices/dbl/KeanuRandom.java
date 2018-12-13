@@ -106,6 +106,10 @@ public class KeanuRandom {
         }
     }
 
+    public double nextGamma(double theta, double k) {
+        return Gamma.withParameters(DoubleTensor.scalar(theta), DoubleTensor.scalar(k)).sample(new long[]{}, this).scalar();
+    }
+
     public DoubleTensor nextGamma(long[] shape, DoubleTensor theta, DoubleTensor k) {
         return Gamma.withParameters(theta, k).sample(shape, this);
     }
