@@ -275,7 +275,6 @@ public class MetropolisHastingsTest {
     @Test
     public void doesNotStoreSamplesThatWillBeDropped() {
 
-        MetropolisHastings algo = MetropolisHastings.withDefaultConfig();
 
         int sampleCount = 1000;
         int dropCount = 100;

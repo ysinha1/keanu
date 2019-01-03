@@ -1,31 +1,21 @@
 package io.improbable.keanu.spark;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.Map;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SparkSession;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Iterables;
-
+import io.improbable.keanu.algorithms.NetworkSample;
+import io.improbable.keanu.algorithms.NetworkSamples;
+import io.improbable.keanu.algorithms.mcmc.MetropolisHastings;
 import io.improbable.keanu.network.BayesianNetwork;
-import io.improbable.keanu.network.NetworkLoader;
 import io.improbable.keanu.util.io.JsonLoader;
-import io.improbable.keanu.util.io.ProtobufLoader;
-import scala.Tuple2;
+import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
 
 public class SparkRunner {
 
@@ -39,14 +29,23 @@ public class SparkRunner {
 
     public void run() {
         try (JavaSparkContext jsc = new JavaSparkContext(session.sparkContext())) {
-            
+
             JavaRDD<String> file = jsc.textFile(savedModel.getAbsolutePath());
 
             JavaRDD<BayesianNetwork> net = file.mapPartitions(new ParseJSON());
 
-            int count = net.map(network -> {
-                return network.getAllVertices().size();
-            }).reduce((integer, integer2) -> integer + integer2);
+            JavaRDD<NetworkSamples> netSamples = net.map(network -> {
+                NetworkSamples posteriorSamples = MetropolisHastings.withDefaultConfig().getPosteriorSamples(
+                    network,
+                    network.getLatentVertices(),
+                    5000
+                );
+                return posteriorSamples;
+            });
+
+            int count = netSamples.map(networkSamples -> {
+                return networkSamples.size();
+            }).reduce((i, i1) -> i + i1);
 
             System.out.println(count);
 
@@ -56,7 +55,7 @@ public class SparkRunner {
 
     public static class ParseJSON implements FlatMapFunction<Iterator<String>, BayesianNetwork> {
         public Iterator<BayesianNetwork> call(Iterator<String> lines) throws Exception {
-            ArrayList<BayesianNetwork> bayesianNetworks = new ArrayList<BayesianNetwork>();
+            ArrayList<BayesianNetwork> bayesianNetworks = new ArrayList<>();
             String json = "";
             while (lines.hasNext()) {
                 String line = lines.next();
@@ -72,7 +71,7 @@ public class SparkRunner {
     private SparkSession initSparkSession() {
         return SparkSession
             .builder()
-            .appName("WordCount")
+            .appName("SparkRunner")
             .master("local")
             .config("spark.driver.bindAddress", "127.0.0.1")
             .getOrCreate();
