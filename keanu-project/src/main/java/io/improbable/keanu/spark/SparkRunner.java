@@ -2,6 +2,7 @@ package io.improbable.keanu.spark;
 
 import java.io.File;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 
@@ -16,8 +17,8 @@ public class SparkRunner {
     }
 
     public void run() {
-        try (JavaSparkContext jsc = new JavaSparkContext()) {
-            jsc.textFile(savedModel.getPath());
+        try (JavaSparkContext jsc = new JavaSparkContext(session.sparkContext())) {
+            JavaRDD<String> file = jsc.textFile(savedModel.getPath());
         }
         session.close();
     }
@@ -25,10 +26,9 @@ public class SparkRunner {
     private SparkSession initSparkSession() {
         return SparkSession
             .builder()
-            .appName("SparkRunner")
+            .appName("WordCount")
             .master("local")
             .config("spark.driver.bindAddress", "127.0.0.1")
-            .config("spark.driver.allowMultipleContexts", true)
             .getOrCreate();
     }
 
