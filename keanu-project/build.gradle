@@ -38,6 +38,10 @@ dependencies {
     compile group: 'org.apache.spark', name: 'spark-core_2.12', version: '2.4.0'
     compile group: 'org.apache.spark', name: 'spark-sql_2.12', version: '2.4.0'
 
+    compile('org.apache.hadoop:hadoop-mapreduce-client-core:2.7.2')
+    compile('org.apache.hadoop:hadoop-common:2.7.2')
+    compile('commons-io:commons-io:2.4')
+
     //testing
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.19.1'

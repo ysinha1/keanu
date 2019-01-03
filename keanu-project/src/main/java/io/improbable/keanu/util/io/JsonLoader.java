@@ -1,5 +1,6 @@
 package io.improbable.keanu.util.io;
 
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.improbable.keanu.KeanuSavedBayesNet;
 import io.improbable.keanu.network.BayesianNetwork;
@@ -29,8 +30,12 @@ public class JsonLoader implements NetworkLoader {
     @Override
     public BayesianNetwork loadNetwork(InputStream input) throws IOException {
         String jsonInput = IOUtils.toString(input, StandardCharsets.UTF_8);
+        return loadNetwork(jsonInput);
+    }
+
+    public BayesianNetwork loadNetwork(String input) throws InvalidProtocolBufferException {
         KeanuSavedBayesNet.Model.Builder modelBuilder = KeanuSavedBayesNet.Model.newBuilder();
-        JsonFormat.parser().merge(jsonInput, modelBuilder);
+        JsonFormat.parser().merge(input, modelBuilder);
         return protobufLoader.loadNetwork(modelBuilder.build());
     }
 

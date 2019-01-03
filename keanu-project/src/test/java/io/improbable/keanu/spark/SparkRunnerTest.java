@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.network.NetworkSaver;
+import io.improbable.keanu.util.io.JsonSaver;
 import io.improbable.keanu.util.io.ProtobufSaver;
 import io.improbable.keanu.vertices.dbl.DoubleVertex;
 import io.improbable.keanu.vertices.dbl.probabilistic.GaussianVertex;
@@ -24,14 +25,14 @@ public class SparkRunnerTest {
         GaussianVertex b = new GaussianVertex(5, 2);
         DoubleVertex c = a.plus(b);
         BayesianNetwork bayesianNetwork = new BayesianNetwork(c.getConnectedGraph());
-        NetworkSaver saver = new ProtobufSaver(bayesianNetwork);
-        FileOutputStream writer = new FileOutputStream("proto.pbf");
+        NetworkSaver saver = new JsonSaver(bayesianNetwork);
+        FileOutputStream writer = new FileOutputStream("model.json");
         saver.save(writer, true);
     }
 
     @Test
     public void canRun() {
-        File file = new File("proto.pbf");
+        File file = new File("model.json");
         SparkRunner runner = new SparkRunner(file);
         runner.run();
     }
