@@ -33,7 +33,7 @@ public class SparkRunnerTest {
     @Test
     public void canRun() {
         File file = new File("model.json");
-        SparkRunner runner = new SparkRunner(file);
+        SparkRunner runner = new SparkRunner(file, 8);
         runner.run();
     }
 
