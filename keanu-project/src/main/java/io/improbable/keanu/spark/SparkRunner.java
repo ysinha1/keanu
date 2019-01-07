@@ -23,16 +23,18 @@ public class SparkRunner implements Serializable {
 
     public SparkRunner(File savedModel, int numPartitions) {
         this.savedModel = savedModel;
-        this.session = initSparkSession();
         this.numPartitions = numPartitions;
+        this.session = initSparkSession();
     }
 
     public void run() {
         try (JavaSparkContext jsc = new JavaSparkContext(session.sparkContext())) {
 
             JavaRDD<String> file = jsc.textFile(savedModel.getAbsolutePath());
+            file = file.coalesce(1);
 
             JavaRDD<BayesianNetwork> net = file.mapPartitions(new ModelParser(numPartitions));
+            net = net.repartition(numPartitions);
 
             JavaRDD<NetworkSamples> netSamples = net.map(network -> {
                 NetworkSamples posteriorSamples = MetropolisHastings.withDefaultConfig().getPosteriorSamples(
@@ -42,8 +44,6 @@ public class SparkRunner implements Serializable {
                 );
                 return posteriorSamples;
             });
-
-
 
             int count = netSamples.map(networkSamples -> {
                 return networkSamples.size();
@@ -85,7 +85,7 @@ public class SparkRunner implements Serializable {
         return SparkSession
             .builder()
             .appName("SparkRunner")
-            .master("local")
+            .master("local[" + numPartitions + "]")
             .config("spark.driver.bindAddress", "127.0.0.1")
             .getOrCreate();
     }

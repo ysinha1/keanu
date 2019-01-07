@@ -9,13 +9,14 @@ import io.improbable.keanu.network.NetworkLoader;
 import io.improbable.keanu.network.NetworkSaver;
 import io.improbable.keanu.tensor.Tensor;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
-public abstract class Vertex<T> implements Observable<T>, Samplable<T>, Variable<T> {
+public abstract class Vertex<T> implements Observable<T>, Samplable<T>, Variable<T>, Serializable {
 
     private final VertexId id = new VertexId();
     private final long[] initialShape;

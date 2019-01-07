@@ -4,6 +4,7 @@ import com.google.common.primitives.Ints;
 import io.improbable.keanu.algorithms.variational.optimizer.VariableReference;
 import lombok.EqualsAndHashCode;
 
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -15,7 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * graph exists - ie depth 1 is the outermost graph, depth 2 is a graph within a graph etc.
  */
 @EqualsAndHashCode
-public class VertexId implements Comparable<VertexId>, VariableReference {
+public class VertexId implements Comparable<VertexId>, VariableReference, Serializable {
 
     public static final AtomicLong ID_GENERATOR = new AtomicLong(0L);
     private static final int TOP_LEVEL_ARRAY_SIZE = 1;

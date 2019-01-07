@@ -13,6 +13,7 @@ import io.improbable.keanu.vertices.VertexLabel;
 import io.improbable.keanu.vertices.dbl.Differentiable;
 import io.improbable.keanu.vertices.dbl.KeanuRandom;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -24,7 +25,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class BayesianNetwork {
+public class BayesianNetwork implements Serializable {
 
     private final List<? extends Vertex> vertices;
     private final Map<VertexLabel, Vertex> vertexLabels;

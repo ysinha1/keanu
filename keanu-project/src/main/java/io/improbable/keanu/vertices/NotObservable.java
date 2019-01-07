@@ -1,8 +1,9 @@
 package io.improbable.keanu.vertices;
 
+import java.io.Serializable;
 import java.util.Optional;
 
-public class NotObservable<T> implements Observable<T> {
+public class NotObservable<T> implements Observable<T>, Serializable {
     // package private - because it's created by the factory method Observable.observableTypeFor
     NotObservable() {
     }
