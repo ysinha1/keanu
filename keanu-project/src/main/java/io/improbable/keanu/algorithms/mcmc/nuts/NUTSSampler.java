@@ -91,6 +91,7 @@ class NUTSSampler implements SamplingAlgorithm {
     @Override
     public void step() {
 
+        System.out.println("step");
         initializeMomentumForEachVertex(latentVertices, tree.getForwardMomentum(), random);
         cache(tree.getForwardMomentum(), tree.getBackwardMomentum());
 

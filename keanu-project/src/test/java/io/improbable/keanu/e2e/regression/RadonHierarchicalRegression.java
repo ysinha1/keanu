@@ -1,11 +1,14 @@
 package io.improbable.keanu.e2e.regression;
 
 import io.improbable.keanu.DeterministicRule;
+import io.improbable.keanu.algorithms.NetworkSamples;
+import io.improbable.keanu.algorithms.mcmc.nuts.NUTS;
 import io.improbable.keanu.algorithms.variational.optimizer.KeanuOptimizer;
 import io.improbable.keanu.algorithms.variational.optimizer.gradient.GradientOptimizer;
 import io.improbable.keanu.model.regression.RegressionModel;
 import io.improbable.keanu.model.regression.RegressionRegularization;
 import io.improbable.keanu.network.BayesianNetwork;
+import io.improbable.keanu.network.NetworkSaver;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
 import io.improbable.keanu.util.csv.ReadCsv;
 import io.improbable.keanu.vertices.VertexLabel;
@@ -104,13 +107,13 @@ public class RadonHierarchicalRegression {
 
         //Set the starting values of the parent random variables
         //This is required for the optimiser to find the correct values of the sub models latents
-        muAlpha.setValue(1.);
+        muAlpha.setValue(10.);
         sigmaAlpha.setValue(0.5);
 
         muBeta.setValue(-1.);
         sigmaBeta.setValue(0.5);
 
-        optimise(new BayesianNetwork(muAlpha.getConnectedGraph()), models);
+        sample(new BayesianNetwork(muAlpha.getConnectedGraph()), models);
     }
 
     private RegressionModel createSubModel(double[] allFloor,
@@ -141,6 +144,24 @@ public class RadonHierarchicalRegression {
         return model;
     }
 
+    private void sample(BayesianNetwork bayesianNetwork, List<RegressionModel> models) {
+        NUTS nuts = NUTS.builder()
+            .adaptEnabled(false)
+            .initialStepSize(0.1)
+            .targetAcceptanceProb(0.6)
+            .maxTreeHeight(4)
+            .saveStatistics(true)
+            .build();
+
+        NetworkSamples posteriorSamples = nuts.getPosteriorSamples(
+            bayesianNetwork,
+            bayesianNetwork.getLatentVertices(),
+            250
+        );
+
+        assertSamplesAreCorrect(bayesianNetwork, models, posteriorSamples);
+    }
+
     private void optimise(BayesianNetwork bayesianNetwork, List<RegressionModel> models) {
         bayesianNetwork.probeForNonZeroProbability(100);
         GradientOptimizer optimizer = KeanuOptimizer.Gradient.builderFor(bayesianNetwork)
@@ -150,6 +171,26 @@ public class RadonHierarchicalRegression {
         optimizer.maxAPosteriori();
 
         assertValuesAreCorrect(bayesianNetwork, models);
+    }
+
+    private void assertSamplesAreCorrect(BayesianNetwork bayesianNetwork, List<RegressionModel> models, NetworkSamples samples) {
+        DoubleVertex muIntercept = (DoubleVertex) bayesianNetwork.getVertexByLabel(new VertexLabel("MuIntercept"));
+        DoubleVertex muGradient = (DoubleVertex) bayesianNetwork.getVertexByLabel(new VertexLabel("MuGradient"));
+        DoubleVertex sigmaIntercept = (DoubleVertex) bayesianNetwork.getVertexByLabel(new VertexLabel("SigmaIntercept"));
+        DoubleVertex sigmaGradient = (DoubleVertex) bayesianNetwork.getVertexByLabel(new VertexLabel("SigmaGradient"));
+
+        Assert.assertTrue(-0.4 > samples.get(muGradient).getMode().scalar() && samples.get(muGradient).getMode().scalar() > -0.9);
+        Assert.assertTrue(1.8 > samples.get(muIntercept).getMode().scalar()  && samples.get(muIntercept).getMode().scalar() > 1.2);
+
+        Assert.assertTrue(0.5 > samples.get(sigmaGradient).getMode().scalar() && samples.get(sigmaGradient).getMode().scalar() > 0.);
+        Assert.assertTrue(0.5 > samples.get(sigmaIntercept).getMode().scalar() && samples.get(sigmaIntercept).getMode().scalar() > 0.);
+
+        for (RegressionModel subModel : models) {
+            double weight = samples.get(subModel.getWeightVertex()).getMode().scalar();
+            double intercept = samples.get(subModel.getInterceptVertex()).getMode().scalar();
+            Assert.assertTrue(-0.0 > weight && weight > -1.5);
+            Assert.assertTrue(2. > intercept && intercept > 1.);
+        }
     }
 
     private void assertValuesAreCorrect(BayesianNetwork bayesianNetwork, List<RegressionModel> models) {
