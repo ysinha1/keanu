@@ -50,10 +50,9 @@ public class Keanu {
             }
 
             public static io.improbable.keanu.algorithms.mcmc.MetropolisHastings withDefaultConfigFor(KeanuProbabilisticModel model, KeanuRandom random) {
-                List<Vertex> latentVertices = model.getLatentVertices();
                 return builder()
-                    .proposalDistribution(new PriorProposalDistribution(latentVertices))
-                    .rejectionStrategy(new RollBackToCachedValuesOnRejection(latentVertices))
+                    .proposalDistribution(new PriorProposalDistribution(model.getLatentVertices()))
+                    .rejectionStrategy(new RollBackToCachedValuesOnRejection(model))
                     .random(random)
                     .build();
             }

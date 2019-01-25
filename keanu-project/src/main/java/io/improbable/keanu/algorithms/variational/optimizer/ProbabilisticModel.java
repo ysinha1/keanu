@@ -14,8 +14,6 @@ public interface ProbabilisticModel {
 
     double logProb(Map<VariableReference, ?> inputs);
 
-    double logProbAfter(Map<VariableReference, Object> newValues, double logProbBefore);
-
     default double logLikelihood() {
         return logLikelihood(Collections.emptyMap());
     }

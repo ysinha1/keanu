@@ -191,12 +191,13 @@ public class MetropolisHastingsTest {
         Cobserved.observe(46.0);
 
         BayesianNetwork bayesNet = new BayesianNetwork(Arrays.asList(A, B, Cobserved));
+        KeanuProbabilisticModel model = new KeanuProbabilisticModel(bayesNet);
         bayesNet.probeForNonZeroProbability(100);
 
         ProposalDistribution proposalDistribution = new GaussianProposalDistribution(DoubleTensor.scalar(1.));
         MetropolisHastings metropolisHastings = MetropolisHastings.builder()
             .proposalDistribution(proposalDistribution)
-            .rejectionStrategy(new RollbackAndCascadeOnRejection(bayesNet.getLatentVertices()))
+            .rejectionStrategy(new RollbackAndCascadeOnRejection(model))
             .build();
 
         NetworkSamples posteriorSamples =  metropolisHastings.getPosteriorSamples(
@@ -241,10 +242,11 @@ public class MetropolisHastingsTest {
 
         int sampleCount = 100;
         BayesianNetwork network = new BayesianNetwork(start.getConnectedGraph());
+        KeanuProbabilisticModel model = new KeanuProbabilisticModel(network);
 
         MetropolisHastings.builder()
             .proposalDistribution(new PriorProposalDistribution(network.getLatentVertices()))
-            .rejectionStrategy(new RollBackToCachedValuesOnRejection(network.getLatentVertices()))
+            .rejectionStrategy(new RollBackToCachedValuesOnRejection(model))
             .build()
             .getPosteriorSamples(
             new KeanuProbabilisticModel(network),

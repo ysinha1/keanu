@@ -1,6 +1,7 @@
 package io.improbable.keanu.algorithms.variational.optimizer;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
 import io.improbable.keanu.network.BayesianNetwork;
 import io.improbable.keanu.tensor.dbl.DoubleTensor;
@@ -26,6 +27,8 @@ public class KeanuProbabilisticModel implements ProbabilisticModel {
 
     private final List<Vertex> latentOrObservedVertices;
     private final LambdaSectionSnapshot lambdaSectionSnapshot;
+    private double currentLogProb;
+    private boolean needToRecalculateLogProb = true;
 
     public KeanuProbabilisticModel(Collection<? extends Vertex> variables) {
         this(new BayesianNetwork(variables));
@@ -44,20 +47,42 @@ public class KeanuProbabilisticModel implements ProbabilisticModel {
         checkBayesNetInHealthyState();
     }
 
+    public void setNeedToRecalculateLogProb() {
+        needToRecalculateLogProb = true;
+    }
+
     @Override
     public double logProb(Map<VariableReference, ?> inputs) {
+        if (needToRecalculateLogProb) {
+            needToRecalculateLogProb = false;
+            currentLogProb = logProbFullCalculation(inputs);
+        } else {
+            currentLogProb = logProbOptimisedCalculation(inputs);
+        }
+        return currentLogProb;
+    }
+
+    private double logProbFullCalculation(Map<VariableReference, ?> inputs) {
         cascadeValues(inputs);
         return ProbabilityCalculator.calculateLogProbFor(this.latentOrObservedVertices);
     }
 
-    @Override
-    public double logProbAfter(Map<VariableReference, Object> newValues, double logProbBefore) {
-        Set<Vertex> affectedVertices = newValues.keySet().stream().map(ref -> vertexLookup.get(ref)).collect(Collectors.toSet());
+    private double logProbOptimisedCalculation(Map<VariableReference, ?> inputs) {
+        return logProbDelta(inputs) + this.currentLogProb;
+    }
+
+    private double logProbDelta(Map<VariableReference, ?> newValues) {
+        ImmutableSet.Builder<Vertex> affectedVerticesBuilder = ImmutableSet.builder();
+        for (VariableReference variableReference : newValues.keySet()) {
+            Vertex vertex = vertexLookup.get(variableReference);
+            affectedVerticesBuilder.add(vertex);
+        }
+        Set<Vertex> affectedVertices = affectedVerticesBuilder.build();
         double lambdaSectionLogProbBefore = lambdaSectionSnapshot.logProb(affectedVertices);
         cascadeValues(newValues);
         double lambdaSectionLogProbAfter = lambdaSectionSnapshot.logProb(affectedVertices);
         double deltaLogProb = lambdaSectionLogProbAfter - lambdaSectionLogProbBefore;
-        return logProbBefore + deltaLogProb;
+        return deltaLogProb;
     }
 
     @Override

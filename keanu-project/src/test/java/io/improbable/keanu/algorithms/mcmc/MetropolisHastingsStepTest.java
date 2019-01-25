@@ -65,7 +65,7 @@ public class MetropolisHastingsStepTest {
         MetropolisHastingsStep mhStep = new MetropolisHastingsStep(
             model,
             new PriorProposalDistribution(bayesNet.getAllVertices()),
-            new RollBackToCachedValuesOnRejection(bayesNet.getLatentVertices()),
+            new RollBackToCachedValuesOnRejection(model),
             alwaysAccept
         );
 
@@ -83,7 +83,7 @@ public class MetropolisHastingsStepTest {
     public void doesAllowCustomProposalDistribution() {
         DoubleVertex A = new GaussianVertex(0, 1);
         A.setValue(0.0);
-        ProbabilisticModel model = new KeanuProbabilisticModel(A.getConnectedGraph());
+        KeanuProbabilisticModel model = new KeanuProbabilisticModel(A.getConnectedGraph());
 
         MetropolisHastingsStep mhStep = stepFunctionWithConstantProposal(model, 1.0, alwaysAccept);
 
@@ -100,7 +100,7 @@ public class MetropolisHastingsStepTest {
     public void doesRejectOnImpossibleProposal() {
         DoubleVertex A = new UniformVertex(0, 1);
         A.setValue(0.5);
-        ProbabilisticModel model = new KeanuProbabilisticModel(A.getConnectedGraph());
+        KeanuProbabilisticModel model = new KeanuProbabilisticModel(A.getConnectedGraph());
 
         MetropolisHastingsStep mhStep = stepFunctionWithConstantProposal(model, -1, alwaysAccept);
 
@@ -121,26 +121,23 @@ public class MetropolisHastingsStepTest {
         DoubleVertex B = A.times(2);
         DoubleVertex C = new GaussianVertex(B, 1);
         C.observe(5.0);
-        ProbabilisticModel model = new KeanuProbabilisticModel(A.getConnectedGraph());
+        KeanuProbabilisticModel model = new KeanuProbabilisticModel(A.getConnectedGraph());
 
         MetropolisHastingsStep mhStep = stepFunctionWithConstantProposal(model, 10, alwaysReject);
 
         MetropolisHastingsStep.StepResult result = mhStep.step(
-            Collections.singleton(A),
-            model.logProb()
+            Collections.singleton(A)
         );
 
         assertFalse(result.isAccepted());
         assertEquals(0.5, A.getValue(0), 1e-10);
     }
 
-    private MetropolisHastingsStep stepFunctionWithConstantProposal(ProbabilisticModel model, double constant, KeanuRandom random) {
-        List<Vertex> latentVertices = (List<Vertex>) model.getLatentVariables();
-
+    private MetropolisHastingsStep stepFunctionWithConstantProposal(KeanuProbabilisticModel model, double constant, KeanuRandom random) {
         return new MetropolisHastingsStep(
             model,
             constantProposal(constant),
-            new RollBackToCachedValuesOnRejection(latentVertices),
+            new RollBackToCachedValuesOnRejection(model),
             random
         );
     }

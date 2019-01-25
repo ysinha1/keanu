@@ -89,7 +89,6 @@ public class SimulatedAnnealing {
             double temperature = annealingSchedule.getTemperature(sampleNum);
             logProbabilityBeforeStep = mhStep.step(
                 Collections.singleton(chosenVariable),
-                logProbabilityBeforeStep,
                 temperature
             ).getLogProbabilityAfterStep();
 

@@ -2,6 +2,7 @@ package io.improbable.keanu.algorithms.mcmc;
 
 import io.improbable.keanu.algorithms.graphtraversal.VertexValuePropagation;
 import io.improbable.keanu.algorithms.mcmc.proposal.Proposal;
+import io.improbable.keanu.algorithms.variational.optimizer.KeanuProbabilisticModel;
 import io.improbable.keanu.algorithms.variational.optimizer.Variable;
 import io.improbable.keanu.algorithms.variational.optimizer.VariableReference;
 import io.improbable.keanu.vertices.Vertex;
@@ -15,9 +16,11 @@ public class RollbackAndCascadeOnRejection implements ProposalRejectionStrategy 
 
     private Map<Vertex, Object> fromValues;
     private final Map<VariableReference, Vertex> vertexLookup;
+    private final KeanuProbabilisticModel model;
 
-    public RollbackAndCascadeOnRejection(Collection<Vertex> vertices) {
-        vertexLookup = vertices.stream().collect(Collectors.toMap(Variable::getReference, v -> v));
+    public RollbackAndCascadeOnRejection(KeanuProbabilisticModel model) {
+        vertexLookup = model.getLatentVertices().stream().collect(Collectors.toMap(Variable::getReference, v -> v));
+        this.model = model;
     }
 
     @Override
@@ -35,5 +38,6 @@ public class RollbackAndCascadeOnRejection implements ProposalRejectionStrategy 
             vertex.setValue(oldValue);
         }
         VertexValuePropagation.cascadeUpdate(fromValues.keySet());
+        model.setNeedToRecalculateLogProb();
     }
 }

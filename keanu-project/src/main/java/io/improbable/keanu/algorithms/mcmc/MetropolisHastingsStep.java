@@ -2,6 +2,7 @@ package io.improbable.keanu.algorithms.mcmc;
 
 import io.improbable.keanu.algorithms.mcmc.proposal.Proposal;
 import io.improbable.keanu.algorithms.mcmc.proposal.ProposalDistribution;
+import io.improbable.keanu.algorithms.variational.optimizer.KeanuProbabilisticModel;
 import io.improbable.keanu.algorithms.variational.optimizer.ProbabilisticModel;
 import io.improbable.keanu.algorithms.variational.optimizer.Variable;
 import io.improbable.keanu.vertices.ProbabilityCalculator;
@@ -39,26 +40,24 @@ public class MetropolisHastingsStep {
         this.random = random;
     }
 
-    public StepResult step(final Set<Variable> chosenVariables,
-                           final double logProbabilityBeforeStep) {
-        return step(chosenVariables, logProbabilityBeforeStep, DEFAULT_TEMPERATURE);
+    public StepResult step(final Set<Variable> chosenVariables) {
+        return step(chosenVariables, DEFAULT_TEMPERATURE);
     }
 
     /**
      * @param chosenVariables          variables to get a proposed change for
-     * @param logProbabilityBeforeStep The log of the previous state's probability
      * @param temperature              Temperature for simulated annealing. This
      *                                 should be constant if no annealing is wanted
      * @return the log probability of the network after either accepting or rejecting the sample
      */
     public StepResult step(final Set<Variable> chosenVariables,
-                           final double logProbabilityBeforeStep,
                            final double temperature) {
 
 
         Proposal proposal = proposalDistribution.getProposal(chosenVariables, random);
         rejectionStrategy.onProposalCreated(proposal);
-        final double logProbabilityAfterStep = model.logProbAfter(proposal.getProposalTo(), logProbabilityBeforeStep);
+        final double logProbabilityBeforeStep = model.logProb();
+        final double logProbabilityAfterStep = model.logProb(proposal.getProposalTo());
 
         if (!ProbabilityCalculator.isImpossibleLogProb(logProbabilityAfterStep)) {
 

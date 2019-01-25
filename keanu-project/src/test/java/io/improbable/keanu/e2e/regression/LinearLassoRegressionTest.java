@@ -135,7 +135,7 @@ public class LinearLassoRegressionTest {
         SamplingModelFitting sampling = new SamplingModelFitting(model -> MetropolisHastings.builder()
             .proposalDistribution(proposalDistribution)
             .variableSelector(MHStepVariableSelector.SINGLE_VARIABLE_SELECTOR)
-            .rejectionStrategy(new RollbackAndCascadeOnRejection(model.getLatentVertices()))
+            .rejectionStrategy(new RollbackAndCascadeOnRejection(model))
             .build(),
             samplingCount);
 

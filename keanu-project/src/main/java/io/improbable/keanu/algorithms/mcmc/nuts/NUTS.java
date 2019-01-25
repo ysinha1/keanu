@@ -125,6 +125,7 @@ public class NUTS implements PosteriorSamplingAlgorithm {
         );
 
         resetVariableValue(sampleFromVariables, position);
+//        ((KeanuProbabilisticModel) model).setNeedToRecalculateLogProb();
 
         Tree tree = Tree.createInitialTree(position, momentum, gradient, initialLogOfMasterP, takeSample((List<? extends Variable<Object, ?>>)sampleFromVariables));
 

@@ -40,8 +40,7 @@ public class MetropolisHastingsSampler implements SamplingAlgorithm {
         Set<Variable> chosenVariables = variableSelector.select(latentVariables, sampleNum);
 
         logProbabilityBeforeStep = mhStep.step(
-            chosenVariables,
-            logProbabilityBeforeStep
+            chosenVariables
         ).getLogProbabilityAfterStep();
 
         sampleNum++;
