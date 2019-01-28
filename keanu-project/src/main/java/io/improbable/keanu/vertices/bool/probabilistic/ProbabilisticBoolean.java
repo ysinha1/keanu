@@ -8,7 +8,7 @@ import io.improbable.keanu.vertices.Vertex;
 import java.util.Map;
 import java.util.Set;
 
-public interface ProbabilisticBoolean extends Probabilistic<BooleanTensor> {
+public interface ProbabilisticBoolean extends Probabilistic<BooleanTensor, Vertex> {
 
     default double logPmf(boolean value) {
         return logPmf(BooleanTensor.scalar(value));

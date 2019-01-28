@@ -8,7 +8,7 @@ import io.improbable.keanu.vertices.Vertex;
 import java.util.Map;
 import java.util.Set;
 
-public interface ProbabilisticInteger extends Probabilistic<IntegerTensor> {
+public interface ProbabilisticInteger extends Probabilistic<IntegerTensor, Vertex> {
     default double logPmf(int value) {
         return logPmf(IntegerTensor.scalar(value));
     }

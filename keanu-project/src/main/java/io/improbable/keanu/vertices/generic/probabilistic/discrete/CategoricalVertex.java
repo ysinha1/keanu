@@ -27,7 +27,7 @@ import static io.improbable.keanu.tensor.TensorShapeValidation.checkTensorsMatch
 import static java.util.stream.Collectors.toMap;
 
 
-public class CategoricalVertex<CATEGORY, TENSOR extends Tensor<CATEGORY>> extends GenericTensorVertex<TENSOR> implements Probabilistic<TENSOR>, NonSaveableVertex {
+public class CategoricalVertex<CATEGORY, TENSOR extends Tensor<CATEGORY>> extends GenericTensorVertex<TENSOR> implements Probabilistic<TENSOR, Vertex>, NonSaveableVertex {
 
     private final Map<CATEGORY, DoubleVertex> selectableValues;
 

@@ -30,7 +30,7 @@ public class PriorProposalDistribution implements ProposalDistribution {
     }
 
     @Override
-    public <T> double logProb(Probabilistic<T> vertex, T ofValue, T givenValue) {
+    public <T> double logProb(Probabilistic<T, Vertex> vertex, T ofValue, T givenValue) {
         return vertex.logProb(ofValue);
     }
 

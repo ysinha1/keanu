@@ -171,7 +171,7 @@ public class ProbabilisticDoubleTensorContract {
                                                                       DoubleTensor hyperParameterEndValue,
                                                                       double hyperParameterValueIncrement,
                                                                       DoubleVertex hyperParameterVertex,
-                                                                      Probabilistic<?> vertexUnderTest,
+                                                                      Probabilistic<?, Vertex> vertexUnderTest,
                                                                       double gradientDelta) {
 
         for (DoubleTensor parameterValue = hyperParameterStartValue; parameterValue.scalar() <= hyperParameterEndValue.scalar(); parameterValue.plusInPlace(hyperParameterValueIncrement)) {
@@ -186,7 +186,7 @@ public class ProbabilisticDoubleTensorContract {
 
     public static void testGradientAtHyperParameterValue(DoubleTensor hyperParameterValue,
                                                          DoubleVertex hyperParameterVertex,
-                                                         Probabilistic<?> vertexUnderTest,
+                                                         Probabilistic<?, Vertex> vertexUnderTest,
                                                          double gradientDelta) {
 
         hyperParameterVertex.setAndCascade(hyperParameterValue.minus(gradientDelta));
@@ -223,13 +223,13 @@ public class ProbabilisticDoubleTensorContract {
         assertNull(vertexUnderTest.dLogProb(ones).get(vertexUnderTest));
     }
 
-    public static void matchesKnownLogDensityOfVector(Probabilistic<DoubleTensor> vertexUnderTest, double[] vector, double expectedLogDensity) {
+    public static void matchesKnownLogDensityOfVector(Probabilistic<DoubleTensor, Vertex> vertexUnderTest, double[] vector, double expectedLogDensity) {
 
         double actualDensity = vertexUnderTest.logProb(DoubleTensor.create(vector, vector.length, 1));
         assertEquals(expectedLogDensity, actualDensity, 1e-5);
     }
 
-    public static void matchesKnownLogDensityOfScalar(Probabilistic<DoubleTensor> vertexUnderTest, double scalar, double expectedLogDensity) {
+    public static void matchesKnownLogDensityOfScalar(Probabilistic<DoubleTensor, Vertex> vertexUnderTest, double scalar, double expectedLogDensity) {
 
         double actualDensity = vertexUnderTest.logProb(DoubleTensor.scalar(scalar));
         assertEquals(expectedLogDensity, actualDensity, 1e-5);

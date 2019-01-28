@@ -181,7 +181,7 @@ public class DirichletVertexTest {
         }
     }
 
-    private static <V extends Vertex<DoubleTensor> & Probabilistic<DoubleTensor>> void sampleMethodMatchesLogProbMethodMultiVariateDirichlet(V vertexUnderTest,
+    private static <V extends Vertex<DoubleTensor> & Probabilistic<DoubleTensor, Vertex>> void sampleMethodMatchesLogProbMethodMultiVariateDirichlet(V vertexUnderTest,
                                                                                                                                              double from,
                                                                                                                                              double to,
                                                                                                                                              double bucketSize,

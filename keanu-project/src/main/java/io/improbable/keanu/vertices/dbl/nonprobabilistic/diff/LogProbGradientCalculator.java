@@ -119,12 +119,12 @@ public class LogProbGradientCalculator {
      */
     private LogProbGradients reverseModeLogProbGradientWrtLatents(final Vertex ofVertex) {
         Preconditions.checkArgument(
-            ofVertex instanceof Probabilistic<?>,
+            ofVertex instanceof Probabilistic,
             "Cannot get logProb gradient on non-probabilistic vertex %s", ofVertex
         );
 
         Set<DoubleVertex> verticesWithNonzeroDiff = verticesWithNonzeroDiffWrtLatent.get(ofVertex);
-        final Map<Vertex, DoubleTensor> dlogProbOfVertexWrtVertices = ((Probabilistic<?>) ofVertex).dLogProbAtValue(verticesWithNonzeroDiff);
+        final Map<Vertex, DoubleTensor> dlogProbOfVertexWrtVertices = ((Probabilistic<?, Vertex>) ofVertex).dLogProbAtValue(verticesWithNonzeroDiff);
 
         LogProbGradients dOfWrtLatentsAccumulated = new LogProbGradients();
 

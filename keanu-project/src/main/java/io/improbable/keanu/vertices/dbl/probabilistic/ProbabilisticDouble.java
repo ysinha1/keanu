@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public interface ProbabilisticDouble extends Probabilistic<DoubleTensor> {
+public interface ProbabilisticDouble extends Probabilistic<DoubleTensor, Vertex> {
     default double logPdf(double value) {
         return logPdf(DoubleTensor.scalar(value));
     }

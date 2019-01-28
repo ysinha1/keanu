@@ -14,7 +14,7 @@ public interface ProposalDistribution {
 
     Proposal getProposal(Set<Vertex> vertices, KeanuRandom random);
 
-    <T> double logProb(Probabilistic<T> vertex, T ofValue, T givenValue);
+    <T> double logProb(Probabilistic<T, Vertex> vertex, T ofValue, T givenValue);
 
     /**
      * Represents q(x|x') where q is the proposal distribution,

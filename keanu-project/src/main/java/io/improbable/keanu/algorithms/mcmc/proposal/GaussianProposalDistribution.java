@@ -37,7 +37,7 @@ public class GaussianProposalDistribution implements ProposalDistribution {
     }
 
     @Override
-    public <T> double logProb(Probabilistic<T> vertex, T ofValue, T givenValue) {
+    public <T> double logProb(Probabilistic<T, Vertex> vertex, T ofValue, T givenValue) {
         if (!(ofValue instanceof DoubleTensor)) {
             throw new ClassCastException("Only DoubleTensor values are supported - not " + ofValue.getClass().getSimpleName());
         }
