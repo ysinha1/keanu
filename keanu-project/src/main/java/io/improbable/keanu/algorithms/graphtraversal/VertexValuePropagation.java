@@ -87,6 +87,33 @@ public class VertexValuePropagation {
         }
     }
 
+    public static void sample(Collection<? extends Vertex> vertices) {
+        Deque<Vertex> stack = asDeque(vertices);
+
+        Set<Vertex<?>> hasCalculated = new HashSet<>();
+
+        while (!stack.isEmpty()) {
+
+            Vertex<?> head = stack.peek();
+            Set<Vertex<?>> parentsThatAreNotYetCalculated = parentsThatAreNotCalculated(hasCalculated, head.getParents());
+
+            if (parentsThatAreNotYetCalculated.isEmpty()) {
+
+                Vertex<?> top = stack.pop();
+                updateVertexValue(top);
+                hasCalculated.add(top);
+
+            } else {
+
+                for (Vertex<?> vertex : parentsThatAreNotYetCalculated) {
+                    stack.push(vertex);
+                }
+
+            }
+
+        }
+    }
+
     private static Set<Vertex<?>> parentsThatAreNotCalculated(Set<Vertex<?>> calculated, Collection<Vertex> parents) {
         Set<Vertex<?>> notCalculatedParents = new HashSet<>();
         for (Vertex<?> next : parents) {
