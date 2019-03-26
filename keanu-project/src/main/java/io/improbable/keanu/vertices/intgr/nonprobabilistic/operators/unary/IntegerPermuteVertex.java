@@ -6,7 +6,8 @@ import io.improbable.keanu.vertices.LoadVertexParam;
 import io.improbable.keanu.vertices.SaveVertexParam;
 import io.improbable.keanu.vertices.intgr.IntegerVertex;
 
-import static io.improbable.keanu.tensor.TensorShape.getPermutedResultShape;
+import static io.improbable.keanu.tensor.TensorShape.getPermutedResultShapeShape;
+
 
 public class IntegerPermuteVertex extends IntegerUnaryOpVertex {
 
@@ -17,7 +18,7 @@ public class IntegerPermuteVertex extends IntegerUnaryOpVertex {
     @ExportVertexToPythonBindings
     public IntegerPermuteVertex(@LoadVertexParam(INPUT_NAME) IntegerVertex inputVertex,
                                 @LoadVertexParam(REARRANGE_NAME) int... rearrange) {
-        super(getPermutedResultShape(inputVertex.getShape(), rearrange), inputVertex);
+        super(getPermutedResultShapeShape(inputVertex.getShape(), rearrange), inputVertex);
         this.rearrange = rearrange;
     }
 

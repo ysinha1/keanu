@@ -77,9 +77,9 @@ public interface Tensor<T> {
 
     long[] getShape();
 
-    long getLength();
+    long[] getStride();
 
-    boolean isShapePlaceholder();
+    long getLength();
 
     T getValue(long... index);
 

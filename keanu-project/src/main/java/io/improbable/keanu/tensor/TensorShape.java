@@ -4,7 +4,9 @@ import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 public class TensorShape {
@@ -177,6 +179,14 @@ public class TensorShape {
         return newShape;
     }
 
+    public static int[] slideDimension(int from, int to, int rank) {
+        int[] dimensionRange = dimensionRange(0, rank);
+        List<Integer> shapeList = new ArrayList<>(Ints.asList(dimensionRange));
+        int dimLength = shapeList.remove(from);
+        shapeList.add(to, dimLength);
+        return Ints.toArray(shapeList);
+    }
+
     public static long[] shapeDesiredToRankByAppendingOnes(long[] lowRankTensorShape, int desiredRank) {
         return increaseRankByPaddingValue(lowRankTensorShape, desiredRank, true);
     }
@@ -259,12 +269,22 @@ public class TensorShape {
         }
     }
 
-    public static long[] getPermutedResultShape(long[] shape, int... rearrange) {
+    public static long[] getPermutedResultShapeShape(long[] shape, int... rearrange) {
         long[] permutedShape = new long[shape.length];
         for (int i = 0; i < shape.length; i++) {
             permutedShape[i] = shape[rearrange[i]];
         }
         return permutedShape;
+    }
+
+    public static int[] invertedPermute(int[] rearrange) {
+        int[] inverted = new int[rearrange.length];
+
+        for (int i = 0; i < rearrange.length; i++) {
+            inverted[rearrange[i]] = i;
+        }
+
+        return inverted;
     }
 
 }

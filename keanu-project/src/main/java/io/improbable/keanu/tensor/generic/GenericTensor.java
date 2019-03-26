@@ -72,13 +72,13 @@ public class GenericTensor<T> implements Tensor<T> {
     }
 
     @Override
-    public long getLength() {
-        return TensorShape.getLength(shape);
+    public long[] getStride() {
+        return stride;
     }
 
     @Override
-    public boolean isShapePlaceholder() {
-        return data == null;
+    public long getLength() {
+        return TensorShape.getLength(shape);
     }
 
     @Override
@@ -215,7 +215,7 @@ public class GenericTensor<T> implements Tensor<T> {
     @Override
     public Tensor<T> permute(int... rearrange) {
 
-        long[] resultShape = TensorShape.getPermutedResultShape(shape, rearrange);
+        long[] resultShape = TensorShape.getPermutedResultShapeShape(shape, rearrange);
         long[] resultStride = TensorShape.getRowFirstStride(resultShape);
         T[] newBuffer = Arrays.copyOf(data, data.length);
 
