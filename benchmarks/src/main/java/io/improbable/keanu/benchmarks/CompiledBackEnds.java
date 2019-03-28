@@ -45,11 +45,12 @@ public class CompiledBackEnds {
     @Setup
     public void setup() {
 
-        GaussianVertex A = new GaussianVertex(0, 1);
-        GaussianVertex B = new GaussianVertex(0, 1);
+        long[] shape = new long[]{10, 100};
+        GaussianVertex A = new GaussianVertex(shape, 0, 1);
+        GaussianVertex B = new GaussianVertex(shape, 0, 1);
 
-        valueA = DoubleTensor.scalar(0);
-        valueB = DoubleTensor.scalar(0.5);
+        valueA = DoubleTensor.create(0, shape);
+        valueB = DoubleTensor.create(0.5, shape);
 
         inputs = new HashMap<>();
         inputs.put(A.getReference(), valueA);
@@ -113,7 +114,7 @@ public class CompiledBackEnds {
     public DoubleTensor sweepValues() {
         DoubleTensor result = null;
 
-        for (int i = 0; i < 10000; i++) {
+        for (int i = 0; i < 100; i++) {
             result = (DoubleTensor) computableGraph.compute(inputs).get(output);
             incrementInputs();
         }
