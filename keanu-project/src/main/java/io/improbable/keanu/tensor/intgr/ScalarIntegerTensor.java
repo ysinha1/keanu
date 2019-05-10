@@ -98,6 +98,11 @@ public class ScalarIntegerTensor implements IntegerTensor {
     }
 
     @Override
+    public IntegerTensor permute(int... rearrange) {
+        return new ScalarIntegerTensor(value, shape);
+    }
+
+    @Override
     public IntegerTensor diag() {
         return duplicate();
     }

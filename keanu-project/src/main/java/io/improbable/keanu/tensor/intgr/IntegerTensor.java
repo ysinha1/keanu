@@ -141,6 +141,9 @@ public interface IntegerTensor extends NumberTensor<Integer, IntegerTensor>, Int
     IntegerTensor reshape(long... newShape);
 
     @Override
+    IntegerTensor permute(int... rearrange);
+
+    @Override
     IntegerTensor duplicate();
 
     IntegerTensor diag();

@@ -29,17 +29,11 @@ public class Nd4jIntegerTensorTest {
     public ExpectedException thrown = ExpectedException.none();
 
     private IntegerTensor matrixA;
-    private IntegerTensor matrixB;
     private IntegerTensor scalarA;
-    private IntegerTensor vectorA;
-    private IntegerTensor rankThreeTensor;
 
     public Nd4jIntegerTensorTest() {
         matrixA = IntegerTensor.create(new int[]{1, 2, 3, 4}, 2, 2);
-        matrixB = IntegerTensor.create(new int[]{1, 2, 3, 4}, 2, 2);
         scalarA = IntegerTensor.scalar(2);
-        vectorA = IntegerTensor.create(new int[]{1, 2, 3}, 3);
-        rankThreeTensor = IntegerTensor.create(new int[]{1, 2, 3, 4, 5, 6, 7, 8}, 2, 2, 2);
     }
 
     @Test
@@ -55,11 +49,6 @@ public class Nd4jIntegerTensorTest {
         assertEquals(4, (int) vector.getValue(3));
         TestCase.assertEquals(1, vector.getRank());
     }
-
-//    @Test
-//    public void canAverage() {
-//        assertEquals(2.5, matrixA.average(), 1e-6);
-//    }
 
     @Test
     public void canEye() {
@@ -676,6 +665,58 @@ public class Nd4jIntegerTensorTest {
 
         assertArrayEquals(new long[]{2, 2}, resultAB.getShape());
         assertArrayEquals(new long[]{2, 2}, resultBA.getShape());
+    }
+
+    @Test
+    public void canPermuteUpperDimensions() {
+        IntegerTensor a = IntegerTensor.create(new int[]{
+            1, 2,
+            3, 4,
+            5, 6,
+            7, 8
+        }, 1, 2, 2, 2);
+        IntegerTensor permuted = a.permute(0, 1, 3, 2);
+        IntegerTensor expected = IntegerTensor.create(new int[]{
+            1, 3,
+            2, 4,
+            5, 7,
+            6, 8
+        }, 1, 2, 2, 2);
+
+        assertEquals(expected, permuted);
+    }
+
+    @Test
+    public void canPermute() {
+        IntegerTensor x = IntegerTensor.create(new int[]{1, 2, 3}, 1, 3);
+        IntegerTensor y = IntegerTensor.create(new int[]{4, 5, 6}, 1, 3);
+
+        IntegerTensor concatDimensionZero = IntegerTensor.concat(0, x, y);
+
+        assertArrayEquals(new int[]{1, 2, 3, 4, 5, 6}, concatDimensionZero.asFlatIntegerArray());
+
+        IntegerTensor concatDimensionOne = IntegerTensor.concat(1, x, y);
+        IntegerTensor permuttedConcatDimensionOne = concatDimensionOne.permute(1, 0);
+
+        assertArrayEquals(new int[]{1, 2, 3, 4, 5, 6}, permuttedConcatDimensionOne.asFlatIntegerArray());
+
+        x = IntegerTensor.create(new int[]{1, 2, 3, 4, 5, 6, 7, 8}, 2, 2, 2);
+        y = IntegerTensor.create(new int[]{9, 10, 11, 12, 13, 14, 15, 16}, 2, 2, 2);
+
+        concatDimensionZero = IntegerTensor.concat(0, x, y);
+
+        assertArrayEquals(new int[]{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16}, concatDimensionZero.asFlatIntegerArray());
+
+        concatDimensionOne = IntegerTensor.concat(1, x, y);
+        permuttedConcatDimensionOne = concatDimensionOne.permute(1, 0, 2);
+
+        int[] sliced = new int[permuttedConcatDimensionOne.asFlatIntegerArray().length / 2];
+        for (int i = 0; i < permuttedConcatDimensionOne.asFlatDoubleArray().length / 2; i++) {
+            sliced[i] = permuttedConcatDimensionOne.asFlatIntegerArray()[i];
+        }
+
+        IntegerTensor answer = IntegerTensor.create(sliced, x.getShape()).permute(1, 0, 2);
+        assertArrayEquals(new int[]{1, 2, 3, 4, 5, 6, 7, 8}, answer.asFlatIntegerArray());
     }
 
     @Test

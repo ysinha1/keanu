@@ -1,4 +1,4 @@
-package io.improbable.keanu.tensor.dbl;
+package io.improbable.keanu.tensor;
 
 import com.google.common.primitives.Ints;
 import com.google.common.primitives.Longs;
@@ -6,9 +6,8 @@ import com.google.common.primitives.Longs;
 import java.util.ArrayList;
 import java.util.List;
 
-class TensorMulByMatrixMul {
-
-    static DoubleTensor tensorMmul(DoubleTensor left, DoubleTensor right, int[] dimsLeft, int[] dimsRight) {
+public class TensorMulByMatrixMul {
+    public static <N extends Number, T extends NumberTensor<N ,T>> T tensorMmul(T left, T right, int[] dimsLeft, int[] dimsRight) {
 
         long[] leftShape = left.getShape();
         long[] rightShape = right.getShape();
@@ -25,16 +24,16 @@ class TensorMulByMatrixMul {
         long[] leftTensorAsMatrixShape = {-1, dimsLength};
         long[] rightTensorAsMatrixShape = {dimsLength, -1};
 
-        DoubleTensor leftTensorAsMatrix = left.permute(leftDimsPermuted).reshape(leftTensorAsMatrixShape);
-        DoubleTensor rightTensorAsMatrix = right.permute(rightDimsPermuted).reshape(rightTensorAsMatrixShape);
-        DoubleTensor resultAsMatrix = leftTensorAsMatrix.matrixMultiply(rightTensorAsMatrix);
+        T leftTensorAsMatrix = left.permute(leftDimsPermuted).reshape(leftTensorAsMatrixShape);
+        T rightTensorAsMatrix = right.permute(rightDimsPermuted).reshape(rightTensorAsMatrixShape);
+        T resultAsMatrix = leftTensorAsMatrix.matrixMultiply(rightTensorAsMatrix);
 
         long[] leftKeptShape = getKeptShape(leftShape, leftDimsKept);
         long[] rightKeptShape = getKeptShape(rightShape, rightDimsKept);
 
         long[] resultShape = Longs.concat(leftKeptShape, rightKeptShape);
         return resultAsMatrix.reshape(resultShape);
-    }
+     }
 
     /**
      * Validates that the multiply dimensions match for the left shape and the right shape. Also, corrects for the

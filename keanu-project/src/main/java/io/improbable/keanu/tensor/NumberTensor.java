@@ -19,6 +19,8 @@ public interface NumberTensor<N extends Number, T extends NumberTensor<N,T>> ext
 
     T transpose();
 
+    T permute(int... rearrange);
+
     T sum(int... overDimensions);
     
     // New tensor Ops and transforms
@@ -28,6 +30,8 @@ public interface NumberTensor<N extends Number, T extends NumberTensor<N,T>> ext
     T tensorMultiply(T value, int[] dimLeft, int[] dimsRight);
     
     T abs();
+
+    T reshape(long... shape);
 
     /**
      * Find the index into the flattened array of the tensor of the largest value, e.g.
